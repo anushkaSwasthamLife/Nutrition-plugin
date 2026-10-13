@@ -1,0 +1,69 @@
+{
+  "version": "GR-PARTIAL-0.2",
+  "status": "PARTIAL",
+  "note": "UNSIGNED. Built only from what is documented: (a) the live Dixit app's answers on 13 Oct 2026 and (b) the expectations in the Dixit nutrition amendment v1.2.6 tests (NUT-T005, T008, T011, T012, T017). The Dixit base package v1.1 + v1.1.1 is not available, so every rule not listed here is 'unknown' and the engine refuses to answer it instead of guessing. Production refuses this file.",
+  "sources": {
+    "live_app": "Dixit Lifestyle web app answers, 13 Oct 2026",
+    "amendment_tests": "Dixit_AI_Nutrition_Data_Integration_Amendment_v1_2_6/05_tests/nutrition_integration_tests.json"
+  },
+
+  "full": [
+    "Two meals a day, only when you're truly hungry, not by the clock.",
+    "Each meal in this order: nuts → salad → sprouts → your usual home-cooked meal, until you feel satisfied, not overfull.",
+    "Finish the whole meal within 55 minutes.",
+    "Nothing in between meals: anything you eat or drink that starts digestion again counts as a meal."
+  ],
+  "reminder": "Remember the order: nuts → salad → sprouts → your home meal, within 55 minutes.",
+  "meal_place": "This goes in the last step of your meal, after nuts, salad and sprouts.",
+  "amounts": {
+    "nuts": "4 almonds and 4 walnuts, or a handful of soaked peanuts",
+    "salad": "a bowl of raw salad, such as cucumber and tomato",
+    "sprouts": "sprouted moong, matki or chole, or 2 boiled eggs, in the same quantity as the salad"
+  },
+
+  "rules": [
+    {"id": "GR-MEALS-2", "statement": "Two meals a day, when truly hungry.", "source": "live_app", "confirmed_by_base_package": false},
+    {"id": "GR-WINDOW-55", "statement": "Each meal is finished within 55 minutes.", "source": "live_app + amendment_tests T011/T017", "confirmed_by_base_package": false},
+    {"id": "GR-NOTHING-BETWEEN", "statement": "Nothing that starts digestion between the two meals.", "source": "live_app", "confirmed_by_base_package": false},
+    {"id": "GR-SEQUENCE", "statement": "Nuts, then salad, then sprouts, then the home meal.", "source": "live_app", "confirmed_by_base_package": false},
+    {"id": "GR-SUGAR", "statement": "Reduce sugar and sweets.", "source": "live_app", "confirmed_by_base_package": false},
+    {"id": "GR-FRUIT", "statement": "Fruit rules depend on diabetes status (see 'fruit').", "source": "amendment_tests T005/T011/T012", "confirmed_by_base_package": false}
+  ],
+
+  "status_values": ["unknown", "diabetic", "prediabetic", "non_diabetic", "currently_non_diabetic"],
+  "fruit": {
+    "non_diabetic": {
+      "allowed": "within_meal_window",
+      "text": "For people who have never had diabetes, the programme allows seasonal fruit only within the 55-minute meal window, never between meals."
+    },
+    "currently_non_diabetic_unvalidated": {
+      "allowed": "no",
+      "text": "If you had diabetes and your readings are now normal, the fruit restriction continues until your consultant confirms you no longer have diabetes. A normal reading alone is not enough."
+    },
+    "currently_non_diabetic_validated": {"allowed": "unknown", "text": null},
+    "diabetic": {"allowed": "unknown", "text": null},
+    "prediabetic": {"allowed": "unknown", "text": null},
+    "unknown": {"allowed": "depends_on_status", "text": "The programme's fruit rule depends on your diabetes status."},
+    "unknown_rule_text": "The programme has a specific fruit rule for this situation, and I can't state it here yet. Please check with your Dixit coach. Nutrition facts below are for information only and are not permission."
+  },
+
+  "positions": {
+    "vegetable": "{food} is allowed in the programme. No vegetable is banned; what changes is how you eat.",
+    "starchy_vegetable": "{food} is allowed in the programme. No vegetable is banned; what changes is how you eat.",
+    "staple": "{food} is allowed in the programme as part of your home meal. The programme treats rice and chapati as interchangeable.",
+    "pulse": "{food} is allowed in the programme.",
+    "dairy": "{food} is allowed in the programme as part of your home meal.",
+    "nut": "Nuts are the first step of each meal in the programme.",
+    "egg": "Eggs are allowed in the programme; 2 boiled eggs can replace the sprouts step.",
+    "sweet": "The programme asks you to reduce sugar and sweets."
+  },
+  "unknown_position": "I can't confirm the programme's rule for {food} yet. Please check with your Dixit coach.",
+  "between_meals_allowed": null,
+  "between_meals_unknown": "I can't confirm yet what the programme allows between meals. Please check with your Dixit coach.",
+
+  "forbidden_claims": [
+    "fruit between meals", "eat fruit anytime", "eat fruit any time", "fruit is allowed", "fruit is fine", "fruit is okay",
+    "you can eat fruit", "you can have fruit", "fruit whenever", "snack on fruit", "have a fruit",
+    "eat every three hours", "eat every 3 hours", "three meals", "3 meals", "small frequent meals"
+  ]
+}

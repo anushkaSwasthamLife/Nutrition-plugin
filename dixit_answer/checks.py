@@ -34,7 +34,7 @@ def _fail(check_id: str, level: str, detail: str) -> CheckResult:
     return CheckResult(check_id, False, level, detail)
 
 
-def check_ai_text(ai_text: str, draft: Draft, plan: AnswerPlan, index: FoodIndex, words: dict) -> list[CheckResult]:
+def check_ai_text(ai_text: str, draft: Draft, plan: AnswerPlan, index: FoodIndex, words: dict, golden=None) -> list[CheckResult]:
     """Checks on the part the AI wrote. Locked placeholders are removed before the word checks."""
     results: list[CheckResult] = []
     expected = PLACEHOLDER_RE.findall(draft.template())
@@ -55,6 +55,8 @@ def check_ai_text(ai_text: str, draft: Draft, plan: AnswerPlan, index: FoodIndex
     if extra_foods:
         results.append(_fail("N16", "critical", f"names foods not in the answer plan: {extra_foods}"))
     results += _word_checks(cleaned, words)
+    if golden is not None and golden.relaxing_claims(free_text):
+        results.append(_fail("N4", "critical", f"relaxes a Golden Rule: {golden.relaxing_claims(free_text)}"))
     if word_count(draft.fill(ai_text)) > plan.max_words * 1.25:
         results.append(_fail("LEN", "major", f"longer than {plan.max_words} words"))
     return results
@@ -76,7 +78,7 @@ def _word_checks(cleaned: str, words: dict) -> list[CheckResult]:
 
 
 def check_final(final_text: str, draft: Draft, plan: AnswerPlan, state: ChatState, words: dict,
-                index: FoodIndex | None = None) -> list[CheckResult]:
+                index: FoodIndex | None = None, golden=None) -> list[CheckResult]:
     results: list[CheckResult] = []
     locked_numbers = {n for text in draft.locked.values() for n in NUMBER_RE.findall(text)}
     stray = [n for n in NUMBER_RE.findall(final_text) if n not in locked_numbers]
@@ -98,6 +100,8 @@ def check_final(final_text: str, draft: Draft, plan: AnswerPlan, state: ChatStat
         if any(has_phrase(cleaned, clean(t)) for t in ("two meals", "2 meals", "nothing in between")):
             results.append(_fail("N22", "major", "protocol text appeared although the plan said none"))
     results += _word_checks(clean(PLACEHOLDER_RE.sub(" ", draft.template())), words)   # our own template must pass too
+    if golden is not None and golden.relaxing_claims(final_text):
+        results.append(_fail("N4", "critical", f"relaxes a Golden Rule: {golden.relaxing_claims(final_text)}"))
     if index is not None:
         results += _phase5_checks(final_text, draft, plan, index, words)
     return results

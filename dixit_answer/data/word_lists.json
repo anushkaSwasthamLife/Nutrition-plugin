@@ -1,5 +1,5 @@
 {
- "version": "WL-0.2.2",
+ "version": "WL-0.3.0",
  "status": "TEST ONLY",
  "note": "Draft word lists for development; need review. Matching is on cleaned, lower-case text with whole words.",
  "spelling_map": {
@@ -366,6 +366,21 @@
   "medium",
   "large",
   "small",
-  "today"
+  "today",
+  "raw",
+  "ripe",
+  "unripe",
+  "green",
+  "boiled",
+  "cooked",
+  "chopped",
+  "sliced",
+  "frozen",
+  "dry",
+  "red",
+  "yellow",
+  "white",
+  "big",
+  "tiny"
  ]
 }

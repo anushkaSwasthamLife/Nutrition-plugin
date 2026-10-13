@@ -61,6 +61,7 @@ class SwasthamData:
     condition_limits: dict
     swap_table: dict
     cooking_factors: dict
+    rules_registry: dict
     manifest: dict
 
 
@@ -166,6 +167,6 @@ def load_swastham_data(settings: Settings, manifest: dict | None = None) -> Swas
     loaded = {key: json.loads((DATA_DIR / name).read_text(encoding="utf-8")) for key, name in names.items()}
     if not env.get("allow_test_only_data"):
         for key, data in loaded.items():
-            if str(data.get("status", "")).upper() in {"TEST ONLY", "STUB"}:
+            if str(data.get("status", "")).upper() in {"TEST ONLY", "STUB", "PARTIAL", "PROPOSED"}:
                 raise LoadError(f"Production refuses {names[key]}: status is {data['status']}.")
     return SwasthamData(manifest=manifest, **loaded)

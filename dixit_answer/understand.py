@@ -10,6 +10,7 @@ import re
 from dataclasses import dataclass, field
 
 from .foods import FoodIndex
+from .status import parse_status
 from .textnorm import clean, has_phrase
 
 TYPES = [
@@ -22,7 +23,7 @@ TYPES = [
 GREETING = re.compile(r"^(hi|hello|hey|namaste|good (morning|evening|afternoon)|thanks?|thank you|thank you so much|ok|okay|"
                       r"ok thanks|okay thanks|thx|ty)( (dixit|coach|so much|a lot))?$")
 INGREDIENTS = re.compile(r"\b(i have|i've got|i got|we have|at home (i|we) have|there is|there's|have only|only have|my paas)\b")
-HINDI_MAKE = re.compile(r"\b(bana|banau|banaun|banaye|banana|pakau|pakaun|pakana|pakaye|kya bana)\b")
+HINDI_MAKE = re.compile(r"\b(bana|banau|banaun|banaye|pakau|pakaun|pakana|pakaye|kya bana)\b")   # not "banana": that's a fruit
 DISH_AFTER = re.compile(r"(?:recipe (?:for|of)|how (?:do|to|can|should) (?:i |you |we )?(?:make|cook|prepare)|make|cook|prepare)\s+(.+)$")
 GENERIC_DISH = {"recipes", "recipe", "some recipes", "a recipe", "something", "food", "a dish", "dish", "dishes", "some dishes",
                 "me recipes", "it", "this", "that", "meal", "meals", "lunch", "dinner"}
@@ -35,7 +36,11 @@ COMPARE = re.compile(r"\b(compare|comparison|vs|versus|difference between|better
 STATUS = re.compile(r"\b(non diabetic|no longer diabetic|not diabetic anymore|reversed|reversal|now normal|sugar is normal)\b")
 PERSONAL = re.compile(r"\b(safe for me|good for me|ok for me|okay for me|suitable for me|right for me|bad for me|harmful for me)\b")
 MEAL_PROTOCOL = re.compile(r"\b(between meals|in between|snack|snacks|snacking|skip (breakfast|lunch|dinner|a meal)|two meals|"
-                           r"2 meals|55 min|55 minutes|meal timing|when should i eat|how many meals|third meal|three meals)\b")
+                           r"2 meals|55 min|55 minutes|meal timing|when should i eat|how many meals|third meal|three meals|"
+                           r"every (two|three|2|3|4|four|few) hours|small meals|frequent meals|small frequent|five meals|six meals|"
+                           r"eat more often|eating more often|more meals)\b")
+FREQUENCY = re.compile(r"\b(every (two|three|2|3|4|four|few) hours|small meals|frequent meals|small frequent|five meals|six meals|"
+                       r"eat more often|eating more often|more meals|three meals|how many meals)\b")
 PERMISSION = re.compile(r"\b(allowed|permitted|in the program|in the protocol|as per the program|does the program allow)\b")
 ALLOWED = re.compile(r"\b(can i (eat|have|take|drink)|should i (eat|have)|is it ok to (eat|have)|may i (eat|have))\b")
 CHOICE = re.compile(r"\b(what (should|can|do) i (eat|have|cook)|what to eat|which (sabji|vegetable|food|foods|dal|fruit)|"
@@ -68,6 +73,8 @@ class Understanding:
     suggestion: dict | None = None                       # {"word", "food_id"} close match to confirm first
     ack_only: bool = False                               # allergy reply that doesn't affect the recipe already shown
     unknown_dish: str = ""                               # a dish asked for by name that isn't in the recipe collection
+    fruit_foods: list = field(default_factory=list)      # fruit mentioned (the Golden Rule for fruit depends on diabetes status)
+    frequency_question: bool = False                     # "is eating every three hours better?": the programme's position, no evidence
 
 
 def _conditions(cleaned: str, word_lists: dict) -> list[str]:
@@ -116,6 +123,8 @@ def classify(cleaned: str, foods: list[str], index: FoodIndex) -> str:
         return "meal_from_ingredients"   # "I have cauliflower and potato": a list of what's at home is a recipe request
     if foods and len(cleaned.split()) <= 4:
         return "food_allowed"            # a bare food name: say what the programme says about it, with facts
+    if any(index.foods[f]["category"] == "fruit" and f != "FOOD-LEMON" for f in foods):
+        return "food_allowed"            # a question about a fruit: the programme's fruit position, plus facts
     if DIET_WORDS.search(cleaned) or foods:
         return "food_choice_guidance"
     return "out_of_scope"
@@ -153,6 +162,21 @@ def pantry_words(cleaned: str, index: FoodIndex, stop_words: list[str]) -> tuple
 def read_reply(cleaned: str, slot: str, foods: list[str], index: FoodIndex, word_lists: dict,
                allergy_reader=None, recipe_ids=None) -> dict:
     """Try to read the message as an answer to our last question. Returns the slot values, or {}."""
+    if slot == "diabetes_status":
+        found = parse_status(cleaned, reply=True)
+        if not found and set(cleaned.split()) & {"no", "nope", "nahi", "never", "none"}:
+            found = {"status": "non_diabetic", "prior_history": False}
+        return {"diabetes_status": found} if found else {}
+    if slot == "consultant":
+        found = parse_status(cleaned, reply=True)
+        if "consultant_validated" in found:
+            return {"consultant": found["consultant_validated"]}
+        words = set(cleaned.split())
+        if words & {"yes", "yeah", "yep", "haan", "ha", "confirmed", "validated"}:
+            return {"consultant": True}
+        if words & {"no", "nope", "nahi", "not", "never"}:
+            return {"consultant": False}
+        return {}
     if slot == "allergies" and allergy_reader:
         allergies = allergy_reader(cleaned)
         return {"allergies": allergies} if allergies is not None else {}
@@ -196,6 +220,7 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
     foods = [m.food_id for m in mentions]
     u = Understanding(cleaned=cleaned, type="", foods=foods, conditions=_conditions(cleaned, word_lists),
                       preference=_preference(cleaned, word_lists))
+    u.fruit_foods = [f for f in foods if index.foods[f]["category"] == "fruit" and f != "FOOD-LEMON"]
     if recipe_finder:
         u.recipe_ids = recipe_finder(cleaned)
     if TOPIC_SABJI.search(cleaned):
@@ -210,6 +235,9 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
         u.slot_fill = read_reply(cleaned, last["slot"], foods, index, word_lists, allergy_reader, u.recipe_ids)
 
     question_type = classify(cleaned, foods, index)
+    u.frequency_question = bool(FREQUENCY.search(cleaned)) and question_type == "meal_protocol_application"
+    if question_type == "out_of_scope" and not u.slot_fill and parse_status(cleaned):
+        question_type = "status_dependent_protocol_question"       # "yes, my consultant confirmed it": a status statement
     if question_type != "recipe_request" and not (u.slot_fill and "recipe_choice" in u.slot_fill):
         u.recipe_ids = []                # a dish name only counts when the person is asking for that recipe
     if question_type == "recipe_request" and not u.recipe_ids:

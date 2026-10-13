@@ -9,6 +9,7 @@ from dataclasses import dataclass
 
 from .facts import Fact, make_fact, preferred_records
 from .foods import FoodIndex
+from .golden import GoldenRules, Status
 from .loader import Library, SwasthamData
 
 FACT_FIELDS = ("energy_kcal", "carbohydrate_g", "fiber_g", "protein_g")
@@ -28,32 +29,27 @@ class Services:
         self.library = library
         self.data = data
         self.index = index
-        self.rules = data.golden_rules
+        self.golden = GoldenRules(data.golden_rules)
 
-    # ---------- protocol engine (Golden Rules stub) ----------
+    # ---------- protocol engine (Golden Rules, phase 6) ----------
     def protocol_full(self) -> list[str]:
-        return list(self.rules["full"])
+        return self.golden.full()
 
     def protocol_reminder(self) -> str:
-        return self.rules["reminder"]
+        return self.golden.reminder()
 
     def meal_place(self) -> str:
-        return self.rules["meal_place"]
+        return self.golden.meal_place()
 
     def protocol_amount(self, step: str) -> str | None:
-        return self.rules["amounts"].get(step)
+        return self.golden.amount(step)
 
-    def position_for(self, food_id: str) -> str:
-        food = self.index.foods[food_id]
-        template = self.rules["positions"].get(food["category"])
-        name = food["name"]
-        if not template:
-            return self.rules["unknown_position"].format(food=name)
-        return template.format(food=name[:1].upper() + name[1:])
+    def position_for(self, food_id: str, status: Status | None = None):
+        """(locked text, fruit position or None). Fruit depends on diabetes status; unknown rules are said, never guessed."""
+        return self.golden.position_for(food_id, self.index.foods[food_id], status or Status())
 
     def between_meals(self) -> str:
-        allowed = self.rules.get("between_meals_allowed")
-        return allowed or self.rules["between_meals_unknown"]
+        return self.golden.between_meals()
 
     # ---------- food choices (approved list) ----------
     def choices(self, topic: str, blocked=frozenset()) -> list[ChoiceGroup]:

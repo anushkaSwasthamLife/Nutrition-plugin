@@ -1,5 +1,5 @@
 {
- "version": "FM-0.2.1",
+ "version": "FM-0.2.2",
  "status": "TEST ONLY",
  "note": "Draft food master table for development. Allergens, record choices and unit weights need dietitian review; unit weights are typical values to verify against USDA FoodData Central portion data. ingredient_record = USDA per-100 g record used for recipe maths. No IFCT links.",
  "foods": [
@@ -556,8 +556,10 @@
      "SURVEY-2709242"
     ]
    },
-   "ingredient_record": null,
-   "unit_weights_g": {}
+   "ingredient_record": "SURVEY-2709242",
+   "unit_weights_g": {
+    "medium": 200
+   }
   },
   {
    "id": "FOOD-BANANA",
@@ -577,8 +579,10 @@
      "SURVEY-2709224"
     ]
    },
-   "ingredient_record": null,
-   "unit_weights_g": {}
+   "ingredient_record": "SURVEY-2709224",
+   "unit_weights_g": {
+    "medium": 120
+   }
   },
   {
    "id": "FOOD-SUGAR",

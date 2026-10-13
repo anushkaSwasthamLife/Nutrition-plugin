@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 
 from .facts import Fact
 from .foods import FoodIndex
+from .golden import Status
 from .planner import AnswerPlan
 from .safety import EMERGENCY_ANSWER, safety_caution
 from .services import Services
@@ -133,6 +134,9 @@ class Composer:
             elif block == "meal_place":
                 d.lines.append("**In your meal:** " + lock("P", self.s.meal_place()))
             elif block == "between_meals":
+                if plan.frequency_note:
+                    d.lines.append(lock("T", "The programme's position is two meals a day. I don't have approved evidence on other "
+                                              "eating patterns to share here."))
                 d.lines.append("**Between meals:** " + lock("P", self.s.between_meals()))
             elif block == "choices":
                 for group in self.s.choices(plan.topic, blocked):
@@ -161,7 +165,10 @@ class Composer:
                     if fid in blocked:
                         self._blocked_line(fid, person, d, lock)
                     else:
-                        d.lines.append(lock("T", self.s.position_for(fid)))
+                        text, pos = self.s.position_for(fid, person.status if person else None)
+                        d.lines.append(lock("T", text))
+                        if pos is not None and pos.allowed == "depends_on_status":
+                            d.lines.append(lock("T", "The nutrition facts below are for information only, not permission."))
             elif block == "food_facts":
                 for fid in plan.focus_foods:
                     if fid in blocked:
@@ -201,9 +208,9 @@ class Composer:
                     if rec:
                         src = "USDA FoodData Central" if not self.s.library.is_indian(rid) else "Swastham Indian meal library (development only)"
                         d.lines.append("- " + lock("T", f"{rec['food_name']}: {src}, record {rid}"))
-            elif block == "status_unknown":
-                d.lines.append(lock("T", "The programme's rules can change when your diabetes status changes. I can't confirm the rule for "
-                                          "your situation yet."))
+            elif block == "status_position":
+                pos = self.s.golden.fruit_position(person.status if person else Status())
+                d.lines.append(lock("T", pos.text))
             elif block == "struggle":
                 self._struggle_lines(u, d, lock)
             elif block == "boundary":

@@ -1,5 +1,5 @@
 {
-  "runtime_id": "DIXIT-ANSWER-0.2.0-dev",
+  "runtime_id": "DIXIT-ANSWER-0.3.0-dev",
   "note": "Release bundle for the Dixit answer pipeline. The loader checks every pin at start and stops on any mismatch.",
   "library": {
     "name": "Swastham_Nutrition_Data_Library",
@@ -46,12 +46,13 @@
     "food_master": "food_master.json",
     "approved_list": "approved_list_test.json",
     "cooking_tips": "cooking_tips_test.json",
-    "golden_rules": "golden_rules_stub.json",
+    "golden_rules": "golden_rules.json",
     "word_lists": "word_lists.json",
     "allergen_map": "allergen_map.json",
     "recipes": "recipes_test.json",
     "condition_limits": "condition_limits_test.json",
     "swap_table": "swap_table_test.json",
-    "cooking_factors": "cooking_factors.json"
+    "cooking_factors": "cooking_factors.json",
+    "rules_registry": "rules_registry.json"
   }
 }

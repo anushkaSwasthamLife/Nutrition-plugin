@@ -83,7 +83,8 @@ def _d(value) -> Decimal:
 
 class RecipeService:
     def __init__(self, library: Library, data: SwasthamData, index: FoodIndex, allergy: AllergyFilter, llm,
-                 ai_enabled: bool):
+                 ai_enabled: bool, golden=None):
+        self.golden = golden
         self.library = library
         self.data = data
         self.index = index
@@ -175,15 +176,9 @@ class RecipeService:
             if fid in blocked:
                 g.reasons.append(f"it contains {self.index.name(fid)}, which isn't suitable for you")
                 g.failed_tags += [f"allergen:{a}" for a in self.index.foods[fid].get("allergens", [])] or [f"blocked:{fid}"]
-        if recipe.kind not in ALLOWED_KINDS or recipe.meal_place != "home_meal":
-            g.reasons.append("not a home-meal dish (Golden Rules: nothing between meals)")
-            g.failed_tags.append("golden_rule:meal_place")
-        if any(self.index.foods[f]["category"] == "sweet" for f in foods):
-            g.reasons.append("adds sugar (the programme asks to reduce sugar)")
-            g.failed_tags.append("golden_rule:sugar")
-        if "diabetes" in person.conditions and any(self.index.foods[f]["category"] == "fruit" and f != "FOOD-LEMON" for f in foods):
-            g.reasons.append("fruit rules depend on diabetes status, which isn't confirmed")
-            g.failed_tags.append("golden_rule:fruit")
+        for tag, reason in self.golden.recipe_violations(foods, self.index.foods, person.status, recipe.kind, recipe.meal_place):
+            g.reasons.append(reason)
+            g.failed_tags.append(tag)
         missing_foods: list[str] = []
         for nutrient, limit in limits.items():
             if not limit.verifiable:
@@ -297,10 +292,13 @@ class RecipeService:
         blocked = self.allergy.blocked_foods(person)
         if not person.allergies_known:
             blocked = blocked | self.allergy.major_allergen_foods()
+        fruit = [f for f in have if self.golden.is_fruit(self.index.foods[f]["category"], f)] if person.status.value != "non_diabetic" else []
         for fid in have:
             if fid in blocked:
                 out.left_out.append((fid, self._block_reason(fid, person)))
-        usable_have = [f for f in have if f not in blocked]
+            elif fid in fruit:
+                out.left_out.append((fid, "the programme's fruit rule, which depends on your diabetes status"))
+        usable_have = [f for f in have if f not in blocked and f not in fruit]
         out.trace.append(f"R2: blocked {len(blocked)} foods; allergies {'known' if person.allergies_known else 'unknown'}")
 
         # R3: limits.

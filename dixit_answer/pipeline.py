@@ -23,6 +23,7 @@ from .person import AllergyFilter, apply_profile_safety, build_person
 from .planner import make_plan
 from .recipes import RecipeService
 from .services import Services
+from .status import apply_status, parse_status
 from .state import StateStore
 from .understand import understand
 
@@ -72,7 +73,8 @@ class Engine:
         self.audit = AuditLog(self.settings.audit_log)
         self.llm = llm or make_llm(self.settings)
         ai_drafting = bool(manifest["environments"][self.settings.environment].get("recipe_ai_drafting"))
-        self.recipes = RecipeService(self.library, self.data, self.index, self.allergy, self.llm, ai_drafting)
+        self.recipes = RecipeService(self.library, self.data, self.index, self.allergy, self.llm, ai_drafting,
+                                     self.services.golden)
         self.composer = Composer(self.services, self.index, self.words, self.recipes, self.allergy)
         self.versions = {
             "runtime": manifest["runtime_id"],
@@ -86,6 +88,7 @@ class Engine:
             "recipes": self.data.recipes["collection_version"],
             "condition_limits": self.data.condition_limits["version"],
             "swap_table": self.data.swap_table["version"],
+            "rules_registry": self.data.rules_registry["version"],
             "cooking_factors": self.data.cooking_factors["version"],
         }
 
@@ -126,10 +129,12 @@ class Engine:
             mentioned = self.allergy.read_reply(u.cleaned)
             if mentioned is not None:
                 state.allergies = sorted(set((state.allergies or []) + mentioned))
+        if not u.slot_fill:
+            apply_status(state, parse_status(text))          # "I have diabetes", "my diabetes is now normal" ...
         person = build_person(profile, state, self.index)
 
         # 5 plan
-        plan = make_plan(u, state, emergency=gate.emergency, allergies_known=person.allergies_known)
+        plan = make_plan(u, state, emergency=gate.emergency, allergies_known=person.allergies_known, status=person.status)
 
         # 6-7 fetch + compose (allergy / avoid / diet filter runs inside every service that names a food)
         draft = self.composer.build(plan, state, u, person)
@@ -146,17 +151,17 @@ class Engine:
                 except LLMError as exc:
                     ai_results = [CheckResult("LLM", False, "major", str(exc))]
                     break
-                ai_results = check_ai_text(ai_text, draft, plan, self.index, self.words)
+                ai_results = check_ai_text(ai_text, draft, plan, self.index, self.words, self.services.golden)
                 bad = blocking(ai_results)
                 if not bad:
                     final, ai_used = draft.fill(ai_text), True
                     break
                 failed_ids = [f"{r.check_id}: {r.detail}" for r in bad]
             fallback = not ai_used
-        final_results = check_final(final, draft, plan, state, self.words, self.index)
+        final_results = check_final(final, draft, plan, state, self.words, self.index, self.services.golden)
         if blocking(final_results) and ai_used:
             final, ai_used, fallback = draft.fill(template), False, True
-            final_results = check_final(final, draft, plan, state, self.words, self.index)
+            final_results = check_final(final, draft, plan, state, self.words, self.index, self.services.golden)
         if any(r.level == "critical" and not r.passed for r in final_results) and plan.type != "emergency":
             # Even the template broke a critical check: nothing unchecked is shown.
             final, ai_used, fallback = SAFE_FALLBACK, False, True
@@ -183,6 +188,10 @@ class Engine:
                 state.safety_asked_turn = state.turn
             if plan.followup["id"] == "FU-ALLERGY":
                 state.allergy_asked_turn = state.turn
+            if plan.followup["id"] == "FU-STATUS":
+                state.status_asked_turn = state.turn
+            if plan.followup["id"] == "FU-CONSULTANT":
+                state.consultant_asked_turn = state.turn
         else:
             state.last_followup = None
         if u.type not in {"followup_reply", "greeting_thanks", "out_of_scope"}:
@@ -240,6 +249,10 @@ class Engine:
             state.ingredients_on_hand = list(u.slot_fill["ingredients"])
         if "allergies" in u.slot_fill:
             state.allergies = list(u.slot_fill["allergies"])
+        if "diabetes_status" in u.slot_fill:
+            apply_status(state, u.slot_fill["diabetes_status"])
+        if "consultant" in u.slot_fill:
+            state.consultant_validated = bool(u.slot_fill["consultant"])
         if "confirm_food" in u.slot_fill:
             answer, pending = u.slot_fill["confirm_food"], state.pending_confirm
             food = pending["food_id"] if (answer is True and pending) else (answer if isinstance(answer, str) else None)

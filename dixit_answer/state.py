@@ -36,6 +36,11 @@ class ChatState:
     allergy_asked_turn: int | None = None
     pending_confirm: dict | None = None                      # unknown pantry word -> suggested food ("did you mean ...?")
     recipe_choices: list = field(default_factory=list)       # recipe IDs offered for the person to pick
+    diabetes_status: str = "unknown"                         # unknown | diabetic | prediabetic | non_diabetic | currently_non_diabetic
+    prior_diabetes_history: bool | None = None
+    consultant_validated: bool | None = None
+    status_asked_turn: int | None = None
+    consultant_asked_turn: int | None = None
 
     def to_json(self) -> str:
         return json.dumps(asdict(self), ensure_ascii=False)

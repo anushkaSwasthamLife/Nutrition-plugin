@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
 from .foods import FoodIndex
+from .golden import Status
 from .state import ChatState
 from .textnorm import clean, has_phrase
 
@@ -26,6 +27,7 @@ class Person:
     clinician_targets: dict = field(default_factory=dict)   # nutrient -> daily max (only if the app holds them)
     intake_today: dict = field(default_factory=dict)        # nutrient -> amount, only used if logged recently
     intake_logged_at: str | None = None
+    status: Status = field(default_factory=Status)          # diabetes status for the Golden Rules (fruit)
 
     @property
     def allergies_known(self) -> bool:
@@ -99,7 +101,14 @@ def build_person(profile: dict | None, state: ChatState, index: FoodIndex) -> Pe
         avoid += [m.food_id for m in index.find(str(item))] or ([item] if item in index.foods else [])
     diet = profile.get("diet_type") or (state.food_preference if state.food_preference != "unknown" else "unknown")
     conditions = list(dict.fromkeys([*(profile.get("conditions") or []), *state.conditions_mentioned]))
-    return Person(allergies=list(allergies) if allergies is not None else None, avoid_foods=avoid, diet_type=diet,
+    value = profile.get("diabetes_status") or state.diabetes_status
+    if value not in ("unknown", "diabetic", "prediabetic", "non_diabetic", "currently_non_diabetic"):
+        value = "unknown"
+    status = Status(value, profile.get("prior_diabetes_history", state.prior_diabetes_history),
+                    profile.get("consultant_validated", state.consultant_validated))
+    if status.value in ("diabetic", "prediabetic") and "diabetes" not in conditions:
+        conditions.append("diabetes")
+    return Person(allergies=list(allergies) if allergies is not None else None, avoid_foods=avoid, diet_type=diet, status=status,
                   conditions=conditions, clinician_targets=dict(profile.get("clinician_targets") or {}),
                   intake_today=dict(profile.get("intake_today") or {}), intake_logged_at=profile.get("intake_logged_at"))
 
