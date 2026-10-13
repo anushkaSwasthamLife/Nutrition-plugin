@@ -86,3 +86,8 @@ corrupt or old chat state, bad profiles, every allergen × diet combination, tam
 - Phase 7: connecting to the Dixit app. Phase 8: dietitian / doctor / legal review.
 - Sodium and sugar for USDA records (library v1.0.4), so blood-pressure and diabetes limits can be checked.
 - Fixes D1–D3 in the Indian library itself (the loader's quality gates only block the bad records).
+
+## Documents
+
+- `Desktop\Nutrition\workflow.html`: the recipe-guardrail diagram, used for reviewers.
+- `Documents\Dixit_Chat_Answer_Architecture.html`: the full chat design (the source for this package).
