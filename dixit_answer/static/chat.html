@@ -46,6 +46,9 @@
   form button { background: var(--me); color: var(--me-fg); border-color: var(--me); padding: 0 18px; }
   .examples { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
   .examples button { font-size: 12.5px; border-radius: 999px; }
+  .profile { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; margin-bottom: 8px; font-size: 13px; }
+  .profile summary { cursor: pointer; color: var(--muted); }
+  .prow { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; margin: 6px 0; }
   .note { font-size: 12.5px; color: var(--warn); background: var(--warn-bg); border-radius: 8px; padding: 6px 10px; margin-bottom: 8px; }
 </style>
 </head>
@@ -59,6 +62,26 @@
     <button id="newchat" type="button">New chat</button>
   </header>
   <div class="note">Development build. Food lists, tips and Golden Rules are TEST ONLY drafts; "dev data" numbers come from the Indian library (licence pending).</div>
+  <details class="profile" id="profile">
+    <summary>My profile (what the Dixit app would send)</summary>
+    <div class="prow"><b>Allergies:</b>
+      <label><input type="radio" name="allergy_mode" value="unknown" checked> not told yet (it will ask)</label>
+      <label><input type="radio" name="allergy_mode" value="none"> none</label>
+      <label><input type="radio" name="allergy_mode" value="list"> allergic to:</label>
+      <label><input type="checkbox" class="al" value="milk"> milk</label>
+      <label><input type="checkbox" class="al" value="peanut"> peanuts</label>
+      <label><input type="checkbox" class="al" value="tree_nut"> nuts</label>
+      <label><input type="checkbox" class="al" value="gluten"> gluten</label>
+      <label><input type="checkbox" class="al" value="egg"> eggs</label>
+    </div>
+    <div class="prow"><b>Diet:</b>
+      <select id="diet"><option value="">not told</option><option value="vegetarian">vegetarian</option>
+        <option value="egg">eggs ok</option><option value="non_vegetarian">non-vegetarian</option><option value="jain">jain</option></select>
+      <label><input type="checkbox" id="insulin"> takes insulin / diabetes medicine</label>
+      <label><input type="checkbox" id="obesity"> obesity</label>
+      <label><input type="checkbox" id="hbp"> high blood pressure</label>
+    </div>
+  </details>
   <div class="examples" id="examples"></div>
   <div class="log" id="log" aria-live="polite"></div>
   <form id="form">
@@ -73,7 +96,7 @@
   var conversationId = null;
   try { conversationId = sessionStorage.getItem('dixit_cid'); } catch (e) {}
 
-  var EXAMPLES = ['i have obesity . so what should i eat to reduce it', 'No medicines. I have chapati, what sabji can I eat?',
+  var EXAMPLES = ['I have lauki and tomato, what can I cook?', 'how do I make palak paneer?', 'how do I make moong dal tadka?', 'i have obesity . so what should i eat to reduce it', 'No medicines. I have chapati, what sabji can I eat?',
     'bhindi, aloo, cauliflower', 'aloo', 'give me recipes', 'I have aloo and onion, what Indian meal can I prepare?',
     'How many carbs in one chapati?', 'Can I snack between meals?', 'I feel very hungry between meals', 'Which phone should I buy?'];
   var ex = document.getElementById('examples');
@@ -109,12 +132,24 @@
     return row;
   }
 
+  function profile() {
+    var p = {}, mode = (document.querySelector('input[name="allergy_mode"]:checked') || {}).value;
+    if (mode === 'none') p.allergies = [];
+    if (mode === 'list') p.allergies = Array.prototype.map.call(document.querySelectorAll('.al:checked'), function (c) { return c.value; });
+    var diet = document.getElementById('diet').value; if (diet) p.diet_type = diet;
+    if (document.getElementById('insulin').checked) p.medicines = ['insulin'];
+    var cond = []; if (document.getElementById('obesity').checked) cond.push('obesity');
+    if (document.getElementById('hbp').checked) cond.push('hypertension');
+    if (cond.length) p.conditions = cond;
+    return p;
+  }
+
   function send(text) {
     text = (text || '').trim(); if (!text) return;
     add('me', esc(text)); input.value = '';
     var wait = add('bot', '<p class="meta">…</p>');
     fetch('/api/chat', {method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({message: text, conversation_id: conversationId})})
+      body: JSON.stringify({message: text, conversation_id: conversationId, profile: profile()})})
       .then(function (r) { return r.json(); })
       .then(function (r) {
         conversationId = r.conversation_id;

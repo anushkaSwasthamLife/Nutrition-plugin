@@ -19,6 +19,7 @@ STATIC = Path(__file__).resolve().parent / "static"
 class ChatIn(BaseModel):
     message: str = Field(..., max_length=2000)
     conversation_id: str | None = Field(default=None, max_length=64)
+    profile: dict | None = None          # what the Dixit app would send: allergies, diet_type, medicines, conditions ...
 
 
 class FeedbackIn(BaseModel):
@@ -49,7 +50,7 @@ def create_app(engine: Engine | None = None) -> FastAPI:
 
     @app.post("/api/chat")
     def chat(body: ChatIn):
-        result = get_engine().answer(body.message, body.conversation_id)
+        result = get_engine().answer(body.message, body.conversation_id, body.profile)
         return {"conversation_id": result.conversation_id, "turn": result.turn, "answer": result.answer,
                 "type": result.type, "plan": result.plan, "checks": result.checks, "ai_used": result.ai_used,
                 "fallback": result.fallback, "records": result.records, "ms": result.timing_ms}

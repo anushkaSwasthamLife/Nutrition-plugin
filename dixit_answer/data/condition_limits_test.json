@@ -1,0 +1,17 @@
+{
+  "version": "CL-0.1.0",
+  "status": "TEST ONLY",
+  "note": "PLACEHOLDER numbers for development only. A dietitian and a doctor must set the real limits, each with a commercial-safe source, reviewer and review date. Limits filter recipes; they are never shown as personal advice.",
+  "meal_share": 0.5,
+  "release_margin": 0.9,
+  "verifiable_nutrients": ["energy_kcal", "carbohydrate_g", "fiber_g", "protein_g", "fat_g"],
+  "limits": [
+    {"condition": "general", "nutrient": "energy_kcal", "daily_max": 2000, "source": "PLACEHOLDER", "reviewer": null, "review_date": null},
+    {"condition": "general", "nutrient": "fat_g", "daily_max": 70, "source": "PLACEHOLDER", "reviewer": null, "review_date": null},
+    {"condition": "obesity", "nutrient": "energy_kcal", "daily_max": 1800, "source": "PLACEHOLDER", "reviewer": null, "review_date": null},
+    {"condition": "obesity", "nutrient": "fat_g", "daily_max": 55, "source": "PLACEHOLDER", "reviewer": null, "review_date": null},
+    {"condition": "diabetes", "nutrient": "carbohydrate_g", "daily_max": 200, "source": "PLACEHOLDER", "reviewer": null, "review_date": null},
+    {"condition": "diabetes", "nutrient": "added_sugar_g", "daily_max": 25, "source": "PLACEHOLDER", "reviewer": null, "review_date": null},
+    {"condition": "hypertension", "nutrient": "sodium_mg", "daily_max": 2000, "source": "PLACEHOLDER", "reviewer": null, "review_date": null}
+  ]
+}

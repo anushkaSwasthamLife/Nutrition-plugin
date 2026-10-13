@@ -56,12 +56,13 @@ class Services:
         return allowed or self.rules["between_meals_unknown"]
 
     # ---------- food choices (approved list) ----------
-    def choices(self, topic: str, preference: str = "unknown") -> list[ChoiceGroup]:
+    def choices(self, topic: str, blocked=frozenset()) -> list[ChoiceGroup]:
+        """Approved groups for a topic, minus anything the allergy / avoid / diet filter blocks for this person."""
         groups = []
         for entry in self.data.approved_list["entries"]:
             if entry["topic"] != topic or not entry.get("golden_rule_checked"):
                 continue
-            foods = [f for f in entry["foods"] if self._fits_preference(f, preference)]
+            foods = [f for f in entry["foods"] if f not in blocked]
             if foods:
                 groups.append(ChoiceGroup(entry["guidance_id"], entry["direction"], entry["label"], foods, entry["reason"]))
         return groups
@@ -72,14 +73,6 @@ class Services:
                 if food_id in group.foods:
                     return group
         return None
-
-    def _fits_preference(self, food_id: str, preference: str) -> bool:
-        category = self.index.foods[food_id]["category"]
-        if preference in ("vegetarian", "jain") and category == "egg":
-            return False
-        if preference == "jain" and food_id in {"FOOD-ALOO", "FOOD-ONION", "FOOD-SWEET-POTATO"}:
-            return False       # root vegetables; Jain rules need dietitian confirmation
-        return True
 
     # ---------- cooking tips ----------
     def tips(self, keys: list[str], given: set[str], limit: int = 1) -> list[tuple[str, list[Fact], str]]:

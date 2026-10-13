@@ -5,6 +5,7 @@ the reference. (A small AI tie-break can be added later; not needed for the cue 
 """
 from __future__ import annotations
 
+import difflib
 import re
 from dataclasses import dataclass, field
 
@@ -20,7 +21,11 @@ TYPES = [
 
 GREETING = re.compile(r"^(hi|hello|hey|namaste|good (morning|evening|afternoon)|thanks?|thank you|thank you so much|ok|okay|"
                       r"ok thanks|okay thanks|thx|ty)( (dixit|coach|so much|a lot))?$")
-INGREDIENTS = re.compile(r"\b(i have|i've got|i got|we have|at home (i|we) have|there is|there's|have only|only have)\b")
+INGREDIENTS = re.compile(r"\b(i have|i've got|i got|we have|at home (i|we) have|there is|there's|have only|only have|my paas)\b")
+HINDI_MAKE = re.compile(r"\b(bana|banau|banaun|banaye|banana|pakau|pakaun|pakana|pakaye|kya bana)\b")
+DISH_AFTER = re.compile(r"(?:recipe (?:for|of)|how (?:do|to|can|should) (?:i |you |we )?(?:make|cook|prepare)|make|cook|prepare)\s+(.+)$")
+GENERIC_DISH = {"recipes", "recipe", "some recipes", "a recipe", "something", "food", "a dish", "dish", "dishes", "some dishes",
+                "me recipes", "it", "this", "that", "meal", "meals", "lunch", "dinner"}
 MAKE = re.compile(r"\b(make|prepare|cook|dish|meal|recipe|what can i (make|cook|prepare))\b")
 RECIPE = re.compile(r"\b(recipe|how (do|to|can) (i |you )?(make|cook|prepare)|how is .* made|method to (make|cook))\b")
 SOURCE = re.compile(r"\b(source|where (does|do|did) (this|that|these|the) .*(come|from)|where is (this|that) from|reference)\b")
@@ -58,6 +63,11 @@ class Understanding:
     is_reply: bool = False
     unknown_food_query: str = ""                         # food-like words not in the food master
     preference: str = ""
+    recipe_ids: list = field(default_factory=list)       # approved recipes named in the message
+    unknown_words: list = field(default_factory=list)    # pantry words we don't know (never sent to the AI)
+    suggestion: dict | None = None                       # {"word", "food_id"} close match to confirm first
+    ack_only: bool = False                               # allergy reply that doesn't affect the recipe already shown
+    unknown_dish: str = ""                               # a dish asked for by name that isn't in the recipe collection
 
 
 def _conditions(cleaned: str, word_lists: dict) -> list[str]:
@@ -75,7 +85,7 @@ def _preference(cleaned: str, word_lists: dict) -> str:
 def classify(cleaned: str, foods: list[str], index: FoodIndex) -> str:
     if GREETING.match(cleaned):
         return "greeting_thanks"
-    if INGREDIENTS.search(cleaned) and MAKE.search(cleaned):
+    if INGREDIENTS.search(cleaned) and (MAKE.search(cleaned) or HINDI_MAKE.search(cleaned)):
         return "meal_from_ingredients"
     if RECIPE.search(cleaned):
         return "recipe_request"
@@ -101,6 +111,9 @@ def classify(cleaned: str, foods: list[str], index: FoodIndex) -> str:
         return "protocol_permission"
     if ALLOWED.search(cleaned) and foods:
         return "food_allowed"
+    cookable = [f for f in foods if index.foods[f]["category"] not in {"staple", "pantry", "sweet"}]
+    if INGREDIENTS.search(cleaned) and cookable and not STRUGGLE.search(cleaned):
+        return "meal_from_ingredients"   # "I have cauliflower and potato": a list of what's at home is a recipe request
     if foods and len(cleaned.split()) <= 4:
         return "food_allowed"            # a bare food name: say what the programme says about it, with facts
     if DIET_WORDS.search(cleaned) or foods:
@@ -108,8 +121,50 @@ def classify(cleaned: str, foods: list[str], index: FoodIndex) -> str:
     return "out_of_scope"
 
 
-def read_reply(cleaned: str, slot: str, foods: list[str], index: FoodIndex, word_lists: dict) -> dict:
+CLAUSE_END = re.compile(r"\b(so|what|how|which|can|could|please|tell|give|suggest|make|cook|prepare|any|for|to|is|are|"
+                        r"kya|bana|banau|banaun|sakta|sakti)\b")
+
+
+def pantry_words(cleaned: str, index: FoodIndex, stop_words: list[str]) -> tuple[list[str], dict | None]:
+    """R1: words after "I have ..." that aren't known foods. Returns (unknown words, close-match suggestion or None)."""
+    m = INGREDIENTS.search(cleaned)
+    if not m:
+        return [], None
+    clause = cleaned[m.end():]
+    end = CLAUSE_END.search(clause)
+    clause = clause[:end.start()] if end else clause
+    for mention in sorted(index.find(clause, already_clean=True), key=lambda x: -len(x.alias)):
+        clause = re.sub(r"(?<![\w])" + re.escape(mention.alias) + r"(?![\w])", " , ", clause)
+    stops = set(stop_words)
+    unknown = []
+    for chunk in re.split(r",|\band\b|\bor\b|&", clause):
+        words = [w for w in chunk.split() if w not in stops and not w.isdigit()]
+        if words:
+            unknown.append(" ".join(words))
+    suggestion = None
+    for word in unknown:
+        close = difflib.get_close_matches(word, list(index.alias_to_id), n=1, cutoff=0.75)
+        if close:
+            suggestion = {"word": word, "food_id": index.alias_to_id[close[0]]}
+            break
+    return unknown, suggestion
+
+
+def read_reply(cleaned: str, slot: str, foods: list[str], index: FoodIndex, word_lists: dict,
+               allergy_reader=None, recipe_ids=None) -> dict:
     """Try to read the message as an answer to our last question. Returns the slot values, or {}."""
+    if slot == "allergies" and allergy_reader:
+        allergies = allergy_reader(cleaned)
+        return {"allergies": allergies} if allergies is not None else {}
+    if slot == "recipe_choice":
+        return {"recipe_choice": recipe_ids[0]} if recipe_ids else {}
+    if slot == "confirm_food":
+        words = set(cleaned.split())
+        if words & {"yes", "yeah", "yep", "haan", "ha", "right", "correct", "yup"}:
+            return {"confirm_food": True}
+        if words & {"no", "nope", "nahi", "not"}:
+            return {"confirm_food": False}
+        return {"confirm_food": foods[0]} if foods else {}
     if slot == "home_foods":
         veg = [f for f in foods if index.foods[f]["category"] in {"vegetable", "starchy_vegetable"}]
         return {"home_foods": veg} if veg else {}
@@ -135,12 +190,14 @@ def read_reply(cleaned: str, slot: str, foods: list[str], index: FoodIndex, word
     return {}
 
 
-def understand(text: str, state, index: FoodIndex, word_lists: dict) -> Understanding:
+def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_finder=None, allergy_reader=None) -> Understanding:
     cleaned = clean(text, word_lists["spelling_map"])
     mentions = index.find(cleaned, already_clean=True)
     foods = [m.food_id for m in mentions]
     u = Understanding(cleaned=cleaned, type="", foods=foods, conditions=_conditions(cleaned, word_lists),
                       preference=_preference(cleaned, word_lists))
+    if recipe_finder:
+        u.recipe_ids = recipe_finder(cleaned)
     if TOPIC_SABJI.search(cleaned):
         u.topic = "sabji"
     staples = [f for f in foods if index.foods[f]["category"] == "staple"]
@@ -150,15 +207,25 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict) -> Understa
     # Reply to our last question (only the question asked in the previous turn counts).
     last = state.last_followup
     if last and last.get("turn") == state.turn:
-        u.slot_fill = read_reply(cleaned, last["slot"], foods, index, word_lists)
+        u.slot_fill = read_reply(cleaned, last["slot"], foods, index, word_lists, allergy_reader, u.recipe_ids)
 
     question_type = classify(cleaned, foods, index)
+    if question_type != "recipe_request" and not (u.slot_fill and "recipe_choice" in u.slot_fill):
+        u.recipe_ids = []                # a dish name only counts when the person is asking for that recipe
+    if question_type == "recipe_request" and not u.recipe_ids:
+        m = DISH_AFTER.search(cleaned)
+        if m:
+            dish = " ".join(w for w in m.group(1).split() if w not in {"please", "pls", "some", "a", "an", "the", "me", "for", "my"})
+            if dish and dish not in GENERIC_DISH and not u.foods:
+                u.unknown_dish = dish
     if INGREDIENTS.search(cleaned) and question_type == "meal_from_ingredients":
         u.ingredients = foods
+        u.unknown_words, u.suggestion = pantry_words(cleaned, index, word_lists.get("ingredient_stop_words", []))
     if u.slot_fill:
         # A short answer with no question of its own is a pure reply (R6). A longer message can carry a new question too:
         # "No medicines. I have chapati, what sabji can I eat?"
-        has_own_question = question_type not in {"food_allowed", "food_choice_guidance", "out_of_scope", "greeting_thanks"} \
+        has_own_question = question_type not in {"food_allowed", "food_choice_guidance", "out_of_scope", "greeting_thanks",
+                                                 "recipe_request"} \
             or "?" in text or CHOICE.search(cleaned) or ALLOWED.search(cleaned)
         if len(cleaned.split()) <= 6 and not has_own_question:
             u.type, u.is_reply = "followup_reply", True

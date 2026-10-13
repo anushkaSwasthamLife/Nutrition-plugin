@@ -20,6 +20,8 @@ MEASURE_UNITS = {"bowl", "small bowl", "curry bowl", "plate", "small plate", "cu
 FLAG_MACRO_MISMATCH = "macro_energy_mismatch"   # D1: e.g. 495 g fat in a bowl of kofta
 FLAG_SERVING_UNCLEAR = "serving_unclear"        # D2
 FLAG_ENERGY_MISSING = "energy_missing"          # D3
+FLAG_MACROS_INCOMPLETE = "macros_incomplete"    # D4: energy with no macronutrients behind it (e.g. USDA "Oil, canola":
+                                                # 900 kcal, 0 g fat). Facts may show energy; recipe maths refuses it.
 
 
 class LoadError(RuntimeError):
@@ -54,6 +56,11 @@ class SwasthamData:
     cooking_tips: dict
     golden_rules: dict
     word_lists: dict
+    allergen_map: dict
+    recipes: dict
+    condition_limits: dict
+    swap_table: dict
+    cooking_factors: dict
     manifest: dict
 
 
@@ -80,6 +87,8 @@ def quality_flags(record: dict) -> set[str]:
         flags.add(FLAG_MACRO_MISMATCH)
     elif energy is not None and (fat * 9 + carb * 4 + protein * 4) > energy * 1.5 + 25:
         flags.add(FLAG_MACRO_MISMATCH)
+    if energy is not None and energy >= 100 and (fat * 9 + carb * 4 + protein * 4) < energy * 0.5:
+        flags.add(FLAG_MACROS_INCOMPLETE)
     if record.get("source_collection") == "SWASTHAM_INDIAN_MEAL_LIBRARY":
         serving = record.get("serving") or {}
         unit = (serving.get("unit") or "").strip().lower()

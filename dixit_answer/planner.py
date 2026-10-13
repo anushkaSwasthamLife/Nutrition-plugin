@@ -17,7 +17,12 @@ FOLLOWUPS = {
     "FU-PREFERENCE": ("food_preference", "Do you eat vegetarian, with eggs, or non-vegetarian?"),
     "FU-SPROUTS": ("sprouts_choice", "For the sprouts step, do you have moong or matki, or would you prefer eggs?"),
     "FU-INGREDIENTS": ("ingredients", "Tell me which vegetables you have at home, and I'll suggest how to cook them."),
+    "FU-ALLERGY": ("allergies", "Do you have any food allergies, for example to milk, peanuts, nuts, gluten or eggs? "
+                                "Say \"none\" if you don't."),
+    "FU-CONFIRM": ("confirm_food", ""),          # text set when the recipe flow finds a close match
+    "FU-RECIPE-CHOICE": ("recipe_choice", "Which one should I show?"),
 }
+REPLY_RECIPE_SLOTS = {"allergies", "confirm_food", "recipe_choice"}
 
 FOOD_TYPES = {"food_choice_guidance", "food_allowed", "protocol_permission", "neutral_food_comparison"}
 RECIPE_TYPES = {"recipe_request", "meal_from_ingredients"}
@@ -39,6 +44,9 @@ class AnswerPlan:
     pairs_with: list = field(default_factory=list)
     ingredients: list = field(default_factory=list)
     reply_slot: str = ""
+    recipe_ids: list = field(default_factory=list)
+    wants_list: bool = False
+    unknown_dish: str = ""
     rules: list = field(default_factory=list)
     max_words: int = 120
 
@@ -46,10 +54,12 @@ class AnswerPlan:
         return asdict(self)
 
 
-def _choose_followup(plan: AnswerPlan, state: ChatState) -> None:
+def _choose_followup(plan: AnswerPlan, state: ChatState, allergies_known: bool = True) -> None:
     """R8: one question, from a fixed ladder; never a slot already filled or a question already asked."""
     asked = set(state.followups_asked)
     ladder: list[str] = []
+    if plan.type in RECIPE_TYPES and not allergies_known and state.allergy_asked_turn is None:
+        ladder.append("FU-ALLERGY")          # before the first food or recipe answer, ask once
     if plan.timing_advice and state.safety_asked_turn is None and state.risk_level() == "unknown":
         ladder.append("FU-SAFETY")
     if plan.type in FOOD_TYPES or plan.reply_slot in {"safety", "home_foods"}:
@@ -57,12 +67,13 @@ def _choose_followup(plan: AnswerPlan, state: ChatState) -> None:
             ladder.append("FU-HOME-FOODS")
         if state.food_preference == "unknown":
             ladder.append("FU-PREFERENCE")
-    if plan.type == "recipe_request" and not plan.ingredients and not state.ingredients_on_hand:
+    if plan.type == "recipe_request" and not plan.ingredients and not state.ingredients_on_hand and not plan.recipe_ids \
+            and not plan.wants_list:
         ladder.append("FU-INGREDIENTS")
     if plan.type in RECIPE_TYPES or plan.protocol_level in {"full", "meal_place"}:
         ladder.append("FU-SPROUTS")
     for fid in ladder:
-        if fid in asked and fid != "FU-SAFETY":
+        if fid in asked and fid not in {"FU-SAFETY", "FU-ALLERGY"}:
             continue
         if fid == "FU-SAFETY" and state.safety_asked_turn is not None:
             continue
@@ -90,7 +101,7 @@ def _protocol_level(plan: AnswerPlan, u: Understanding, state: ChatState) -> Non
     plan.timing_advice = plan.protocol_level == "full"
 
 
-def make_plan(u: Understanding, state: ChatState, emergency: bool = False) -> AnswerPlan:
+def make_plan(u: Understanding, state: ChatState, emergency: bool = False, allergies_known: bool = True) -> AnswerPlan:
     plan = AnswerPlan(type=u.type, topic=u.topic, pairs_with=list(u.pairs_with))
     if emergency:
         plan.type, plan.blocks, plan.rules = "emergency", ["emergency"], ["R1"]
@@ -119,12 +130,26 @@ def make_plan(u: Understanding, state: ChatState, emergency: bool = False) -> An
             plan.blocks = ["ack", "followup"]
         elif slot == "sprouts_choice":
             plan.blocks = ["protocol_amount", "followup"]
-        elif slot == "ingredients":
-            plan.type = "meal_from_ingredients"
-            plan.ingredients = list(u.slot_fill["ingredients"])
-            plan.blocks = ["direct", "tips_list", "meal_place", "followup"]
+        elif slot == "ingredients" or slot in REPLY_RECIPE_SLOTS:
+            # The answer to a recipe-flow question: run the recipe flow again with what we now know (allergies, the
+            # confirmed food, the chosen dish).
+            last = state.last_question or {}
+            plan.type = last.get("type") if last.get("type") in RECIPE_TYPES else "meal_from_ingredients"
+            plan.ingredients = list(u.slot_fill.get("ingredients") or state.ingredients_on_hand)
+            if slot == "recipe_choice":
+                plan.type, plan.recipe_ids = "recipe_request", [u.slot_fill["recipe_choice"]]
+                plan.ingredients = []                 # a named dish: earlier pantry words don't apply
+            elif last.get("recipe_ids"):
+                plan.recipe_ids = list(last["recipe_ids"])
+            plan.wants_list = bool(last.get("wants_list")) and not plan.recipe_ids and not plan.ingredients
+            plan.blocks = ["recipe", "meal_place", "followup"]
             plan.protocol_level = "meal_place"
-        _choose_followup(plan, state)
+            plan.rules.append("R7")
+            plan.max_words = 260
+            if slot == "allergies" and u.ack_only:
+                # The recipe already shown is unaffected by the allergies just given: don't repeat it.
+                plan.blocks, plan.protocol_level, plan.max_words = ["ack", "followup"], "none", 120
+        _choose_followup(plan, state, allergies_known)
         return plan
 
     # ---- new questions ----
@@ -176,8 +201,11 @@ def make_plan(u: Understanding, state: ChatState, emergency: bool = False) -> An
         blocks += ["direct", "struggle", "boundary"]
     elif plan.type in RECIPE_TYPES:
         plan.rules.append("R7")
-        plan.ingredients = list(u.ingredients or u.foods)
-        blocks += ["direct", "tips_list", "meal_place"]
+        plan.ingredients = list(u.ingredients or ([] if u.recipe_ids else u.foods))
+        plan.recipe_ids = list(u.recipe_ids)
+        plan.unknown_dish = u.unknown_dish
+        plan.wants_list = plan.type == "recipe_request" and not plan.recipe_ids and not plan.ingredients
+        blocks += ["recipe", "meal_place"]
 
     # R2/R3: caution goes before the protocol whenever meal-timing advice is given and risk isn't "none".
     if plan.timing_advice and state.risk_level() != "none":
@@ -189,7 +217,9 @@ def make_plan(u: Understanding, state: ChatState, emergency: bool = False) -> An
         blocks[blocks.index("protocol_full")] = "protocol_reminder"
     blocks.append("followup")
     plan.blocks = blocks
-    if plan.warm_opening or plan.protocol_level == "full" or plan.type in RECIPE_TYPES:
+    if plan.type in RECIPE_TYPES:
+        plan.max_words = 260
+    elif plan.warm_opening or plan.protocol_level == "full":
         plan.max_words = 180
-    _choose_followup(plan, state)
+    _choose_followup(plan, state, allergies_known)
     return plan

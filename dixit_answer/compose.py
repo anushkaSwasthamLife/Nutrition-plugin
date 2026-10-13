@@ -17,6 +17,7 @@ from .services import Services
 from .state import ChatState
 
 PLACEHOLDER_RE = re.compile(r"\{\{([A-Z]+\d*)\}\}")
+FOLLOWUP_CHOICE = "Which one should I show?"
 
 
 @dataclass
@@ -26,6 +27,11 @@ class Draft:
     facts: list = field(default_factory=list)       # Fact objects used
     foods_named: set = field(default_factory=set)   # food IDs the answer may name
     free_lines: list = field(default_factory=list)  # indexes of lines the AI may reword
+    recipe: object = None                           # CheckedRecipe shown in this answer (N25, N26)
+    recipe_trace: list = field(default_factory=list)
+    blocked_foods: set = field(default_factory=set)         # foods this person must never be offered (N24)
+    exclusion_texts: list = field(default_factory=list)     # lines that name a blocked food only to say it was left out
+    backlog_request: bool = False                           # no checked recipe: goes to the dietitian's recipe backlog
 
     def template(self) -> str:
         return "\n".join(self.lines)
@@ -53,13 +59,17 @@ def _cap(text: str) -> str:
 
 
 class Composer:
-    def __init__(self, services: Services, index: FoodIndex, word_lists: dict):
+    def __init__(self, services: Services, index: FoodIndex, word_lists: dict, recipes=None, allergy=None):
         self.s = services
         self.index = index
         self.words = word_lists
+        self.recipes = recipes
+        self.allergy = allergy
 
-    def build(self, plan: AnswerPlan, state: ChatState, u) -> Draft:
+    def build(self, plan: AnswerPlan, state: ChatState, u, person=None) -> Draft:
         d = Draft()
+        blocked = self.allergy.blocked_foods(person) if (person and self.allergy) else set()
+        d.blocked_foods = set(blocked)
         counters: dict[str, int] = {}
         given = set(state.facts_given)
 
@@ -83,7 +93,11 @@ class Composer:
             d.foods_named.add(fid)
             return self.index.name(fid)
 
+        suppress: set[str] = set()
+        self._suppress = suppress                  # the recipe block may drop later blocks (e.g. the meal-place line)
         for block in plan.blocks:
+            if block in suppress:
+                continue
             if block == "emergency":
                 d.lines.append(lock("T", EMERGENCY_ANSWER))
             elif block == "greeting":
@@ -121,11 +135,14 @@ class Composer:
             elif block == "between_meals":
                 d.lines.append("**Between meals:** " + lock("P", self.s.between_meals()))
             elif block == "choices":
-                for group in self.s.choices(plan.topic, state.food_preference):
+                for group in self.s.choices(plan.topic, blocked):
                     foods = _join([name(f) for f in group.foods])
                     d.lines.append(lock("G", f"**{group.label}:** {foods}"))   # approved wording: locked as a whole
             elif block == "focus_compare":
                 for fid in plan.focus_foods:
+                    if fid in blocked:
+                        self._blocked_line(fid, person, d, lock, prefix="- ")
+                        continue
                     group = self.s.group_of(fid)
                     label = {"choose_more_often": "a fill-up sabji, choose more often",
                              "fine_but_starchy": "starchy: fine, but closer to the chapati part",
@@ -141,9 +158,14 @@ class Composer:
             elif block == "food_position":
                 for fid in plan.focus_foods:
                     name(fid)
-                    d.lines.append(lock("T", self.s.position_for(fid)))
+                    if fid in blocked:
+                        self._blocked_line(fid, person, d, lock)
+                    else:
+                        d.lines.append(lock("T", self.s.position_for(fid)))
             elif block == "food_facts":
                 for fid in plan.focus_foods:
+                    if fid in blocked:
+                        continue
                     group = self.s.group_of(fid)
                     if group and group.direction == "fine_but_starchy":
                         d.lines.append("**Good to know:** " + lock("G", f"{name(fid)} is a starchy vegetable, closer to the chapati or rice part of the meal") + ".")
@@ -166,14 +188,9 @@ class Composer:
                         given.add(f"{fact.record_id}:{fact.field}")
                     d.lines.append("**Tip:** " + lock("K", filled))
             elif block == "tips_list":
-                keys = ["recipe", *plan.ingredients, *state.home_foods]
-                for text, facts, _tip_id in self.s.tips(keys, given, limit=3):
-                    filled = text
-                    for ph_key, fact in zip(("A", "B"), facts):
-                        filled = filled.replace("{{" + ph_key + "}}", f"{fact.text} ({_short_source(fact)})")
-                        d.facts.append(fact)
-                        given.add(f"{fact.record_id}:{fact.field}")
-                    d.lines.append("- " + lock("K", filled))
+                self._tips_lines(plan, state, d, lock, given)
+            elif block == "recipe":
+                self._recipe_block(plan, state, u, person, d, lock, free, name, given)
             elif block == "sources":
                 recent = state.facts_given[-3:]
                 if not recent:
@@ -196,6 +213,105 @@ class Composer:
         for fid in plan.focus_foods + plan.ingredients + list(u.foods):
             d.foods_named.add(fid)
         return d
+
+    # ---------- allergy / avoid notes ----------
+    def _blocked_line(self, fid: str, person, d: Draft, lock, prefix: str = "") -> None:
+        food = self.index.foods[fid]
+        reason = self.recipes._block_reason(fid, person) if (self.recipes and person) else "what you told me"
+        text = f"{_cap(food['name'])} won't suit you because of {reason}. Please check with your doctor or dietitian."
+        d.exclusion_texts.append(text)
+        d.lines.append(prefix + lock("T", text))
+
+    def _tips_lines(self, plan, state, d: Draft, lock, given: set) -> None:
+        keys = ["recipe", *plan.ingredients, *state.home_foods]
+        for text, facts, _tip_id in self.s.tips(keys, given, limit=3):
+            filled = text
+            for ph_key, fact in zip(("A", "B"), facts):
+                filled = filled.replace("{{" + ph_key + "}}", f"{fact.text} ({_short_source(fact)})")
+                d.facts.append(fact)
+                given.add(f"{fact.record_id}:{fact.field}")
+            d.lines.append("- " + lock("K", filled))
+
+    # ---------- recipes (stage 6d) ----------
+    def _recipe_block(self, plan, state, u, person, d: Draft, lock, free, name, given: set) -> None:
+        reply = bool(plan.reply_slot)
+        out = self.recipes.run(person=person, have=list(plan.ingredients), dish_ids=list(plan.recipe_ids),
+                               unknown_words=[] if reply else list(u.unknown_words),
+                               suggestion=None if reply else u.suggestion, wants_list=plan.wants_list,
+                               home_foods=list(state.home_foods))
+        d.recipe_trace = out.trace
+        if plan.unknown_dish and not plan.reply_slot:
+            d.lines.append(lock("T", f"I don't have a checked recipe for \"{plan.unknown_dish}\" yet; I've passed it to our dietitian."))
+            d.backlog_request = True
+        for fid, why in out.left_out:
+            text = f"I left out {self.index.name(fid)} because of {why}."
+            d.exclusion_texts.append(text)
+            d.lines.append(lock("T", text))
+        if out.status == "confirm_food":
+            food = out.suggestion["food_id"]
+            d.lines.append(lock("T", f"I don't know \"{out.suggestion['word']}\" yet."))
+            plan.followup = {"id": "FU-CONFIRM", "slot": "confirm_food", "text": f"Did you mean {self.index.name(food)}?"}
+            state.pending_confirm = out.suggestion
+            self._suppress.add("meal_place")
+            return
+        if out.unknown_words:
+            d.lines.append(lock("T", "I left out " + _join([f'"{w}"' for w in out.unknown_words]) +
+                                " because it isn't in our food list yet; it has been passed to our dietitian."))
+            d.backlog_request = True
+        if out.status == "choices":
+            for dish, reasons in out.rejected:
+                text = f"I can't show {dish} for you: {reasons[0]}."
+                d.exclusion_texts.append(text)
+                d.lines.append(lock("T", text))
+            d.lines.append(lock("T", "Here are some light dishes you could make instead:" if out.rejected
+                                else "Here are some light dishes you could make:"))
+            for recipe in out.choices:
+                d.lines.append("- " + lock("T", recipe.name))
+            state.recipe_choices = [r.recipe_id for r in out.choices]
+            plan.followup = {"id": "FU-RECIPE-CHOICE", "slot": "recipe_choice", "text": FOLLOWUP_CHOICE}
+            self._suppress.add("meal_place")
+            return
+        if out.status == "recipe":
+            self._render_recipe(out.recipe, plan, d, lock, free, name)
+            return
+        # tips_only (R9): honest about it, say why, give approved cooking tips, and log the request for the dietitian.
+        d.backlog_request = out.backlog
+        for dish, reasons in out.rejected:
+            text = f"I can't show {dish} for you: {reasons[0]}."
+            d.exclusion_texts.append(text)
+            d.lines.append(lock("T", text))
+        d.lines.append(lock("T", "We don't have a checked recipe for this yet, so here is what helps most:"))
+        self._tips_lines(plan, state, d, lock, given)
+
+    def _render_recipe(self, recipe, plan, d: Draft, lock, free, name) -> None:
+        d.recipe = recipe
+        for item in recipe.ingredients:
+            d.foods_named.add(item["food"])
+        used = [f for f in plan.ingredients if f in {i["food"] for i in recipe.ingredients} and f not in d.blocked_foods
+                and self.index.foods[f]["category"] != "pantry"] if not plan.recipe_ids else []
+        if used:                                   # only foods that really are in the recipe, never words from the message
+            free(f"With {_join([name(f) for f in used])} you can make this:")
+        elif plan.recipe_ids:
+            free("Here's the recipe:")
+        d.lines.append("**" + lock("T", recipe.name) + "**")
+        d.lines.append(lock("T", recipe.label))
+        d.lines.append(lock("T", f"**You need** ({recipe.makes}):"))       # locked: the AI must not hint at portions
+        for line in self.recipes.ingredient_lines(recipe):
+            d.lines.append("- " + lock("K", line))
+        d.lines.append("**How:**")
+        for step in recipe.steps:
+            d.lines.append("- " + lock("K", step))
+        totals = self.recipes.totals_text(recipe)
+        if totals:
+            d.lines.append("**Whole dish:** " + lock("F", totals))
+        if recipe.repairs:
+            note = _join(recipe.repairs)             # e.g. "oil instead of ghee": names what was removed, not an offer
+            d.exclusion_texts.append(note)
+            d.lines.append("**Adjusted for you:** " + lock("T", note))
+        if recipe.why_it_fits and recipe.origin == "approved":
+            d.lines.append(lock("T", recipe.why_it_fits))
+        if recipe.also_need:
+            d.lines.append("**You'd also need:** " + lock("T", _join([self.index.name(f) for f in recipe.also_need])))
 
     # ---------- helpers ----------
     def _direct(self, plan: AnswerPlan, u, name) -> tuple[str, str]:

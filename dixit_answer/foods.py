@@ -34,6 +34,15 @@ class FoodIndex:
     def name(self, food_id: str) -> str:
         return self.foods[food_id]["name"]
 
+    def with_generics(self, food_ids) -> set[str]:
+        """The foods plus their generic parents (moong dal also counts as dal when steps say "the dal")."""
+        out = set(food_ids)
+        for fid in food_ids:
+            parent = self.foods.get(fid, {}).get("generic")
+            if parent:
+                out.add(parent)
+        return out
+
     def find(self, text: str, already_clean: bool = False) -> list[FoodMention]:
         cleaned = text if already_clean else clean(text, self.spelling_map)
         taken: list[tuple[int, int]] = []

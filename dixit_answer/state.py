@@ -32,6 +32,10 @@ class ChatState:
     followups_asked: list = field(default_factory=list)
     warm_opening_used: bool = False
     last_question: dict | None = None                        # type, topic, foods of the last real question (for replies)
+    allergies: list | None = None                            # learnt in chat (None = unknown, [] = none); app profile wins
+    allergy_asked_turn: int | None = None
+    pending_confirm: dict | None = None                      # unknown pantry word -> suggested food ("did you mean ...?")
+    recipe_choices: list = field(default_factory=list)       # recipe IDs offered for the person to pick
 
     def to_json(self) -> str:
         return json.dumps(asdict(self), ensure_ascii=False)

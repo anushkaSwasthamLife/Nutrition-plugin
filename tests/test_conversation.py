@@ -44,10 +44,13 @@ def test_six_turn_conversation(chat):
     assert r[3].answer.startswith("Aloo is allowed in the programme")
     assert "starchy" in r[3].answer and "dry potato" in r[3].answer
 
-    # Turns 5-6: no recipe collection yet (phase 5) -> honest line + approved tips + where it sits in the meal.
-    assert "don't have checked recipes yet" in r[4].answer
-    assert "aloo and onion" in r[5].answer and "In your meal" in r[5].answer
-    assert "Thanks, noted" not in r[5].answer
+    # Turn 5: "give me recipes" offers approved dishes and asks which; turn 6 builds the aloo-onion recipe from the library.
+    assert "light dishes" in r[4].answer and "Which one should I show?" in r[4].answer
+    assert "In your meal" not in r[4].answer
+    t6 = r[5].answer
+    assert "Aloo Pyaz ki Sabji" in t6 and "**You need**" in t6 and "**How:**" in t6
+    assert "372 kcal" in t6 and "calculated from USDA" in t6             # whole-dish numbers worked out by code
+    assert "In your meal" in t6 and "Thanks, noted" not in t6
 
 
 def test_no_status_question_for_a_plain_fact(chat):

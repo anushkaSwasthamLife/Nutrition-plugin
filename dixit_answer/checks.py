@@ -75,7 +75,8 @@ def _word_checks(cleaned: str, words: dict) -> list[CheckResult]:
     return out
 
 
-def check_final(final_text: str, draft: Draft, plan: AnswerPlan, state: ChatState, words: dict) -> list[CheckResult]:
+def check_final(final_text: str, draft: Draft, plan: AnswerPlan, state: ChatState, words: dict,
+                index: FoodIndex | None = None) -> list[CheckResult]:
     results: list[CheckResult] = []
     locked_numbers = {n for text in draft.locked.values() for n in NUMBER_RE.findall(text)}
     stray = [n for n in NUMBER_RE.findall(final_text) if n not in locked_numbers]
@@ -97,7 +98,36 @@ def check_final(final_text: str, draft: Draft, plan: AnswerPlan, state: ChatStat
         if any(has_phrase(cleaned, clean(t)) for t in ("two meals", "2 meals", "nothing in between")):
             results.append(_fail("N22", "major", "protocol text appeared although the plan said none"))
     results += _word_checks(clean(PLACEHOLDER_RE.sub(" ", draft.template())), words)   # our own template must pass too
+    if index is not None:
+        results += _phase5_checks(final_text, draft, plan, index, words)
     return results
+
+
+def _phase5_checks(final_text: str, draft: Draft, plan: AnswerPlan, index: FoodIndex, words: dict) -> list[CheckResult]:
+    out: list[CheckResult] = []
+    # N24: no food the person can't have (allergen, derivative, avoid list, diet). Lines that say a food was left out, and
+    # the allergy question itself, are not offers and are not scanned.
+    scan = final_text
+    for text in draft.exclusion_texts + ([plan.followup["text"]] if plan.followup else []):
+        scan = scan.replace(text, " ")
+    named = {m.food_id for m in index.find(scan)}
+    hit = sorted(index.name(f) for f in named & draft.blocked_foods)
+    if hit:
+        out.append(_fail("N24", "critical", f"names foods this person can't have: {hit}"))
+    recipe = draft.recipe
+    if recipe is not None:
+        # N25: a recipe is shown only after an explicit gate pass, with its label.
+        if recipe.gate is None or not recipe.gate.passed:
+            out.append(_fail("N25", "critical", "a recipe is shown without an explicit gate pass"))
+        if recipe.label not in final_text:
+            out.append(_fail("N25", "critical", "a recipe is shown without its origin label"))
+        # N26: steps and name only mention ingredients that are in the list.
+        have = index.with_generics({i["food"] for i in recipe.ingredients})
+        step_text = clean(" ".join([recipe.name, *recipe.steps]), words["spelling_map"])
+        extra = sorted(index.name(m.food_id) for m in index.find(step_text, already_clean=True) if m.food_id not in have)
+        if extra:
+            out.append(_fail("N26", "major", f"steps mention {extra}, which are not in the ingredient list"))
+    return out
 
 
 def blocking(results: list[CheckResult]) -> list[CheckResult]:

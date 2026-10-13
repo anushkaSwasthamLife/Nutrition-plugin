@@ -1,0 +1,17 @@
+{
+  "version": "AL-0.1.0",
+  "status": "TEST ONLY",
+  "note": "Allergen -> foods that contain it, including derivatives (ghee and paneer for milk, besan for chickpea). Needs dietitian sign-off. 'words' read allergy replies and avoid lists.",
+  "major": ["milk", "peanut", "tree_nut", "gluten", "egg", "soy", "sesame"],
+  "allergens": {
+    "milk": {"label": "milk", "foods": ["FOOD-CURD", "FOOD-PANEER", "FOOD-GHEE"], "words": ["milk", "dairy", "lactose", "ghee", "paneer", "curd", "dahi", "butter", "cream", "khoa", "cheese", "yogurt"]},
+    "peanut": {"label": "peanuts", "foods": ["FOOD-PEANUT"], "words": ["peanut", "peanuts", "groundnut", "groundnuts", "moongphali"]},
+    "tree_nut": {"label": "nuts", "foods": ["FOOD-ALMOND", "FOOD-WALNUT"], "words": ["nut", "nuts", "tree nut", "tree nuts", "almond", "almonds", "cashew", "cashews", "walnut", "walnuts", "kaju", "badam", "pista", "pistachio"]},
+    "gluten": {"label": "gluten", "foods": ["FOOD-CHAPATI"], "words": ["gluten", "wheat", "atta", "maida", "suji", "rava", "celiac", "coeliac"]},
+    "egg": {"label": "eggs", "foods": ["FOOD-EGG"], "words": ["egg", "eggs"]},
+    "chickpea": {"label": "chickpea", "foods": ["FOOD-CHANA-DAL"], "words": ["chickpea", "chickpeas", "besan", "chana", "chole", "gram flour"]},
+    "soy": {"label": "soy", "foods": [], "words": ["soy", "soya", "soybean"]},
+    "sesame": {"label": "sesame", "foods": [], "words": ["sesame", "til"]}
+  },
+  "none_words": ["no", "none", "no allergies", "no allergy", "nothing", "nope", "not allergic", "nahi"]
+}

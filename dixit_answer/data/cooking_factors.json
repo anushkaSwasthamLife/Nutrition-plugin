@@ -1,0 +1,6 @@
+{
+  "version": "CF-0.1.0",
+  "status": "TEST ONLY",
+  "note": "Whole-dish totals are summed from raw ingredient weights. Water lost in cooking changes weight, not the total energy or macronutrients, so the factor is 1.0 for these; USDA retention factors (public domain) matter for vitamins and minerals, which are not used yet. Oil is counted in full (nothing assumed left in the pan).",
+  "factors": {"energy_kcal": 1.0, "carbohydrate_g": 1.0, "fiber_g": 1.0, "protein_g": 1.0, "fat_g": 1.0}
+}
