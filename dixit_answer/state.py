@@ -46,14 +46,36 @@ class ChatState:
         return json.dumps(asdict(self), ensure_ascii=False)
 
     @classmethod
-    def from_json(cls, text: str) -> "ChatState":
+    def from_json(cls, text: str, conversation_id: str | None = None) -> "ChatState":
+        """Rebuild a state. Missing fields get defaults, unknown fields are ignored, and a field of the wrong type keeps its
+        default (an old, hand-edited or corrupted row must never crash the chat)."""
         data = json.loads(text)
-        state = cls(conversation_id=data["conversation_id"])
+        if not isinstance(data, dict):
+            raise ValueError("chat state is not an object")
+        state = cls(conversation_id=str(conversation_id or data.get("conversation_id") or ""))
         for key, value in data.items():
-            if hasattr(state, key):
+            if key == "conversation_id" or not hasattr(state, key):
+                continue
+            default = getattr(state, key)
+            if default is None:                       # optional int / bool / dict fields: accept None or the matching simple type
+                if value is None or isinstance(value, (int, str, dict, list, bool)):
+                    setattr(state, key, value)
+            elif isinstance(value, type(default)) and not (isinstance(default, int) and isinstance(value, bool) and not isinstance(default, bool)):
                 setattr(state, key, value)
+        if not isinstance(state.safety_status, dict):
+            state.safety_status = {k: "unknown" for k in SAFETY_FIELDS}
         for key in SAFETY_FIELDS:
-            state.safety_status.setdefault(key, "unknown")
+            if state.safety_status.get(key) not in ("yes", "no", "unknown"):
+                state.safety_status[key] = "unknown"
+        for key in ("last_followup", "last_question", "pending_confirm"):
+            if getattr(state, key) is not None and not isinstance(getattr(state, key), dict):
+                setattr(state, key, None)
+        for key in ("allergies",):
+            if getattr(state, key) is not None and not isinstance(getattr(state, key), list):
+                setattr(state, key, None)
+        for key in ("turn",):
+            if not isinstance(getattr(state, key), int) or getattr(state, key) < 0:
+                setattr(state, key, 0)
         return state
 
     def risk_level(self) -> str:
@@ -80,7 +102,12 @@ class StateStore:
     def load(self, conversation_id: str) -> ChatState:
         with self._lock:
             row = self._db.execute("SELECT state FROM chat_state WHERE conversation_id = ?", (conversation_id,)).fetchone()
-        return ChatState.from_json(row[0]) if row else ChatState(conversation_id=conversation_id)
+        if not row:
+            return ChatState(conversation_id=conversation_id)
+        try:
+            return ChatState.from_json(row[0], conversation_id)
+        except (ValueError, TypeError, KeyError, AttributeError):
+            return ChatState(conversation_id=conversation_id)       # corrupted row: start the conversation fresh
 
     def save(self, state: ChatState) -> None:
         with self._lock:

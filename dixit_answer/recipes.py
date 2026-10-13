@@ -6,6 +6,7 @@ Nothing unchecked is shown: a recipe reaches the person only with an explicit ga
 """
 from __future__ import annotations
 
+import math
 import re
 import time
 from dataclasses import dataclass, field
@@ -246,26 +247,40 @@ class RecipeService:
 
     # ------------------------------------------------------------------ R5: AI draft
     def _validate_draft(self, draft: dict, allowed: set[str]) -> tuple[CheckedRecipe | None, str]:
+        try:
+            return self._validate_draft_unsafe(draft, allowed)
+        except Exception:                                  # noqa: BLE001 - whatever shape the AI sent, it is simply rejected
+            return None, "malformed draft"
+
+    def _validate_draft_unsafe(self, draft: dict, allowed: set[str]) -> tuple[CheckedRecipe | None, str]:
         if not isinstance(draft, dict):
             return None, "draft is not an object"
         name, items, steps = draft.get("name"), draft.get("ingredients"), draft.get("steps")
-        if not isinstance(name, str) or not 3 <= len(name) <= 60:
+        if not isinstance(name, str) or not 3 <= len(name.strip()) <= 60:
             return None, "bad name"
+        if not _plain_text(name) or any(ch.isdigit() for ch in name):
+            return None, "name has markup, links or numbers"
         if not isinstance(items, list) or not 2 <= len(items) <= 15:
             return None, "bad ingredient list"
         if not isinstance(steps, list) or not 2 <= len(steps) <= 6 or not all(isinstance(s, str) and 5 <= len(s) <= 220 for s in steps):
             return None, "bad steps"
-        clean_items = []
+        if not all(_plain_text(s) for s in steps):
+            return None, "steps have markup or links"
+        clean_items, seen = [], set()
         for item in items:
-            if not isinstance(item, dict) or item.get("food_id") not in allowed:
-                return None, f"ingredient not allowed: {item.get('food_id') if isinstance(item, dict) else item}"
-            try:
-                grams = float(item.get("grams"))
-            except (TypeError, ValueError):
+            food_id = item.get("food_id") if isinstance(item, dict) else None
+            if not isinstance(food_id, str) or food_id not in allowed:
+                return None, f"ingredient not allowed: {str(food_id)[:40]}"
+            if food_id in seen:
+                return None, f"ingredient listed twice: {food_id}"
+            seen.add(food_id)
+            grams = item.get("grams")
+            if isinstance(grams, bool) or not isinstance(grams, (int, float)) or not math.isfinite(float(grams)):
                 return None, "grams not a number"
+            grams = float(grams)
             if not 0.5 <= grams <= 1000:
                 return None, "grams out of range"
-            clean_items.append({"food": item["food_id"], "grams": grams, "unit": ""})
+            clean_items.append({"food": food_id, "grams": grams, "unit": ""})
         if not all(_only_minutes(s) for s in steps):
             return None, "steps carry amounts (amounts belong in the ingredient list)"
         recipe = CheckedRecipe(recipe_id=f"AI-{int(time.time() * 1000) % 10_000_000}", origin="ai_suggested",
@@ -292,6 +307,8 @@ class RecipeService:
         blocked = self.allergy.blocked_foods(person)
         if not person.allergies_known:
             blocked = blocked | self.allergy.major_allergen_foods()
+        if person.unmapped_allergies:
+            out.trace.append(f"R2: allergy not recognised {person.unmapped_allergies}: staying clear of all common allergens")
         fruit = [f for f in have if self.golden.is_fruit(self.index.foods[f]["category"], f)] if person.status.value != "non_diabetic" else []
         for fid in have:
             if fid in blocked:
@@ -359,7 +376,8 @@ class RecipeService:
         unverifiable = [n for n, l in limits.items() if not l.verifiable]
         # Sweets and pantry items are never "ingredients to cook with" (the programme asks to reduce sugar).
         main_have = [f for f in usable_have if f not in self.pantry and self.index.foods[f]["category"] != "sweet"]
-        ai_ok = self.ai_enabled and person.allergies_known and not unverifiable and main_have and not dish_ids
+        ai_ok = (self.ai_enabled and person.allergies_known and not person.unmapped_allergies and not unverifiable
+                 and main_have and not dish_ids)
         if not ai_ok:
             why = ("off in this environment" if not self.ai_enabled else "allergies unknown" if not person.allergies_known
                    else f"limits can't be checked: {unverifiable}" if unverifiable else "nothing to cook with" if not main_have
@@ -460,6 +478,14 @@ class RecipeService:
         if recipe.missing:
             text += ("; " if text else "") + "some values aren't available"
         return text
+
+
+_MARKUP_RE = re.compile(r"[<>{}\[\]|\\`*_#~]|https?:|www\.|://|@", re.IGNORECASE)
+
+
+def _plain_text(text: str) -> bool:
+    """No markup, braces, links or control characters: AI text that is shown to a person must be plain words."""
+    return not _MARKUP_RE.search(text) and not any(ord(ch) < 32 for ch in text)
 
 
 def recipe_main(recipe: CheckedRecipe, collection: dict) -> list[str]:

@@ -17,6 +17,9 @@ from .state import ChatState
 from .textnorm import clean, has_phrase, word_count
 
 NUMBER_RE = re.compile(r"\d+(?:\.\d+)?")
+# Answers shown to a person are plain text with light markdown (bold, bullets). Links, images, HTML and control characters are
+# never allowed, whoever wrote them (the AI, a data file, or an echoed message).
+MARKUP_RE = re.compile(r"https?:|www\.|://|<\s*/?[a-zA-Z!]|!\[|\]\(|javascript:|data:[a-z]+/|[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", re.IGNORECASE)
 
 
 @dataclass
@@ -45,6 +48,8 @@ def check_ai_text(ai_text: str, draft: Draft, plan: AnswerPlan, index: FoodIndex
         detail = f"missing {missing}, extra {extra}" if (missing or extra) else "placeholders out of order or repeated"
         results.append(_fail("PH", "critical", detail))
     free_text = PLACEHOLDER_RE.sub(" ", ai_text)
+    if MARKUP_RE.search(ai_text):
+        results.append(_fail("MARKUP", "critical", "links, images, HTML or control characters in the wording"))
     if NUMBER_RE.search(free_text):
         results.append(_fail("N15", "critical", "a number was written outside the locked items"))
     cleaned = clean(free_text, words["spelling_map"])
@@ -80,6 +85,8 @@ def _word_checks(cleaned: str, words: dict) -> list[CheckResult]:
 def check_final(final_text: str, draft: Draft, plan: AnswerPlan, state: ChatState, words: dict,
                 index: FoodIndex | None = None, golden=None) -> list[CheckResult]:
     results: list[CheckResult] = []
+    if MARKUP_RE.search(final_text):
+        results.append(_fail("MARKUP", "critical", "links, images, HTML or control characters in the answer"))
     locked_numbers = {n for text in draft.locked.values() for n in NUMBER_RE.findall(text)}
     stray = [n for n in NUMBER_RE.findall(final_text) if n not in locked_numbers]
     if stray:

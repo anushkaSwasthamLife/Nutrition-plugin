@@ -33,6 +33,7 @@ class Draft:
     blocked_foods: set = field(default_factory=set)         # foods this person must never be offered (N24)
     exclusion_texts: list = field(default_factory=list)     # lines that name a blocked food only to say it was left out
     backlog_request: bool = False                           # no checked recipe: goes to the dietitian's recipe backlog
+    suppress: set = field(default_factory=set)              # blocks the recipe flow drops (this request only: Composer is shared)
 
     def template(self) -> str:
         return "\n".join(self.lines)
@@ -94,10 +95,8 @@ class Composer:
             d.foods_named.add(fid)
             return self.index.name(fid)
 
-        suppress: set[str] = set()
-        self._suppress = suppress                  # the recipe block may drop later blocks (e.g. the meal-place line)
         for block in plan.blocks:
-            if block in suppress:
+            if block in d.suppress:
                 continue
             if block == "emergency":
                 d.lines.append(lock("T", EMERGENCY_ANSWER))
@@ -128,9 +127,9 @@ class Composer:
                 d.lines.append(lock("P", self.s.protocol_reminder()))
             elif block == "protocol_amounts":
                 for step in ("nuts", "salad", "sprouts"):
-                    d.lines.append(f"- **{_cap(step)}:** " + lock("P", self.s.protocol_amount(step)))
+                    d.lines.append(f"- **{_cap(step)}:** " + lock("P", self.s.protocol_amount(step, blocked)))
             elif block == "protocol_amount":
-                d.lines.append("**For the sprouts step:** " + lock("P", self.s.protocol_amount("sprouts")))
+                d.lines.append("**For the sprouts step:** " + lock("P", self.s.protocol_amount("sprouts", blocked)))
             elif block == "meal_place":
                 d.lines.append("**In your meal:** " + lock("P", self.s.meal_place()))
             elif block == "between_meals":
@@ -175,19 +174,20 @@ class Composer:
                         continue
                     group = self.s.group_of(fid)
                     if group and group.direction == "fine_but_starchy":
-                        d.lines.append("**Good to know:** " + lock("G", f"{name(fid)} is a starchy vegetable, closer to the chapati or rice part of the meal") + ".")
+                        part = "the starchy part of your meal" if "FOOD-CHAPATI" in blocked else "the chapati or rice part of the meal"
+                        d.lines.append("**Good to know:** " + lock("G", f"{name(fid)} is a starchy vegetable, closer to {part}") + ".")
                     fact = self.s.pick_fact(fid, given)
                     if fact:
                         d.lines.append(f"**{_cap(name(fid))}** · " + fact_ph(fact))
                     elif not group:
                         d.lines.append(lock("T", f"We don't have reliable nutrition numbers for {name(fid)} yet."))
             elif block == "lookup_facts":
-                self._lookup_lines(plan, u, d, given, fact_ph, name)
+                self._lookup_lines(plan, u, d, given, fact_ph, name, person, lock)
             elif block == "unknown_food":
                 d.lines.append(lock("T", "I couldn't find that food in our data yet. Could you tell me its name another way?"))
             elif block == "tip":
                 keys = list(plan.focus_foods) + ([plan.topic] if plan.topic == "sabji" else [])
-                for text, facts, _tip_id in self.s.tips(keys, given):
+                for text, facts, _tip_id in self.s.tips(keys, given, blocked=blocked):
                     filled = text
                     for ph_key, fact in zip(("A", "B"), facts):
                         filled = filled.replace("{{" + ph_key + "}}", f"{fact.text} ({_short_source(fact)})")
@@ -216,6 +216,10 @@ class Composer:
             elif block == "boundary":
                 d.lines.append(lock("T", "Your doctor or dietitian decides what's right for you personally, including any medicines."))
             elif block == "followup" and plan.followup:
+                if plan.followup["id"] == "FU-SPROUTS" and "FOOD-EGG" in d.blocked_foods:
+                    plan.followup["text"] = "For the sprouts step, do you have moong or matki?"   # never offer a blocked food
+                if plan.followup["id"] == "FU-PREFERENCE" and "FOOD-EGG" in d.blocked_foods:
+                    plan.followup["text"] = "Do you eat vegetarian or non-vegetarian?"
                 d.lines.append(lock("Q", plan.followup["text"]))
         for fid in plan.focus_foods + plan.ingredients + list(u.foods):
             d.foods_named.add(fid)
@@ -231,7 +235,7 @@ class Composer:
 
     def _tips_lines(self, plan, state, d: Draft, lock, given: set) -> None:
         keys = ["recipe", *plan.ingredients, *state.home_foods]
-        for text, facts, _tip_id in self.s.tips(keys, given, limit=3):
+        for text, facts, _tip_id in self.s.tips(keys, given, limit=3, blocked=d.blocked_foods):
             filled = text
             for ph_key, fact in zip(("A", "B"), facts):
                 filled = filled.replace("{{" + ph_key + "}}", f"{fact.text} ({_short_source(fact)})")
@@ -257,9 +261,13 @@ class Composer:
         if out.status == "confirm_food":
             food = out.suggestion["food_id"]
             d.lines.append(lock("T", f"I don't know \"{out.suggestion['word']}\" yet."))
+            if food in d.blocked_foods:                      # never suggest a food this person must not have, even as a question
+                plan.followup = None
+                d.suppress.add("meal_place")
+                return
             plan.followup = {"id": "FU-CONFIRM", "slot": "confirm_food", "text": f"Did you mean {self.index.name(food)}?"}
             state.pending_confirm = out.suggestion
-            self._suppress.add("meal_place")
+            d.suppress.add("meal_place")
             return
         if out.unknown_words:
             d.lines.append(lock("T", "I left out " + _join([f'"{w}"' for w in out.unknown_words]) +
@@ -276,7 +284,7 @@ class Composer:
                 d.lines.append("- " + lock("T", recipe.name))
             state.recipe_choices = [r.recipe_id for r in out.choices]
             plan.followup = {"id": "FU-RECIPE-CHOICE", "slot": "recipe_choice", "text": FOLLOWUP_CHOICE}
-            self._suppress.add("meal_place")
+            d.suppress.add("meal_place")
             return
         if out.status == "recipe":
             self._render_recipe(out.recipe, plan, d, lock, free, name)
@@ -317,6 +325,13 @@ class Composer:
             d.lines.append("**Adjusted for you:** " + lock("T", note))
         if recipe.why_it_fits and recipe.origin == "approved":
             d.lines.append(lock("T", recipe.why_it_fits))
+        if not plan.recipe_ids:                    # something they said they have that this recipe doesn't use: say so, never drop it silently
+            in_recipe = {i["food"] for i in recipe.ingredients}
+            unused = [f for f in plan.ingredients if f not in in_recipe and f not in d.blocked_foods
+                      and self.index.foods[f]["category"] not in {"pantry", "sweet", "fruit"}]   # those have their own lines or are never cooked
+            if unused:
+                d.lines.append(lock("T", f"This recipe doesn't use your {_join([self.index.name(f) for f in unused])}; "
+                                         "ask me for another recipe if you'd like to use it."))
         if recipe.also_need:
             d.lines.append("**You'd also need:** " + lock("T", _join([self.index.name(f) for f in recipe.also_need])))
 
@@ -350,13 +365,16 @@ class Composer:
             return "That's common, especially in the first weeks.", ""
         return "", ""
 
-    def _lookup_lines(self, plan, u, d, given, fact_ph, name) -> None:
+    def _lookup_lines(self, plan, u, d, given, fact_ph, name, person=None, lock=None) -> None:
         field = "energy_kcal"
         for word, fld in (("carb", "carbohydrate_g"), ("protein", "protein_g"), ("fat", "fat_g"), ("fiber", "fiber_g")):
             if re.search(rf"\b{word}\b", u.cleaned):
                 field = fld
         if plan.focus_foods:
             for fid in plan.focus_foods:
+                if fid in d.blocked_foods:
+                    self._blocked_line(fid, person, d, lock)
+                    continue
                 fact = self.s.pick_fact(fid, set(), fields=(field,))
                 if fact:
                     d.lines.append(f"{_cap(name(fid))} · " + fact_ph(fact))

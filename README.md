@@ -2,7 +2,7 @@
 
 Swastham's own chat answer system for the Dixit Lifestyle app, built from
 `Documents\Dixit_Chat_Answer_Architecture.html` (design) and `Documents\Dixit_Chat_Answer_Analysis.html` (problems P1–P14, D1–D3).
-Standalone Python package until the Dixit app code is available. **Development build: phases 0–5 (core pipeline + allergy filter + hybrid recipes).**
+Standalone Python package until the Dixit app code is available. **Development build: phases 0–6 (core pipeline + allergy filter + hybrid recipes + Golden Rules engine), with an edge-test suite.**
 
 ## Run
 
@@ -67,9 +67,22 @@ limit can't be verified (sodium and sugar are not in the library yet).
 `swap_table_test.json`, `cooking_factors.json`, and food master v0.2 (ingredient records, unit weights, pantry items).
 Paneer uses USDA queso fresco as a PROXY record until a dietitian confirms a better one.
 
+## Golden Rules (phase 6)
+
+`golden_rules.json` (GR-PARTIAL-0.2) is **PARTIAL and unsigned**: built only from the live Dixit app's answers and the amendment tests.
+Anything not documented is answered "unknown, ask your Dixit coach", never guessed. Production refuses this file.
+Fruit position depends on diabetes status (asked once, only when a rule depends on it). Protocol amounts drop options the person
+can't have (allergy, diet, avoid list) and say "ask your Dixit coach" when none is left.
+
+## Edge testing
+
+`tests/test_edges_*.py`, `test_edge_regressions.py` and `test_consistency_mutations.py`: hostile and odd input, unicode and very long text,
+corrupt or old chat state, bad profiles, every allergen × diet combination, tampered data files, HTTP misuse, a 1500-message seeded fuzz and
+40 multi-turn random walks. The start-up check (`consistency.py`) cross-checks every data file. Run all: `.venv\Scripts\python.exe -m pytest -q`.
+
 ## Not built yet
 
-- Phase 6: real Golden Rules (base package v1.1 + v1.1.1).
+- Real Golden Rules (base package v1.1 + v1.1.1): the file above is partial.
 - Phase 7: connecting to the Dixit app. Phase 8: dietitian / doctor / legal review.
 - Sodium and sugar for USDA records (library v1.0.4), so blood-pressure and diabetes limits can be checked.
 - Fixes D1–D3 in the Indian library itself (the loader's quality gates only block the bad records).

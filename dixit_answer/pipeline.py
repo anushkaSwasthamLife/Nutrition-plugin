@@ -16,10 +16,11 @@ from . import safety as safety_gate
 from .checks import CheckResult, blocking, check_ai_text, check_final
 from .compose import Composer
 from .config import Settings, load_settings
+from .consistency import find_problems
 from .foods import FoodIndex
 from .llm import LLMError, make_llm
-from .loader import load_library, load_manifest, load_swastham_data
-from .person import AllergyFilter, apply_profile_safety, build_person
+from .loader import LoadError, load_library, load_manifest, load_swastham_data
+from .person import AllergyFilter, apply_profile_safety, build_person, sanitize_profile
 from .planner import make_plan
 from .recipes import RecipeService
 from .services import Services
@@ -67,6 +68,9 @@ class Engine:
         self.data = load_swastham_data(self.settings, manifest)
         self.words = self.data.word_lists
         self.index = FoodIndex(self.data.food_master, self.words["spelling_map"])
+        problems = find_problems(self.data, self.library, self.index, self.settings.environment)
+        if problems:
+            raise LoadError("data files disagree with each other:\n  - " + "\n  - ".join(problems[:20]))
         self.services = Services(self.library, self.data, self.index)
         self.allergy = AllergyFilter(self.data.allergen_map, self.index)
         self.store = StateStore(self.settings.state_db)
@@ -103,8 +107,11 @@ class Engine:
             reply = "Please send your question in a few lines, and I'll help."
             return TurnResult(conversation_id, state.turn, reply, "invalid_message")
 
-        # 3 safety gate (the app's profile feeds the same risk status)
+        # 3 safety gate (the app's profile feeds the same risk status). The profile is outside input: sanitised first.
+        profile = sanitize_profile(profile)
         apply_profile_safety(profile, state)
+        if profile.get("diet_type") and state.food_preference == "unknown":
+            state.food_preference = profile["diet_type"]       # the app already knows: never ask it in the chat
         gate = safety_gate.check(text, state, self.words)
         state.safety_status.update(gate.updates)
 
@@ -131,7 +138,7 @@ class Engine:
                 state.allergies = sorted(set((state.allergies or []) + mentioned))
         if not u.slot_fill:
             apply_status(state, parse_status(text))          # "I have diabetes", "my diabetes is now normal" ...
-        person = build_person(profile, state, self.index)
+        person = build_person(profile, state, self.index, self.allergy)
 
         # 5 plan
         plan = make_plan(u, state, emergency=gate.emergency, allergies_known=person.allergies_known, status=person.status)
@@ -148,8 +155,11 @@ class Engine:
             for attempt in range(2):
                 try:
                     ai_text = self.llm.reword(template, text, plan.max_words, failed_ids or None)
-                except LLMError as exc:
-                    ai_results = [CheckResult("LLM", False, "major", str(exc))]
+                except Exception as exc:                  # noqa: BLE001 - whatever the provider does, the template answer is the fallback
+                    ai_results = [CheckResult("LLM", False, "major", f"{exc.__class__.__name__}: {str(exc)[:80]}")]
+                    break
+                if not isinstance(ai_text, str):
+                    ai_results = [CheckResult("LLM", False, "major", "wording was not text")]
                     break
                 ai_results = check_ai_text(ai_text, draft, plan, self.index, self.words, self.services.golden)
                 bad = blocking(ai_results)

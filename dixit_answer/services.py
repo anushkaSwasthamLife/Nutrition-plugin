@@ -41,8 +41,8 @@ class Services:
     def meal_place(self) -> str:
         return self.golden.meal_place()
 
-    def protocol_amount(self, step: str) -> str | None:
-        return self.golden.amount(step)
+    def protocol_amount(self, step: str, blocked=frozenset()) -> str | None:
+        return self.golden.amount(step, blocked)
 
     def position_for(self, food_id: str, status: Status | None = None):
         """(locked text, fruit position or None). Fruit depends on diabetes status; unknown rules are said, never guessed."""
@@ -71,7 +71,7 @@ class Services:
         return None
 
     # ---------- cooking tips ----------
-    def tips(self, keys: list[str], given: set[str], limit: int = 1) -> list[tuple[str, list[Fact], str]]:
+    def tips(self, keys: list[str], given: set[str], limit: int = 1, blocked=frozenset()) -> list[tuple[str, list[Fact], str]]:
         """Tips that apply to any of `keys` (food IDs or topics). Returns (text with {{A}}/{{B}}, facts, tip_id)."""
         env = self.library.environment
         out = []
@@ -79,6 +79,8 @@ class Services:
             if not set(tip["applies_to"]) & set(keys):
                 continue
             body = tip[env]
+            if blocked and (({f.food_id for f in self.index.find(body["text"])} | set(tip["applies_to"])) & set(blocked)):
+                continue
             facts = [make_fact(self.library, rid, fld) for rid, fld in body["compare"]]
             if any(f is None for f in facts):
                 continue

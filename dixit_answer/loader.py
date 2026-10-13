@@ -136,8 +136,11 @@ def load_library(settings: Settings, manifest: dict | None = None) -> Library:
             for line in handle:
                 if not line.strip():
                     continue
-                rec = json.loads(line)
-                rid = rec["nutrition_record_id"]
+                try:
+                    rec = json.loads(line)
+                    rid = rec["nutrition_record_id"]
+                except (ValueError, KeyError, TypeError) as exc:
+                    raise LoadError(f"{files[key]['path']}: unreadable record ({exc.__class__.__name__})") from exc
                 if not (rec.get("retrieval") or {}).get("eligible"):
                     continue
                 if rid in quarantined or (rec.get("data_quality") or {}).get("runtime_status") == "quarantined":
@@ -164,7 +167,14 @@ def load_swastham_data(settings: Settings, manifest: dict | None = None) -> Swas
     manifest = manifest or load_manifest()
     env = manifest["environments"][settings.environment]
     names = manifest["swastham_data"]
-    loaded = {key: json.loads((DATA_DIR / name).read_text(encoding="utf-8")) for key, name in names.items()}
+    loaded = {}
+    for key, name in names.items():
+        try:
+            loaded[key] = json.loads((DATA_DIR / name).read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise LoadError(f"{name}: cannot be read ({exc.__class__.__name__})") from exc
+        if not isinstance(loaded[key], dict):
+            raise LoadError(f"{name}: must be a JSON object")
     if not env.get("allow_test_only_data"):
         for key, data in loaded.items():
             if str(data.get("status", "")).upper() in {"TEST ONLY", "STUB", "PARTIAL", "PROPOSED"}:

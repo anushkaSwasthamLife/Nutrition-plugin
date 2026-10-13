@@ -55,8 +55,23 @@ class GoldenRules:
     def meal_place(self) -> str:
         return self.data["meal_place"]
 
-    def amount(self, step: str) -> str | None:
-        return self.data["amounts"].get(step)
+    def amount(self, step: str, blocked=frozenset()) -> str | None:
+        """The programme's amount for a step. Options the person can't have (allergy, diet, avoid list) are left out; if none
+        is left, the line says to ask the Dixit coach (never an invented substitute)."""
+        base = self.data["amounts"].get(step)
+        cfg = self.data.get("amount_options", {}).get(step)
+        if not cfg or not blocked:
+            return base
+        keep = [o["text"] for o in cfg["options"] if not set(o["foods"]) & set(blocked)]
+        if len(keep) == len(cfg["options"]):
+            return base
+        if not keep:
+            return cfg["none"]
+        if len(keep) == 1:
+            joined = keep[0]
+        else:
+            joined = ", ".join(keep[:-1]) + cfg["join"] + keep[-1]
+        return joined + cfg["suffix"]
 
     def between_meals(self) -> str:
         return self.data.get("between_meals_allowed") or self.data["between_meals_unknown"]

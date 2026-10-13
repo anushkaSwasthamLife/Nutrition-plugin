@@ -21,6 +21,29 @@
     "sprouts": "sprouted moong, matki or chole, or 2 boiled eggs, in the same quantity as the salad"
   },
 
+  "amount_options": {
+    "nuts": {
+      "options": [
+        {"text": "4 almonds and 4 walnuts", "foods": ["FOOD-ALMOND", "FOOD-WALNUT"]},
+        {"text": "a handful of soaked peanuts", "foods": ["FOOD-PEANUT"]}
+      ],
+      "join": " or ",
+      "suffix": "",
+      "none": "The first step of the meal normally uses nuts. Because of your allergy, please ask your Dixit coach what to use instead."
+    },
+    "sprouts": {
+      "options": [
+        {"text": "sprouted moong", "foods": ["FOOD-MOONG-DAL"]},
+        {"text": "matki", "foods": []},
+        {"text": "sprouted chole", "foods": ["FOOD-CHANA-DAL"]},
+        {"text": "2 boiled eggs", "foods": ["FOOD-EGG"]}
+      ],
+      "join": " or ",
+      "suffix": ", in the same quantity as the salad",
+      "none": "The sprouts step normally uses sprouted pulses. Because of what you told me, please ask your Dixit coach what to use instead."
+    }
+  },
+
   "rules": [
     {"id": "GR-MEALS-2", "statement": "Two meals a day, when truly hungry.", "source": "live_app", "confirmed_by_base_package": false},
     {"id": "GR-WINDOW-55", "statement": "Each meal is finished within 55 minutes.", "source": "live_app + amendment_tests T011/T017", "confirmed_by_base_package": false},

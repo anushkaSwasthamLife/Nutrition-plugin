@@ -94,6 +94,8 @@ def classify(cleaned: str, foods: list[str], index: FoodIndex) -> str:
         return "greeting_thanks"
     if INGREDIENTS.search(cleaned) and (MAKE.search(cleaned) or HINDI_MAKE.search(cleaned)):
         return "meal_from_ingredients"
+    if HINDI_MAKE.search(cleaned) and any(index.foods[f]["category"] not in {"staple", "pantry", "sweet"} for f in foods):
+        return "meal_from_ingredients"       # "aloo pyaz hai kya banau": foods plus a Hindi "what can I make"
     if RECIPE.search(cleaned):
         return "recipe_request"
     if SOURCE.search(cleaned):
@@ -142,14 +144,19 @@ def pantry_words(cleaned: str, index: FoodIndex, stop_words: list[str]) -> tuple
     clause = cleaned[m.end():]
     end = CLAUSE_END.search(clause)
     clause = clause[:end.start()] if end else clause
-    for mention in sorted(index.find(clause, already_clean=True), key=lambda x: -len(x.alias)):
-        clause = re.sub(r"(?<![\w])" + re.escape(mention.alias) + r"(?![\w])", " , ", clause)
+    clause = re.split(r"\b(?:i am|am|i m|im|allergic|allergy|allergies)\b", clause)[0]     # a statement about the person is not a food
+    found = {m.food_id for m in index.find(clause, already_clean=True)}
+    aliases = {m.alias for m in index.find(clause, already_clean=True)} | {a for a, fid in index.alias_to_id.items() if fid in found}
+    for alias in sorted(aliases, key=len, reverse=True):          # every spelling of a known food, not just the first one found
+        clause = re.sub(r"(?<![\w])" + re.escape(alias) + r"(?![\w])", " , ", clause)
     stops = set(stop_words)
     unknown = []
     for chunk in re.split(r",|\band\b|\bor\b|&", clause):
         words = [w for w in chunk.split() if w not in stops and not w.isdigit()]
-        if words:
-            unknown.append(" ".join(words))
+        phrase = " ".join(words)
+        if phrase and re.fullmatch(r"[a-z' ]{2,30}", phrase) and phrase not in unknown:   # short plain words only, never echoed raw
+            unknown.append(phrase)
+    unknown = unknown[:5]
     suggestion = None
     for word in unknown:
         close = difflib.get_close_matches(word, list(index.alias_to_id), n=1, cutoff=0.75)
