@@ -2,7 +2,6 @@
   "version": "CL-0.1.0",
   "status": "TEST ONLY",
   "note": "PLACEHOLDER numbers for development only. A dietitian and a doctor must set the real limits, each with a commercial-safe source, reviewer and review date. Limits filter recipes; they are never shown as personal advice.",
-  "meal_share": 0.5,
   "release_margin": 0.9,
   "verifiable_nutrients": ["energy_kcal", "carbohydrate_g", "fiber_g", "protein_g", "fat_g"],
   "limits": [

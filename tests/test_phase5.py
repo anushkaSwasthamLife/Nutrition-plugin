@@ -138,13 +138,13 @@ def test_steps_may_only_mention_listed_foods(engine):
     assert not gate.passed and any("paneer" in r for r in gate.reasons)
 
 
-def test_limits_strictest_wins_per_meal_and_clinician_target_tightens(engine):
+def test_limits_strictest_wins_and_clinician_target_tightens(engine):
     svc = engine.recipes
     both = svc.compile_limits(Person(conditions=["obesity"]))
-    assert both["energy_kcal"].per_meal_max == Decimal(1800) * Decimal("0.5")          # obesity 1800 beats general 2000
-    assert both["energy_kcal"].release_at == Decimal(900) * Decimal("0.9")
+    assert both["energy_kcal"].limit_max == Decimal(1800)          # obesity 1800 beats general 2000
+    assert both["energy_kcal"].release_at == Decimal(1800) * Decimal("0.9")
     tight = svc.compile_limits(Person(clinician_targets={"energy_kcal": 800}))
-    assert tight["energy_kcal"].per_meal_max == Decimal(400)
+    assert tight["energy_kcal"].limit_max == Decimal(800)
     assert not svc.compile_limits(Person(conditions=["hypertension"]))["sodium_mg"].verifiable   # no sodium data yet
 
 
@@ -153,8 +153,8 @@ def test_stale_intake_is_ignored_not_treated_as_nothing_eaten(engine):
     fresh = Person(intake_today={"energy_kcal": 1500}, intake_logged_at=(now - timedelta(hours=1)).isoformat())
     stale = Person(intake_today={"energy_kcal": 1500}, intake_logged_at=(now - timedelta(hours=20)).isoformat())
     svc = engine.recipes
-    assert svc.compile_limits(fresh)["energy_kcal"].per_meal_max == Decimal(500)
-    assert svc.compile_limits(stale)["energy_kcal"].per_meal_max == Decimal(1000)
+    assert svc.compile_limits(fresh)["energy_kcal"].limit_max == Decimal(500)
+    assert svc.compile_limits(stale)["energy_kcal"].limit_max == Decimal(2000)
 
 
 # ---------------------------------------------------------------- chat flows
@@ -212,7 +212,7 @@ def test_ai_draft_passes_gate_and_is_labelled(settings):
     r = engine.answer("I have lauki and tomato, what can I cook?", None, {"allergies": []})
     assert "AI-suggested recipe" in r.answer and "Lauki Tomato Sabji" in r.answer and "Whole dish" in r.answer
     assert not failed(r) and len(llm.requests) == 1
-    assert llm.requests[0]["per_meal_limits_whole_dish"]["energy_kcal"] > 0
+    assert llm.requests[0]["limits_whole_dish"]["energy_kcal"] > 0
     ids = {x["food_id"] for x in llm.requests[0]["must_use_any"] + llm.requests[0]["pantry"]}
     assert "FOOD-PANEER" not in ids and "FOOD-SUGAR" not in ids
 
@@ -343,7 +343,7 @@ def test_rejection_never_shows_limit_numbers(settings):
                                                             "clinician_targets": {"fat_g": 20}})
     first = r.answer.splitlines()[0]
     assert "release limit" not in r.answer and not any(ch.isdigit() for ch in first)
-    assert first == "I can't show Palak Paneer Bhurji for you: it is higher in fat than our limit for one meal."
+    assert first == "I can't show Palak Paneer Bhurji for you: it is higher in fat than our limit."
 
 
 # ---------------------------------------------------------------- findings from the 30-question live batch

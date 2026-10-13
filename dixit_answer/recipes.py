@@ -29,7 +29,7 @@ TIME_BUDGET_SECONDS = 15
 @dataclass
 class Limit:
     nutrient: str
-    per_meal_max: Decimal
+    limit_max: Decimal
     release_at: Decimal
     conditions: list
     verifiable: bool
@@ -123,9 +123,9 @@ class RecipeService:
         return found
 
     def compile_limits(self, person: Person) -> dict[str, Limit]:
-        """R3: strictest limit per nutrient across 'general' + the person's conditions; one meal = daily x meal_share."""
+        """R3: strictest limit per nutrient across 'general' + the person's conditions; the limit is the table's value, less what was eaten today if that is recent."""
         cfg = self.limits_cfg
-        share, margin = _d(cfg["meal_share"]), _d(cfg["release_margin"])
+        margin = _d(cfg["release_margin"])
         verifiable = set(cfg["verifiable_nutrients"])
         conditions = {"general", *person.conditions}
         daily: dict[str, tuple[Decimal, list]] = {}
@@ -143,10 +143,10 @@ class RecipeService:
         intake = person.recent_intake()
         limits = {}
         for nutrient, (value, sources) in daily.items():
-            per_meal = value * share
+            limit = value
             if nutrient in intake:
-                per_meal = min(per_meal, max(value - _d(intake[nutrient]), Decimal(0)))
-            limits[nutrient] = Limit(nutrient, per_meal, per_meal * margin, sources, nutrient in verifiable)
+                limit = max(value - _d(intake[nutrient]), Decimal(0))
+            limits[nutrient] = Limit(nutrient, limit, limit * margin, sources, nutrient in verifiable)
         return limits
 
     def calculate(self, recipe: CheckedRecipe) -> None:
@@ -170,7 +170,7 @@ class RecipeService:
         recipe.missing = missing
 
     def gate(self, recipe: CheckedRecipe, person: Person, limits: dict[str, Limit], blocked: set[str]) -> Gate:
-        """R7: explicit pass only. Allergens / avoid / diet, Golden Rules, limits at 90% of one meal's share, missing data."""
+        """R7: explicit pass only. Allergens / avoid / diet, Golden Rules, limits at 90% of the limit, missing data."""
         g = Gate(passed=False)
         foods = [i["food"] for i in recipe.ingredients]
         for fid in foods:
@@ -195,7 +195,7 @@ class RecipeService:
             total = recipe.totals[nutrient]
             if total > limit.release_at:
                 # Limits are never shown to the person (they would read as personal advice); numbers go to the audit log.
-                g.reasons.append(f"it is higher in {NUTRIENT_WORDS[nutrient]} than our limit for one meal")
+                g.reasons.append(f"it is higher in {NUTRIENT_WORDS[nutrient]} than our limit")
                 g.details.append(f"{nutrient}: {total.quantize(Decimal('1'))} > {limit.release_at.quantize(Decimal('1'))}")
                 g.failed_nutrients.append(nutrient)
         if missing_foods:
@@ -395,7 +395,7 @@ class RecipeService:
                     "must_use_any": [{"food_id": f, "name": self.index.name(f)} for f in main_have],
                     "pantry": [{"food_id": f, "name": self.index.name(f)} for f in sorted(allowed - set(main_have))],
                     "meal_place": "the home-cooked part of a Dixit meal (after nuts, salad and sprouts); a sabji or dal",
-                    "per_meal_limits_whole_dish": {n: float(l.release_at.quantize(Decimal('1'))) for n, l in limits.items()},
+                    "limits_whole_dish": {n: float(l.release_at.quantize(Decimal('1'))) for n, l in limits.items()},
                     "previous_attempt_failed": feedback,
                 }
                 try:

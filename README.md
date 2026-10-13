@@ -52,9 +52,9 @@ the hashes in `data/manifest.json`. Production loads USDA only.
 Approved recipes first, AI-drafted + gated second, fallback last (`recipes.py`):
 
 R1 map pantry words (unknown words are left out, queued for the dietitian, never sent to the AI; a close match is confirmed first)
-→ R2 allergy / avoid / diet filter (derivatives such as ghee and paneer for milk) → R3 limits per meal
+→ R2 allergy / avoid / diet filter (derivatives such as ghee and paneer for milk) → R3 limits (strictest first)
 → R4 approved recipe match → R5 AI draft (only food IDs + grams + steps) → R6 calculate the whole dish from USDA values
-(exact decimals, missing value = error) → R7 gate (allergens, Golden Rules, 90% of one meal's share of each limit) → R8 repair one
+(exact decimals, missing value = error) → R7 gate (allergens, Golden Rules, 90% of each limit) → R8 repair one
 ingredient (never scale the dish), then AI retry (max 2) → R9 fallback (partly matching approved recipe, or tips).
 
 Nothing unchecked is shown. Limits are never shown to the person. AI drafting is switched off in production in `manifest.json`

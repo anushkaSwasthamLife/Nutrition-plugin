@@ -87,8 +87,8 @@ def find_problems(data, library, index, environment: str) -> list[str]:
     for row in data.condition_limits["limits"]:
         if row.get("daily_max") is not None and (not isinstance(row["daily_max"], (int, float)) or row["daily_max"] <= 0):
             problems.append(f"limits: {row['condition']}/{row['nutrient']} has a bad daily_max")
-    if not 0 < data.condition_limits["meal_share"] <= 1 or not 0 < data.condition_limits["release_margin"] <= 1:
-        problems.append("limits: meal_share and release_margin must be between 0 and 1")
+    if not 0 < data.condition_limits["release_margin"] <= 1:
+        problems.append("limits: release_margin must be between 0 and 1")
     for key in ("full", "reminder", "meal_place", "amounts", "fruit", "positions", "forbidden_claims"):
         if key not in data.golden_rules:
             problems.append(f"golden rules: missing '{key}'")

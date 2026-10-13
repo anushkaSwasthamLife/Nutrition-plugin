@@ -27,7 +27,7 @@ MUTATIONS = {
     "allergen unknown food": (lambda d: next(iter(d.allergen_map["allergens"].values()))["foods"].append("FOOD-GHOST"), "FOOD-GHOST"),
     "major allergen missing": (lambda d: d.allergen_map["major"].append("mustard_x"), "mustard_x"),
     "swap unknown action": (lambda d: d.swap_table["repairs"][0].update(action="delete"), "unknown action"),
-    "limits bad share": (lambda d: d.condition_limits.update(meal_share=1.5), "meal_share"),
+    "limits bad margin": (lambda d: d.condition_limits.update(release_margin=1.5), "release_margin"),
     "limits bad max": (lambda d: d.condition_limits["limits"][0].update(daily_max=-1), "bad daily_max"),
     "golden key missing": (lambda d: d.golden_rules.pop("fruit"), "missing 'fruit'"),
 }
