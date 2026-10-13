@@ -1,0 +1,23 @@
+{
+  "version": "0.1.0",
+  "status": "TEST ONLY",
+  "approved_by": null,
+  "note": "Cooking tips (recipe fallback, option a). Wording needs dietitian sign-off. {{A}} / {{B}} are filled by code from library records.",
+  "tips": [
+    {"tip_id": "TIP-OIL", "applies_to": ["FOOD-BHINDI", "sabji"],
+     "development": {"text": "Oil changes a sabji more than the vegetable does: bhindi fry is {{A}}, stuffed bhindi is {{B}}.",
+                     "compare": [["NUTR-INDB-BFP269", "energy_kcal"], ["NUTR-INDB-ASC184", "energy_kcal"]]},
+     "production": {"text": "Oil changes a sabji more than the vegetable does: cooked okra is {{A}} with fat added and {{B}} without.",
+                    "compare": [["SURVEY-2709947", "energy_kcal"], ["SURVEY-2709944", "energy_kcal"]]}},
+    {"tip_id": "TIP-DRY", "applies_to": ["FOOD-ALOO", "FOOD-ONION", "recipe"],
+     "development": {"text": "A dry sabji keeps the oil low: dry aloo is {{A}}, aloo in gravy is {{B}}.",
+                     "compare": [["NUTR-INDB-ASC178", "energy_kcal"], ["NUTR-INDB-BFP239", "energy_kcal"]]},
+     "production": {"text": "A dry sabji usually carries less oil than one in gravy.", "compare": []}},
+    {"tip_id": "TIP-MIX", "applies_to": ["FOOD-ALOO", "FOOD-PEAS", "FOOD-SWEET-POTATO", "recipe"],
+     "development": {"text": "Mix a starchy vegetable with a fibre-rich one, such as aloo with gobhi or methi.", "compare": []},
+     "production": {"text": "Mix a starchy vegetable with a fibre-rich one, such as aloo with gobhi or methi.", "compare": []}},
+    {"tip_id": "TIP-LESS-OIL", "applies_to": ["recipe", "sabji"],
+     "development": {"text": "Use a little oil for the whole dish, and add flavour with jeera, haldi, dhania and chilli instead.", "compare": []},
+     "production": {"text": "Use a little oil for the whole dish, and add flavour with jeera, haldi, dhania and chilli instead.", "compare": []}}
+  ]
+}

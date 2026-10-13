@@ -1,0 +1,25 @@
+{
+  "list_version": "0.1.0",
+  "status": "TEST ONLY",
+  "approved_by": null,
+  "approved_on": null,
+  "note": "Placeholder entries for development, written from the analysis drafts. A dietitian must write and sign the real list; production refuses this file.",
+  "entries": [
+    {"guidance_id": "TEST-SABJI-MORE", "topic": "sabji", "applies_when": {}, "direction": "choose_more_often",
+     "label": "Fill-up sabjis (choose more often)",
+     "foods": ["FOOD-BHINDI", "FOOD-CAULIFLOWER", "FOOD-CABBAGE", "FOOD-LAUKI", "FOOD-PALAK", "FOOD-BEANS"],
+     "reason": "high in fibre, low in starch", "golden_rule_checked": true},
+    {"guidance_id": "TEST-SABJI-STARCHY", "topic": "sabji", "applies_when": {}, "direction": "fine_but_starchy",
+     "label": "Starchy sabjis (fine, but closer to the chapati or rice part of the meal)",
+     "foods": ["FOOD-ALOO", "FOOD-PEAS", "FOOD-SWEET-POTATO"],
+     "reason": "starchy vegetables", "golden_rule_checked": true},
+    {"guidance_id": "TEST-MEAL-MORE", "topic": "home_meal", "applies_when": {}, "direction": "choose_more_often",
+     "label": "In the home meal, choose more often",
+     "foods": ["FOOD-DAL", "FOOD-CURD", "FOOD-BHINDI", "FOOD-CAULIFLOWER", "FOOD-CABBAGE", "FOOD-LAUKI", "FOOD-PALAK"],
+     "reason": "filling, with fibre or protein", "golden_rule_checked": true},
+    {"guidance_id": "TEST-MEAL-LESS", "topic": "home_meal", "applies_when": {}, "direction": "choose_less_often",
+     "label": "Have less often",
+     "foods": ["FOOD-SUGAR", "FOOD-SWEETS", "FOOD-SWEET-DRINKS"],
+     "reason": "the programme asks to reduce sugar and sweets", "golden_rule_checked": true}
+  ]
+}

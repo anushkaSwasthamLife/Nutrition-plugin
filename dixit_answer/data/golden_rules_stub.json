@@ -1,0 +1,32 @@
+{
+  "version": "GR-STUB-0.1",
+  "status": "STUB",
+  "note": "Wording taken only from what the live Dixit app said on 13 Oct 2026. Replace with the Golden Rules from base package v1.1 + v1.1.1. Anything not listed here is refused, never guessed.",
+  "full": [
+    "Two meals a day, only when you're truly hungry, not by the clock.",
+    "Each meal in this order: nuts → salad → sprouts → your usual home-cooked meal, until you feel satisfied, not overfull.",
+    "Finish the whole meal within 55 minutes.",
+    "Nothing in between meals: anything you eat or drink that starts digestion again counts as a meal."
+  ],
+  "reminder": "Remember the order: nuts → salad → sprouts → your home meal, within 55 minutes.",
+  "meal_place": "This goes in the last step of your meal, after nuts, salad and sprouts.",
+  "amounts": {
+    "nuts": "4 almonds and 4 walnuts, or a handful of soaked peanuts",
+    "salad": "a bowl of raw salad, such as cucumber and tomato",
+    "sprouts": "sprouted moong, matki or chole, or 2 boiled eggs, in the same quantity as the salad"
+  },
+  "positions": {
+    "vegetable": "{food} is allowed in the programme. No vegetable is banned; what changes is how you eat.",
+    "starchy_vegetable": "{food} is allowed in the programme. No vegetable is banned; what changes is how you eat.",
+    "staple": "{food} is allowed in the programme as part of your home meal. The programme treats rice and chapati as interchangeable.",
+    "pulse": "{food} is allowed in the programme.",
+    "dairy": "{food} is allowed in the programme as part of your home meal.",
+    "nut": "Nuts are the first step of each meal in the programme.",
+    "egg": "Eggs are allowed in the programme; 2 boiled eggs can replace the sprouts step.",
+    "sweet": "The programme asks you to reduce sugar and sweets.",
+    "fruit": null
+  },
+  "unknown_position": "I can't confirm the programme's rule for {food} yet. Please check with your Dixit coach.",
+  "between_meals_allowed": null,
+  "between_meals_unknown": "I can't confirm yet what the programme allows between meals. Please check with your Dixit coach."
+}

@@ -1,0 +1,64 @@
+{
+  "version": "WL-0.1.0",
+  "status": "TEST ONLY",
+  "note": "Draft word lists for development; need review. Matching is on cleaned, lower-case text with whole words.",
+
+  "spelling_map": {
+    "sabzi": "sabji", "subji": "sabji", "subzi": "sabji", "sabjee": "sabji", "sabjis": "sabji", "sabzis": "sabji", "sabziyan": "sabji",
+    "vegetables": "vegetable", "veggies": "vegetable", "veggie": "vegetable",
+    "programme": "program", "plz": "please", "pls": "please", "wat": "what", "wht": "what", "u": "you", "r": "are",
+    "recipie": "recipe", "receipe": "recipe", "recipes": "recipe", "receipes": "recipe", "recepie": "recipe",
+    "carbs": "carb", "carbohydrates": "carb", "carbohydrate": "carb", "calories": "calorie", "kcal": "calorie",
+    "proteins": "protein", "fibre": "fiber"
+  },
+
+  "emergency_phrases": [
+    "chest pain", "can't breathe", "cannot breathe", "difficulty breathing", "fainted", "fainting", "passed out", "unconscious",
+    "shaking and sweating", "shaky and sweating", "sweating and shaking", "very low sugar", "sugar is very low", "sugar dropped",
+    "hypo", "seizure", "suicide", "kill myself", "want to die", "vomiting blood", "blood in vomit"
+  ],
+
+  "risk_terms": {
+    "diabetes_medicine": ["insulin", "metformin", "glimepiride", "gliclazide", "sulfonylurea", "sugar tablet", "sugar tablets",
+                          "sugar medicine", "diabetes medicine", "diabetes tablets", "diabetes medicines", "sugar pills"],
+    "bp_medicine": ["bp medicine", "bp tablet", "bp tablets", "blood pressure medicine", "blood pressure tablets", "amlodipine", "telmisartan"],
+    "pregnancy": ["pregnant", "pregnancy", "breastfeeding", "breast feeding", "expecting a baby"],
+    "kidney_disease": ["kidney disease", "ckd", "dialysis", "kidney problem", "kidney failure"],
+    "eating_disorder": ["eating disorder", "anorexia", "bulimia", "binge eating"]
+  },
+  "negation_words": ["no", "not", "don't", "dont", "do not", "never", "without", "none", "nope", "neither", "nor"],
+  "yes_words": ["yes", "yeah", "yep", "haan", "ha", "i do", "i take"],
+  "no_words": ["no", "nope", "none", "nahi", "nothing", "no medicines", "no medicine", "not pregnant"],
+
+  "conditions": {
+    "obesity": ["obesity", "obese", "overweight", "reduce weight", "lose weight", "weight loss", "losing weight", "reduce my weight", "fat loss", "belly fat"],
+    "diabetes": ["diabetes", "diabetic", "sugar problem", "high sugar", "type 2", "prediabetes", "prediabetic"],
+    "hypertension": ["bp", "blood pressure", "hypertension"],
+    "thyroid": ["thyroid", "hypothyroid", "hypothyroidism"],
+    "pcos": ["pcos", "pcod"]
+  },
+
+  "preference_words": {
+    "vegetarian": ["vegetarian", "veg", "pure veg", "no eggs", "no egg"],
+    "egg": ["eggetarian", "veg with eggs", "vegetarian with eggs", "i eat eggs", "with eggs"],
+    "non_vegetarian": ["non veg", "non-veg", "nonveg", "non vegetarian", "non-vegetarian", "i eat chicken", "i eat fish"],
+    "jain": ["jain"]
+  },
+
+  "jargon": ["insulin secretion", "triggers insulin", "insulin spike", "glycaemic", "glycemic", "postprandial", "satiety",
+             "macronutrient", "macronutrients", "thermogenesis", "insulin resistance", "metabolic"],
+  "blame_words": ["lazy", "your fault", "willpower", "lack of discipline", "obese people", "fatty", "greedy"],
+  "filler_praise": ["you're asking good questions", "you are asking good questions", "great question", "good question",
+                    "you're planning ahead", "it shows you're ready", "i'm glad you're asking"],
+  "rule_relaxing": ["snack", "snacks", "snacking", "small meals", "three meals", "3 meals", "eat every", "between meals you can",
+                    "in between meals you can", "evening snack", "mid-morning", "breakfast, lunch and dinner"],
+  "personal_claims": ["safe for you", "is safe for you", "you should stop taking", "you should start taking", "stop your medicine",
+                      "change your dose", "dosage", "cure", "cures", "guarantee", "guaranteed"],
+  "outcome_claims": ["you will lose", "will make you lose", "reverses diabetes", "reverse your diabetes", "melts fat", "burns fat",
+                     "kg in", "kgs in", "no meaningful difference"],
+  "portion_phrases": ["calories per day", "calories a day", "kcal per day", "kcal a day", "meal plan", "diet plan", "portion size",
+                      "eat only", "limit yourself to"],
+  "injection_markers": ["system prompt", "developer mode", "ignore previous", "ignoring the rules", "as an ai language model", "jailbreak"],
+  "timing_markers": ["two meals", "2 meals", "55 minutes", "nothing in between", "between meals"],
+  "non_food_words": ["oil", "salt", "water", "spices", "jeera", "haldi", "dhania", "chilli", "methi", "meal", "meals", "food", "foods"]
+}

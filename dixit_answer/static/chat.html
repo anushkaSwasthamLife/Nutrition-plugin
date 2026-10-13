@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dixit Answer Test</title>
+<style>
+  :root {
+    --bg: #f4f6fb; --surface: #ffffff; --fg: #1d2330; --muted: #5b6475; --line: #d5dae3;
+    --me: #1f6feb; --me-fg: #ffffff; --bot: #ffffff; --ok: #1a7f37; --ok-bg: #e6f4ea; --bad: #c62828; --bad-bg: #fdecea;
+    --warn: #9a6700; --warn-bg: #fff4d6; --code-bg: #eef1f5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12151b; --surface: #1a1f27; --fg: #e4e8ef; --muted: #9aa4b5; --line: #2c3340;
+      --me: #3b7be0; --me-fg: #ffffff; --bot: #1f2530; --ok: #5cc27a; --ok-bg: #16301f; --bad: #ff7b72; --bad-bg: #3a1a1a;
+      --warn: #e0b54a; --warn-bg: #352a10; --code-bg: #222833;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.55 "Segoe UI", system-ui, sans-serif; }
+  .app { max-width: 820px; margin: 0 auto; padding: 16px; min-height: 100vh; display: flex; flex-direction: column; }
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-bottom: 10px; }
+  header h1 { font-size: 19px; margin: 0; }
+  .meta { color: var(--muted); font-size: 12.5px; }
+  header .spacer { flex: 1; }
+  button, select { font: inherit; font-size: 13.5px; border: 1px solid var(--line); background: var(--surface); color: var(--fg);
+    border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+  button:hover { border-color: var(--me); }
+  .log { flex: 1; display: flex; flex-direction: column; gap: 12px; padding: 8px 0 16px; }
+  .msg { max-width: 88%; padding: 10px 14px; border-radius: 12px; overflow-wrap: anywhere; }
+  .me { align-self: flex-end; background: var(--me); color: var(--me-fg); border-bottom-right-radius: 4px; }
+  .bot { align-self: flex-start; background: var(--bot); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+  .bot p { margin: 4px 0; } .bot ul { margin: 4px 0; padding-left: 20px; }
+  .fb { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .fb button { font-size: 12px; padding: 3px 9px; border-radius: 999px; }
+  .fb button.done { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); }
+  details { margin-top: 8px; font-size: 12.5px; color: var(--muted); }
+  details pre { background: var(--code-bg); padding: 8px; border-radius: 6px; overflow-x: auto; white-space: pre-wrap; font-size: 11.5px; }
+  .tag { display: inline-block; border-radius: 999px; padding: 0 8px; font-size: 11.5px; font-weight: 600; margin-right: 4px; }
+  .tag.ok { background: var(--ok-bg); color: var(--ok); } .tag.bad { background: var(--bad-bg); color: var(--bad); }
+  .tag.warn { background: var(--warn-bg); color: var(--warn); }
+  form { display: flex; gap: 8px; position: sticky; bottom: 0; background: var(--bg); padding: 10px 0; }
+  textarea { flex: 1; font: inherit; resize: none; min-height: 44px; max-height: 140px; padding: 10px 12px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--surface); color: var(--fg); }
+  form button { background: var(--me); color: var(--me-fg); border-color: var(--me); padding: 0 18px; }
+  .examples { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+  .examples button { font-size: 12.5px; border-radius: 999px; }
+  .note { font-size: 12.5px; color: var(--warn); background: var(--warn-bg); border-radius: 8px; padding: 6px 10px; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Dixit answer pipeline</h1>
+    <span class="meta" id="meta">loading…</span>
+    <span class="spacer"></span>
+    <label class="meta"><input type="checkbox" id="debug" checked> show details</label>
+    <button id="newchat" type="button">New chat</button>
+  </header>
+  <div class="note">Development build. Food lists, tips and Golden Rules are TEST ONLY drafts; "dev data" numbers come from the Indian library (licence pending).</div>
+  <div class="examples" id="examples"></div>
+  <div class="log" id="log" aria-live="polite"></div>
+  <form id="form">
+    <textarea id="input" placeholder="Ask about food, meals or the Dixit programme…" aria-label="Message"></textarea>
+    <button type="submit">Send</button>
+  </form>
+</div>
+<script>
+(function () {
+  var log = document.getElementById('log'), input = document.getElementById('input'), form = document.getElementById('form');
+  var debug = document.getElementById('debug');
+  var conversationId = null;
+  try { conversationId = sessionStorage.getItem('dixit_cid'); } catch (e) {}
+
+  var EXAMPLES = ['i have obesity . so what should i eat to reduce it', 'No medicines. I have chapati, what sabji can I eat?',
+    'bhindi, aloo, cauliflower', 'aloo', 'give me recipes', 'I have aloo and onion, what Indian meal can I prepare?',
+    'How many carbs in one chapati?', 'Can I snack between meals?', 'I feel very hungry between meals', 'Which phone should I buy?'];
+  var ex = document.getElementById('examples');
+  EXAMPLES.forEach(function (t) {
+    var b = document.createElement('button'); b.type = 'button'; b.textContent = t;
+    b.addEventListener('click', function () { send(t); }); ex.appendChild(b);
+  });
+
+  function esc(s) { return s.replace(/[&<>"']/g, function (c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
+  function md(text) {
+    var out = [], list = false;
+    text.split('\n').forEach(function (line) {
+      var h = esc(line).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      if (/^\s*- /.test(line)) { if (!list) { out.push('<ul>'); list = true; } out.push('<li>' + h.replace(/^\s*- /, '') + '</li>'); }
+      else { if (list) { out.push('</ul>'); list = false; } if (h.trim()) out.push('<p>' + h + '</p>'); }
+    });
+    if (list) out.push('</ul>');
+    return out.join('');
+  }
+  function add(cls, html) { var d = document.createElement('div'); d.className = 'msg ' + cls; d.innerHTML = html; log.appendChild(d); d.scrollIntoView({block: 'end'}); return d; }
+
+  function feedbackRow(cid, turn) {
+    var row = document.createElement('div'); row.className = 'fb';
+    [['helpful', 'Helpful'], ['not_what_i_asked', 'Not what I asked'], ['cant_get_this', "Can't get / don't eat this"], ['something_wrong', "Something's wrong"]]
+      .forEach(function (k) {
+        var b = document.createElement('button'); b.type = 'button'; b.textContent = k[1];
+        b.addEventListener('click', function () {
+          fetch('/api/feedback', {method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({conversation_id: cid, turn: turn, kind: k[0]})}).then(function () { b.classList.add('done'); });
+        });
+        row.appendChild(b);
+      });
+    return row;
+  }
+
+  function send(text) {
+    text = (text || '').trim(); if (!text) return;
+    add('me', esc(text)); input.value = '';
+    var wait = add('bot', '<p class="meta">…</p>');
+    fetch('/api/chat', {method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message: text, conversation_id: conversationId})})
+      .then(function (r) { return r.json(); })
+      .then(function (r) {
+        conversationId = r.conversation_id;
+        try { sessionStorage.setItem('dixit_cid', conversationId); } catch (e) {}
+        wait.innerHTML = md(r.answer || '');
+        wait.appendChild(feedbackRow(r.conversation_id, r.turn));
+        if (debug.checked) {
+          var failed = (r.checks || []).filter(function (c) { return !c.passed; });
+          var det = document.createElement('details');
+          det.innerHTML = '<summary><span class="tag ok">' + esc(r.type || '') + '</span>' +
+            (r.ai_used ? '<span class="tag ok">AI wording</span>' : '<span class="tag warn">template</span>') +
+            (r.fallback ? '<span class="tag warn">fallback</span>' : '') +
+            (failed.length ? '<span class="tag bad">' + failed.length + ' check(s) failed</span>' : '<span class="tag ok">checks passed</span>') +
+            ' ' + r.ms + ' ms</summary><pre>' + esc(JSON.stringify({rules: r.plan && r.plan.rules, blocks: r.plan && r.plan.blocks,
+            protocol_level: r.plan && r.plan.protocol_level, followup: r.plan && r.plan.followup, records: r.records,
+            checks: r.checks}, null, 2)) + '</pre>';
+          wait.appendChild(det);
+        }
+      })
+      .catch(function () { wait.innerHTML = '<p>Something went wrong. Please try again.</p>'; });
+  }
+
+  form.addEventListener('submit', function (e) { e.preventDefault(); send(input.value); });
+  input.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(input.value); } });
+  document.getElementById('newchat').addEventListener('click', function () {
+    conversationId = null; try { sessionStorage.removeItem('dixit_cid'); } catch (e) {}
+    log.innerHTML = '';
+  });
+  fetch('/api/info').then(function (r) { return r.json(); }).then(function (i) {
+    document.getElementById('meta').textContent = i.environment + ' · AI: ' + i.llm.provider + (i.llm.model ? ' (' + i.llm.model + ')' : '') +
+      ' · library ' + i.versions.library;
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+{
+  "runtime_id": "DIXIT-ANSWER-0.1.0-dev",
+  "note": "Release bundle for the Dixit answer pipeline. The loader checks every pin at start and stops on any mismatch.",
+  "library": {
+    "name": "Swastham_Nutrition_Data_Library",
+    "version": "1.0.3",
+    "files": {
+      "indian": {
+        "path": "01_data/nutrition_indian_meals.jsonl",
+        "sha256": "5f3f89306192d21fc053d65d369edb7d5d7edf8117829785bfad868e840a55cd",
+        "eligible_count": 865
+      },
+      "usda": {
+        "path": "01_data/nutrition_usda_reference.jsonl",
+        "sha256": "81a5946e05425d3d9e2a5469c0a0552fba0782fc41e75b16a005c3f63b17c846",
+        "eligible_count": 13554
+      },
+      "quarantine": {
+        "path": "01_data/quarantined_indian_records.jsonl",
+        "sha256": "b4c02ff96393495456ee26db84d9ebdf3a5eaa02ec1ad9d2b5637285b657d10f",
+        "count": 29
+      }
+    }
+  },
+  "environments": {
+    "development": {
+      "sources": ["usda", "indian"],
+      "allow_test_only_data": true,
+      "indian_flag": "Indian library, development only (licence pending)"
+    },
+    "production": {
+      "sources": ["usda"],
+      "allow_test_only_data": false,
+      "indian_licence_id": null
+    }
+  },
+  "swastham_data": {
+    "food_master": "food_master.json",
+    "approved_list": "approved_list_test.json",
+    "cooking_tips": "cooking_tips_test.json",
+    "golden_rules": "golden_rules_stub.json",
+    "word_lists": "word_lists.json"
+  }
+}
