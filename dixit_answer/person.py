@@ -25,7 +25,8 @@ MEDICINE_RISK = {"insulin": "diabetes_medicine", "sugar tablets": "diabetes_medi
                  "losartan": "bp_medicine", "blood pressure": "bp_medicine"}
 DIET_TYPES = {"vegetarian", "egg", "non_vegetarian", "jain"}
 STATUS_VALUES = {"unknown", "diabetic", "prediabetic", "non_diabetic", "currently_non_diabetic"}
-TARGET_NUTRIENTS = {"energy_kcal", "carbohydrate_g", "fiber_g", "protein_g", "fat_g", "sodium_mg", "added_sugar_g"}
+TARGET_NUTRIENTS = {"energy_kcal", "carbohydrate_g", "fiber_g", "protein_g", "fat_g", "sodium_mg", "added_sugar_g", "sugars_g",
+                    "saturated_fat_g", "cholesterol_mg", "potassium_mg", "phosphorus_mg"}
 MAX_LIST = 30
 MAX_TEXT = 60
 

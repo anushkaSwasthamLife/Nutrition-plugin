@@ -7,7 +7,7 @@ Standalone Python package until the Dixit app code is available. **Development b
 ## Run
 
 ```
-.venv\Scripts\python.exe -m pytest -q              # 579 tests, about 4 minutes (no AI calls; the AI is mocked)
+.venv\Scripts\python.exe -m pytest -q              # 1144 tests, about 7 minutes (no AI calls; the AI is mocked)
 .venv\Scripts\python.exe -m dixit_answer.web       # chat page on http://127.0.0.1:8100
 ```
 
@@ -44,7 +44,7 @@ is sent.
 
 `food_master.json`, `approved_list_test.json`, `cooking_tips_test.json`, `word_lists.json` are drafts; `golden_rules_stub.json`
 only repeats what the live Dixit app said on 13 Oct 2026. Production refuses all of them until a dietitian / Dixit sign them.
-The nutrition library is read in place from `Desktop\Nutrition\Swastham_Nutrition_Data_Library_v1_0_3` and checked against
+The nutrition library is read in place from `Desktop\Nutrition\Swastham_Nutrition_Data_Library_v1_0_4` and checked against
 the hashes in `data/manifest.json`. Production loads USDA only.
 
 ## Recipes (phase 5)
@@ -126,7 +126,37 @@ through them at **http://127.0.0.1:8100/review** while `python -m dixit_answer.w
 - *a new food* needs a name, a category, the allergens (confirmed on purpose) and a USDA record (Indian records are refused)
 - *reject* needs a reason; for dishes, *add to the recipe list* keeps a wish-list for recipe writing
 
-Every decision stores who made it. Nothing changes until **Apply**: it builds the new food list, runs the engine's start-up
-consistency check, and writes `food_master.json` (version bumped, a `review_log` entry per change) and, for allergens,
-`allergen_map.json`, only if the check finds no problem. The chat uses the new list from the next message. Development tool only:
+Every decision stores who made it. Nothing changes until **Apply**. Apply tries the decisions one at a time against the engine's
+start-up consistency check: one that would break it (a name another food already uses, an allergen that left the map, a record that
+no longer exists) is skipped and its reason is kept on the item, and the others still go in. It then writes `food_master.json`
+(version bumped, a `review_log` entry per change) and, for allergens, `allergen_map.json`, each through a temporary file, and puts
+the old text back if either write fails. Two Applies at once cannot apply the same decision twice. The chat uses the new list from
+the next message. Development tool only:
 production keeps the queue in the app database. Tests: `tests/test_review_queue.py`, `tests/test_review_web.py`.
+
+## Extra nutrients (item E, 16 Oct 2026)
+
+Library **v1.0.4** adds six nutrients per 100 g to every USDA record: `sodium_mg`, `sugars_g`, `saturated_fat_g`, `cholesterol_mg`,
+`potassium_mg`, `phosphorus_mg`. They come from the official USDA files via the USDA workbook (Fix 20, Change Log section 20), and
+every other value is identical to v1.0.3. `null` means USDA publishes no value: the recipe maths treats it as missing data
+("no nutrition data for X"), never as zero. Added sugars are in none of the three USDA downloads, so `added_sugar_g` stays
+unverifiable and the reviewer must choose another route (limit `sugars_g`, or find another source).
+
+The gate now adds up the six nutrients for the whole dish and checks any limit in `condition_limits_test.json` that names them
+(`verifiable_nutrients`). They are never shown in answers. At start-up, every nutrient marked checkable must be one the maths adds
+up and one the library carries. The library is built by `Desktop\Nutrition\usda_checks\build_library_v1_0_4.py`.
+Known gap: workbook fixes 3 to 19 (energy corrections, duplicates, raw or cooked state) are not yet in the library records.
+Tests: `tests/test_extra_nutrients.py`.
+
+## Emergency check: how a message is read (EM-0.1.3)
+
+- **Clauses.** A message is split at `. , ; : ! ?`, the Hindi full stop and at "but" or "lekin". A negation counts only inside the clause
+  of the symptom, and only when it sits right in front of it ("no chest pain", "without fainting or chest pain"). "There is no point,
+  I want to die", "no, I fainted" and "without help I can't breathe" are emergencies. Self-harm (E5) is never set aside.
+- **Only talked about.** A definition ("what is anaphylaxis"), something long past ("a heart attack last year") or a diet question
+  ("what to eat after a stroke") gets a normal answer ending with "call 112 if that changes". "Now", "still", "again", "help" and
+  similar words in the same clause cancel that, so "what is this chest pain" is still an emergency.
+- **Readings.** `sugar 52`, `glucose 3.1 mmol`, and in Hindi script `शुगर ५२`. Food amounts (`50 g sugar`, `sugar 45%`) are ignored.
+- **Known limits (listed for the doctor):** misspelled words are not caught; a second reading without the word "sugar" in front of it
+  is not read; a self-harm phrase used as a joke still triggers. Invisible characters (zero-width marks) never hide a phrase.
+- An emergency message still records the risk words it contains (insulin, pregnancy), for the next answers.

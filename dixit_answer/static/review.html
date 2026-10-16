@@ -131,6 +131,7 @@ ul.problems{margin:6px 0 0;padding-left:20px}
       dec.action === 'reject' ? 'Rejected: ' + dec.reason : dec.action === 'plan' ? 'A recipe should be written. ' + (dec.note || '') : '';
     box.appendChild(el('p', null, text));
     box.appendChild(el('p', 'meta', 'By ' + item.decided_by + ' · ' + (item.decided_at || '').replace('T', ' ')));
+    if (dec.not_applied_because) box.appendChild(el('p', 'err', 'Not applied yet: ' + dec.not_applied_because + '. Reopen it and decide again.'));
     if (item.status !== 'applied') {
       var b = el('button', 'quiet', 'Reopen'); b.type = 'button';
       b.addEventListener('click', function () { api('/api/review/reopen', { word: item.word, kind: item.kind }).then(load).catch(function (e) { alert(e.message); }); });

@@ -8,6 +8,7 @@ have data. Thresholds live in data/alert_rules.json (PROPOSED: Swastham confirms
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import re
 import sys
@@ -70,12 +71,14 @@ def load_rules(path: Path | None = None) -> dict:
     return json.loads((path or RULES_PATH).read_text(encoding="utf-8"))
 
 
-def read_records(path: Path) -> list[dict]:
-    """Every readable line of the log. A damaged line is skipped, never fatal."""
-    records: list[dict] = []
-    if not path.exists():
-        return records
-    with open(path, encoding="utf-8", errors="replace") as handle:
+_DAY_RE = re.compile(r"^\d{4}-\d{2}-\d{2}")
+
+
+def read_records(path: Path):
+    """Every readable line of the log, one at a time. A damaged line, a record without a real date, or a missing file never stops the report."""
+    if not path.is_file():
+        return
+    with open(path, encoding="utf-8-sig", errors="replace") as handle:
         for line in handle:
             line = line.strip()
             if not line:
@@ -84,12 +87,16 @@ def read_records(path: Path) -> list[dict]:
                 record = json.loads(line)
             except ValueError:
                 continue
-            if isinstance(record, dict) and isinstance(record.get("at"), str) and len(record["at"]) >= 10:
-                records.append(record)
-    return records
+            if isinstance(record, dict) and isinstance(record.get("at"), str) and _DAY_RE.match(record["at"]):
+                try:
+                    datetime.strptime(record["at"][:10], "%Y-%m-%d")
+                except ValueError:
+                    continue
+                yield record
 
 
 _ATTEMPT_RE = re.compile(r"attempt (\d+)")
+_RESULT_RE = re.compile(r": (pass\b.*|\[.*)$")
 
 
 def _count_trace(stats: DayStats, trace) -> None:
@@ -97,10 +104,9 @@ def _count_trace(stats: DayStats, trace) -> None:
         if not isinstance(line, str):
             continue
         if line.startswith(("R4/R7:", "R5-R8:")):
-            parts = line.split(": ", 2)
-            result = parts[2] if len(parts) == 3 else ""
+            found = _RESULT_RE.search(line)
             stats.gate_checks += 1
-            if not result.startswith("pass"):
+            if not (found and found.group(1).startswith("pass")):
                 stats.gate_rejections += 1
             if " after repairs " in line:
                 stats.repairs += 1
@@ -116,10 +122,14 @@ def _count_trace(stats: DayStats, trace) -> None:
         if line.startswith("R9: partial approved match"):
             stats.partial_matches += 1
         if line.startswith("R1: unknown ["):
-            stats.unknown_words += line.count("'") // 2 or 1
+            try:
+                words = ast.literal_eval(line[len("R1: unknown "):line.index("],") + 1])
+                stats.unknown_words += len(words) if isinstance(words, list) else 1
+            except (ValueError, SyntaxError):
+                stats.unknown_words += 1
 
 
-def summarise(records: list[dict]) -> dict[str, DayStats]:
+def summarise(records) -> dict[str, DayStats]:
     days: dict[str, DayStats] = {}
     for record in records:
         day = record["at"][:10]
@@ -179,7 +189,7 @@ def evaluate(days: dict[str, DayStats], day: str, rules: dict) -> list[Alert]:
     # 1 The gate rejects far fewer recipes than usual.
     rule = r["rejections_fell"]
     base_checks, base_rej = _sum(base, "gate_checks"), _sum(base, "gate_rejections")
-    if base_checks >= rule["min_baseline_checks"] and today.gate_checks >= rule["min_today_checks"]:
+    if base_checks >= max(1, rule["min_baseline_checks"]) and today.gate_checks >= max(1, rule["min_today_checks"]):
         base_rate, today_rate = base_rej / base_checks, today.gate_rejections / today.gate_checks
         if base_rate >= rule["min_baseline_rate"] and today_rate < base_rate * rule["today_below_fraction_of_baseline"]:
             add("rejections_fell",
@@ -207,7 +217,7 @@ def evaluate(days: dict[str, DayStats], day: str, rules: dict) -> list[Alert]:
 
     # 4 More recipe requests end with no checked recipe.
     rule = r["fallbacks_rose"]
-    if today.recipe_turns >= rule["min_recipe_turns"]:
+    if today.recipe_turns >= max(1, rule["min_recipe_turns"]):
         today_rate = today.recipe_fallbacks / today.recipe_turns
         base_turns = _sum(base, "recipe_turns")
         base_rate = (_sum(base, "recipe_fallbacks") / base_turns) if base_turns else 0.0
@@ -220,7 +230,7 @@ def evaluate(days: dict[str, DayStats], day: str, rules: dict) -> list[Alert]:
 
     # 5 The AI's wording keeps failing the checks.
     rule = r["wording_fallbacks_rose"]
-    if today.ai_wording_turns >= rule["min_ai_turns"]:
+    if today.ai_wording_turns >= max(1, rule["min_ai_turns"]):
         rate = today.wording_fallbacks / today.ai_wording_turns
         if rate >= rule["min_rate"]:
             add("wording_fallbacks_rose",
@@ -306,9 +316,15 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         path = args.file or load_settings().audit_log
+        if path.is_dir():
+            print(f"{path} is a folder, not an audit log file.", file=sys.stderr)
+            return 1
         days, day, alerts, rules = build(path, args.date)
     except ValueError:
         print("--date must be today, latest or YYYY-MM-DD", file=sys.stderr)
+        return 1
+    except OSError as exc:
+        print(f"Cannot read the audit log: {exc}", file=sys.stderr)
         return 1
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(errors="replace")

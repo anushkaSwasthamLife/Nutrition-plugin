@@ -17,9 +17,14 @@ from .loader import FLAG_MACRO_MISMATCH, FLAG_MACROS_INCOMPLETE, Library, Swasth
 from .person import AllergyFilter, Person
 from .textnorm import clean
 
-NUTRIENTS = ("energy_kcal", "carbohydrate_g", "fiber_g", "protein_g", "fat_g")
+MACROS = ("energy_kcal", "carbohydrate_g", "fiber_g", "protein_g", "fat_g")
+# Library v1.0.4 adds these six for USDA records (null = USDA publishes no value). They are summed for the gate only and never shown in answers.
+EXTRA_NUTRIENTS = ("sodium_mg", "sugars_g", "saturated_fat_g", "cholesterol_mg", "potassium_mg", "phosphorus_mg")
+NUTRIENTS = MACROS + EXTRA_NUTRIENTS
 NUTRIENT_WORDS = {"energy_kcal": "kcal", "carbohydrate_g": "carbohydrate", "fiber_g": "fibre", "protein_g": "protein",
-                  "fat_g": "fat", "sodium_mg": "sodium", "added_sugar_g": "added sugar"}
+                  "fat_g": "fat", "sodium_mg": "sodium", "added_sugar_g": "added sugar", "sugars_g": "sugar",
+                  "saturated_fat_g": "saturated fat", "cholesterol_mg": "cholesterol", "potassium_mg": "potassium",
+                  "phosphorus_mg": "phosphorus"}
 ALLOWED_KINDS = {"sabji", "dal"}
 AI_LABEL = ("AI-suggested recipe, checked by our system against general limits for your conditions. "
             "Your doctor or dietitian has the final say.")
@@ -80,6 +85,13 @@ class RecipeOutcome:
 
 def _d(value) -> Decimal:
     return Decimal(str(value))
+
+
+def _valid_amount(value) -> Decimal | None:
+    """A nutrient amount from the library as an exact decimal, or None when it is not a usable number."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
+        return None
+    return _d(value)
 
 
 class RecipeService:
@@ -159,13 +171,13 @@ class RecipeService:
             rec = self.library.get(rid) if rid else None
             flags = self.library.flags.get(rid, set()) if rid else set()
             ok = rec is not None and not self.library.is_indian(rid) and not (flags & {FLAG_MACRO_MISMATCH, FLAG_MACROS_INCOMPLETE})
-            per100 = (rec or {}).get("nutrients_per_100g") or {}
+            per100 = (rec or {}).get("nutrients_per_100g") if isinstance((rec or {}).get("nutrients_per_100g"), dict) else {}
             for n in NUTRIENTS:
-                value = per100.get(n) if ok else None
-                if value is None:
+                value = _valid_amount(per100.get(n)) if ok else None
+                if value is None:                           # absent, null, text, NaN, infinite, negative or a boolean: all are "no data"
                     missing.setdefault(n, []).append(item["food"])
                 else:
-                    totals[n] += _d(value) * _d(item["grams"]) / Decimal(100) * self.factors.get(n, Decimal(1))
+                    totals[n] += value * _d(item["grams"]) / Decimal(100) * self.factors.get(n, Decimal(1))
         recipe.totals = {n: v for n, v in totals.items() if n not in missing}
         recipe.missing = missing
 
@@ -475,7 +487,7 @@ class RecipeService:
                 v = recipe.totals[n].quantize(Decimal("1"), rounding=ROUND_HALF_UP)
                 parts.append(f"{v} kcal" if n == "energy_kcal" else f"{v} g {NUTRIENT_WORDS[n]}")
         text = "about " + ", ".join(parts) + " for the whole dish (calculated from USDA)" if parts else ""
-        if recipe.missing:
+        if any(n in recipe.missing for n in MACROS):      # the extra nutrients are never shown, so their gaps are not worth mentioning
             text += ("; " if text else "") + "some values aren't available"
         return text
 

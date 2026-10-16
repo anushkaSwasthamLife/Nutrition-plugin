@@ -123,7 +123,7 @@ def test_apply_alias_and_new_food_with_allergen(env):
         env.queue.decide("kale", "ingredient", "reject", "Dr Rao", env.index, lib, alg, cats, reason="changed my mind")
 
 
-def test_apply_stops_and_writes_nothing_when_the_check_fails(env):
+def test_a_bad_item_is_skipped_with_its_reason_and_writes_nothing(env):
     env.add(line(kind="unknown_item", word="kale", item_kind="ingredient", suggested_food_id=""))
     env.queue.sync()
     env.queue.decide("kale", "ingredient", "new_food", "Dr Rao", env.index, env.engine_.library, {"milk"}, {"vegetable"},
@@ -132,11 +132,11 @@ def test_apply_stops_and_writes_nothing_when_the_check_fails(env):
         con.execute("UPDATE items SET decision=? WHERE word='kale'", (json.dumps(
             {"action": "new_food", "name": "kale", "category": "vegetable", "allergens": [], "record_id": "NOT-A-RECORD", "aliases": []}),))
     before = (env.fm.read_text(encoding="utf-8"), env.al.read_text(encoding="utf-8"))
-    with pytest.raises(ApplyError) as err:
-        env.queue.apply(env.engine_, env.fm, env.al, "Dr Rao")
-    assert "NOT-A-RECORD" in " ".join(err.value.problems)
+    result = env.queue.apply(env.engine_, env.fm, env.al, "Dr Rao")
+    assert result["applied"] == 0 and "NOT-A-RECORD" in result["skipped"][0]["why"]
     assert (env.fm.read_text(encoding="utf-8"), env.al.read_text(encoding="utf-8")) == before
-    assert env.queue.items()[0]["status"] == "decided"
+    item = env.queue.items()[0]
+    assert item["status"] == "decided" and "NOT-A-RECORD" in item["decision"]["not_applied_because"]
 
 
 def test_apply_skips_a_name_taken_in_the_meantime(env):

@@ -71,7 +71,7 @@ def test_search_returns_usda_records_only(engine, tmp_path):
     assert client.get("/api/review/search", params={"q": "k"}).status_code == 422
 
 
-def test_a_failed_check_is_a_409_and_changes_nothing(engine, tmp_path):
+def test_a_bad_item_is_skipped_with_a_reason_and_changes_nothing(engine, tmp_path):
     app, client = make_client(engine, tmp_path)
     with open(engine.settings.audit_log, "a", encoding="utf-8") as h:
         h.write(unknown("zzkale"))
@@ -86,7 +86,7 @@ def test_a_failed_check_is_a_409_and_changes_nothing(engine, tmp_path):
             {"action": "new_food", "name": "zzkale", "category": "vegetable", "allergens": [], "record_id": "NOT-A-RECORD", "aliases": []}),))
     before = (tmp_path / "food_master.json").read_text(encoding="utf-8")
     res = client.post("/api/review/apply", json={"by": "Dr Rao"})
-    assert res.status_code == 409 and "NOT-A-RECORD" in " ".join(res.json()["detail"]["problems"])
+    assert res.status_code == 200 and res.json()["applied"] == 0 and "NOT-A-RECORD" in res.json()["skipped"][0]["why"]
     assert (tmp_path / "food_master.json").read_text(encoding="utf-8") == before
 
 

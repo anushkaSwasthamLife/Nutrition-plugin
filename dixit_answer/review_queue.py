@@ -16,7 +16,9 @@ Older audit lines (before `unknown_item` existed) are read too, from the recipe 
 from __future__ import annotations
 
 import ast
+import hashlib
 import json
+import os
 import re
 import sqlite3
 import threading
@@ -73,6 +75,7 @@ class ReviewQueue:
         db_path.parent.mkdir(parents=True, exist_ok=True)
         self.db_path, self.audit_path = db_path, audit_path
         self._lock = threading.Lock()
+        self._apply_lock = threading.Lock()
         with self._connect() as con:
             con.executescript(_SCHEMA)
 
@@ -90,11 +93,14 @@ class ReviewQueue:
             row = con.execute("SELECT value FROM meta WHERE key='offset'").fetchone()
             offset = int(row["value"]) if row else 0
             size = self.audit_path.stat().st_size
-            if size < offset:
-                offset = 0
             with open(self.audit_path, "rb") as handle:
+                start = hashlib.sha256(handle.read(256)).hexdigest()       # the first lines identify the file
+                known = con.execute("SELECT value FROM meta WHERE key='start'").fetchone()
+                if size < offset or (known and known["value"] != start):
+                    offset = 0                                               # truncated or replaced: read it from the top
                 handle.seek(offset)
                 data = handle.read()
+            con.execute("INSERT OR REPLACE INTO meta VALUES ('start', ?)", (start,))
             end = data.rfind(b"\n") + 1                      # only whole lines
             added = 0
             for line in data[:end].decode("utf-8", errors="replace").splitlines():
@@ -111,7 +117,11 @@ class ReviewQueue:
         key = _key(word)
         if not key or len(key) < 2:
             return 0
-        cid, turn, at = str(record.get("conversation_id") or ""), int(record.get("turn") or 0), str(record.get("at") or "")
+        try:
+            turn = int(record.get("turn") or 0)
+        except (TypeError, ValueError, OverflowError):
+            turn = 0
+        cid, at = str(record.get("conversation_id") or "")[:80], str(record.get("at") or "")[:40]
         cur = con.execute("INSERT OR IGNORE INTO events VALUES (?,?,?,?,?)", (cid, turn, key, kind, at))
         con.execute("INSERT OR IGNORE INTO items (word, kind, suggested_food_id) VALUES (?,?,?)", (key, kind, suggested))
         if suggested:
@@ -121,8 +131,11 @@ class ReviewQueue:
     def _ingest(self, con, record: dict) -> int:
         added = 0
         if record.get("kind") == "unknown_item":
-            return self._event(con, record, record.get("word", ""), record.get("item_kind") or "ingredient",
-                               str(record.get("suggested_food_id") or ""))
+            word, item_kind = record.get("word"), record.get("item_kind")
+            if not isinstance(word, str):
+                return 0
+            return self._event(con, record, word, item_kind if item_kind in ACTIONS else "ingredient",
+                               str(record.get("suggested_food_id") or "")[:80])
         if record.get("kind") != "turn":
             return 0
         for line in record.get("recipe_trace") or []:       # older lines, from before unknown_item records existed
@@ -177,16 +190,18 @@ class ReviewQueue:
     def decide(self, word: str, kind: str, action: str, by: str, index: FoodIndex, library=None, allergen_keys=(),
                categories=(), **fields) -> dict:
         """Record a decision. Nothing in the chat changes until `apply`."""
-        by = (by or "").strip()
+        by = by.strip() if isinstance(by, str) else ""
         if len(by) < 2:
             raise QueueError("Say who is deciding (your name), so the decision can be traced.")
+        if not isinstance(word, str) or not isinstance(kind, str) or not isinstance(action, str):
+            raise QueueError("The word, kind and action must be text.")
         if kind not in ACTIONS or action not in ACTIONS[kind]:
             raise QueueError(f"'{action}' is not an option for a {kind}.")
         key = _key(word)
         decision: dict = {"action": action}
         if action == "alias":
             food_id = fields.get("food_id")
-            if food_id not in index.foods:
+            if not isinstance(food_id, str) or food_id not in index.foods:
                 raise QueueError("Choose which food this word is another name for.")
             decision["food_id"] = food_id
         elif action == "new_food":
@@ -218,100 +233,170 @@ class ReviewQueue:
 
     @staticmethod
     def _validate_new_food(word: str, fields: dict, index: FoodIndex, library, allergen_keys, categories) -> dict:
-        name = clean(str(fields.get("name") or word))
+        raw_name = fields.get("name") or word
+        if not isinstance(raw_name, str):
+            raise QueueError("Give the food a name.")
+        name = clean(raw_name)[:60]
         if len(name) < 2:
             raise QueueError("Give the food a name.")
         category = fields.get("category")
-        if category not in set(categories):
+        if not isinstance(category, str) or category not in set(categories):
             raise QueueError("Choose a category from the list.")
         allergens = fields.get("allergens")
         if not isinstance(allergens, list) or fields.get("allergens_confirmed") is not True:
             raise QueueError("Confirm the allergens: tick the ones that apply, or confirm that it has none.")
-        if any(a not in set(allergen_keys) for a in allergens):
+        if any(not isinstance(a, str) or a not in set(allergen_keys) for a in allergens):
             raise QueueError("An allergen is not one we track.")
+        allergens = sorted(set(allergens))
         record = fields.get("record_id")
-        if library is None or record not in library.records:
+        if library is None or not isinstance(record, str) or record not in library.records:
             raise QueueError("Choose the USDA record that gives this food's nutrition per 100 g.")
         if library.is_indian(record):
             raise QueueError("Choose a USDA record. Indian library records are not used for recipe maths.")
-        aliases = sorted({a for a in (_key(x) for x in [word, *(fields.get("aliases") or [])]) if a and a != name})
+        extra = fields.get("aliases") or []
+        if not isinstance(extra, list) or len(extra) > 10 or any(not isinstance(x, str) for x in extra):
+            raise QueueError("Other names must be a short list of words.")
+        aliases = sorted({a for a in (_key(x) for x in [word, *extra]) if a and len(a) >= 2 and a != name})
         if index.alias_to_id.get(name) or any(index.alias_to_id.get(a) for a in aliases):
             raise QueueError("We already have a food with that name. Use 'another name for' instead.")
-        return {"name": name, "category": category, "allergens": sorted(allergens), "record_id": record, "aliases": aliases}
+        return {"name": name, "category": category, "allergens": allergens, "record_id": record, "aliases": aliases}
 
     # ------------------------------------------------------------------ applying
+    def _note(self, word: str, kind: str, text: str) -> None:
+        """Keep the reason an item could not be applied with the item, so the reviewer sees it on the page."""
+        with self._lock, self._connect() as con:
+            row = con.execute("SELECT decision FROM items WHERE word=? AND kind=?", (word, kind)).fetchone()
+            if row:
+                decision = json.loads(row["decision"] or "{}")
+                if text:
+                    decision["not_applied_because"] = text
+                else:
+                    decision.pop("not_applied_because", None)
+                con.execute("UPDATE items SET decision=? WHERE word=? AND kind=?", (json.dumps(decision, ensure_ascii=False), word, kind))
+
+    @staticmethod
+    def _write_atomically(path: Path, text: str) -> None:
+        tmp = path.with_name(path.name + ".tmp")
+        try:
+            tmp.write_text(text, encoding="utf-8")
+            os.replace(tmp, path)
+        finally:
+            try:
+                tmp.unlink()                                      # nothing is left behind if the replace failed
+            except FileNotFoundError:
+                pass
+
     def apply(self, engine, food_master_path: Path, allergen_map_path: Path, by: str) -> dict:
-        """Write every 'decided' ingredient into the food master (and allergen map), if the result passes the consistency check."""
-        by = (by or "").strip()
+        """Write every 'decided' ingredient into the food master (and allergen map), one at a time, each only if the result passes
+        the engine's start-up consistency check. An item that would break the check is skipped with its reason (kept on the item);
+        the others still go in. Nothing is written when no item passes."""
+        by = by.strip() if isinstance(by, str) else ""
         if len(by) < 2:
             raise QueueError("Say who is applying the changes.")
-        decided = [i for i in self.items(status="decided", kind="ingredient")]
+        with self._apply_lock:
+            return self._apply(engine, food_master_path, allergen_map_path, by)
+
+    def _apply(self, engine, food_master_path: Path, allergen_map_path: Path, by: str) -> dict:
+        decided = self.items(status="decided", kind="ingredient")
         if not decided:
             return {"applied": 0, "version": engine.data.food_master["version"], "changes": [], "skipped": []}
-        old_fm_text = food_master_path.read_text(encoding="utf-8")
-        old_al_text = allergen_map_path.read_text(encoding="utf-8")
-        fm, al = json.loads(old_fm_text), json.loads(old_al_text)
+        try:
+            old_fm_text = food_master_path.read_text(encoding="utf-8")
+            old_al_text = allergen_map_path.read_text(encoding="utf-8")
+            fm, al = json.loads(old_fm_text), json.loads(old_al_text)
+            if not isinstance(fm, dict) or not isinstance(al, dict) or not isinstance(fm.get("foods"), list) \
+                    or not isinstance(al.get("allergens"), dict) or not isinstance(fm.get("version"), str):
+                raise ValueError("unexpected layout")
+        except (OSError, ValueError) as exc:
+            raise ApplyError([f"the food list or allergen map cannot be read ({exc.__class__.__name__}). Nothing was changed."]) from exc
         by_id = {f["id"]: f for f in fm["foods"]}
         taken = {_key(a): f["id"] for f in fm["foods"] for a in [f["name"], *f.get("aliases", [])]}
-        changes, skipped, done = [], [], []
         new_version = _bump(fm["version"])
+        spelling = engine.words.get("spelling_map")
+
+        def problems_of(foods_doc, allergen_doc) -> set[str]:
+            index = FoodIndex(foods_doc, spelling)
+            return set(find_problems(replace(engine.data, food_master=foods_doc, allergen_map=allergen_doc), engine.library, index,
+                                     engine.settings.environment))
+
+        baseline = problems_of(fm, al)
+        changes, skipped, done = [], [], []
         for item in decided:
             word, d = item["word"], item["decision"]
-            if d["action"] == "alias":
-                food = by_id.get(d["food_id"])
-                if food is None or (word in taken and taken[word] != d["food_id"]):
-                    skipped.append({"word": word, "why": "the name is already used by another food, or the food no longer exists"})
-                    continue
-                if word not in taken:
-                    food.setdefault("aliases", []).append(word)
-                    taken[word] = food["id"]
-                changes.append({"word": word, "action": "alias", "food_id": food["id"]})
-            else:
-                fid = f"FOOD-{_slug(d['name'])}"
-                n = 2
-                while fid in by_id:
-                    fid, n = f"FOOD-{_slug(d['name'])}-{n}", n + 1
-                names = [d["name"], *d["aliases"]]
-                clashes = [x for x in names if x in taken]
-                if clashes:
-                    skipped.append({"word": word, "why": f"{clashes[0]} is already used by {taken[clashes[0]]}"})
-                    continue
-                food = {"id": fid, "name": d["name"], "category": d["category"], "aliases": sorted(set(names)),
-                        "allergens": d["allergens"], "fact_records": {"development": [d["record_id"]], "production": [d["record_id"]]},
-                        "ingredient_record": d["record_id"], "unit_weights_g": {}}
-                fm["foods"].append(food)
-                by_id[fid] = food
-                for x in names:
-                    taken[x] = fid
-                for allergen in d["allergens"]:
-                    entry = al["allergens"][allergen]
-                    if fid not in entry["foods"]:
-                        entry["foods"].append(fid)
-                changes.append({"word": word, "action": "new_food", "food_id": fid, "name": d["name"]})
+            trial_fm, trial_al = json.loads(json.dumps(fm)), json.loads(json.dumps(al))
+            t_by_id, t_taken = {f["id"]: f for f in trial_fm["foods"]}, dict(taken)
+            reason = ""
+            try:
+                if d.get("action") == "alias":
+                    food = t_by_id.get(d.get("food_id"))
+                    if food is None:
+                        reason = "the food it was matched to no longer exists"
+                    elif t_taken.get(word, food["id"]) != food["id"]:
+                        reason = f"the name is already used by {t_taken[word]}"
+                    elif word not in t_taken:
+                        food.setdefault("aliases", []).append(word)
+                        t_taken[word] = food["id"]
+                    change = {"word": word, "action": "alias", "food_id": d.get("food_id")}
+                else:
+                    fid = f"FOOD-{_slug(d['name'])}"
+                    n = 2
+                    while fid in t_by_id:
+                        fid, n = f"FOOD-{_slug(d['name'])}-{n}", n + 1
+                    names = [d["name"], *d["aliases"]]
+                    clash = next((x for x in names if x in t_taken), None)
+                    missing_allergen = next((a for a in d["allergens"] if a not in trial_al["allergens"]), None)
+                    if clash:
+                        reason = f"the name {clash} is already used by {t_taken[clash]}"
+                    elif missing_allergen:
+                        reason = f"the allergen {missing_allergen} is no longer in the allergen map"
+                    else:
+                        trial_fm["foods"].append({
+                            "id": fid, "name": d["name"], "category": d["category"], "aliases": sorted(set(names)), "allergens": d["allergens"],
+                            "fact_records": {"development": [d["record_id"]], "production": [d["record_id"]]},
+                            "ingredient_record": d["record_id"], "unit_weights_g": {}})
+                        for x in names:
+                            t_taken[x] = fid
+                        for allergen in d["allergens"]:
+                            if fid not in trial_al["allergens"][allergen]["foods"]:
+                                trial_al["allergens"][allergen]["foods"].append(fid)
+                    change = {"word": word, "action": "new_food", "food_id": fid, "name": d.get("name")}
+            except (KeyError, TypeError, AttributeError) as exc:
+                reason, change = f"the decision is incomplete ({exc.__class__.__name__})", {}
+            if not reason:
+                new_problems = problems_of(trial_fm, trial_al) - baseline
+                if new_problems:
+                    reason = "it would break the consistency check: " + "; ".join(sorted(new_problems)[:2])
+            if reason:
+                skipped.append({"word": word, "why": reason})
+                self._note(word, item["kind"], reason)
+                continue
+            fm, al, by_id, taken = trial_fm, trial_al, {f["id"]: f for f in trial_fm["foods"]}, t_taken
+            changes.append(change)
             done.append(item)
         if not changes:
             return {"applied": 0, "version": fm["version"], "changes": [], "skipped": skipped}
         fm["version"] = new_version
-        fm.setdefault("review_log", []).extend(
-            {"version": new_version, "at": time.strftime("%Y-%m-%dT%H:%M:%S"), "applied_by": by[:80], **c} for c in changes)
-        if any(c["action"] == "new_food" for c in changes) and any(i["decision"].get("allergens") for i in done):
+        fm.setdefault("review_log", []).extend({"version": new_version, "at": time.strftime("%Y-%m-%dT%H:%M:%S"), "applied_by": by[:80], **c}
+                                                for c in changes)
+        if any(i["decision"].get("allergens") for i in done if i["decision"].get("action") == "new_food"):
             al["version"] = _bump(al["version"])
-        # The same check the engine runs at start-up. Anything wrong: stop, write nothing.
-        index = FoodIndex(fm, engine.words.get("spelling_map"))
-        problems = find_problems(replace(engine.data, food_master=fm, allergen_map=al), engine.library, index,
-                                 engine.settings.environment)
-        if problems:
-            raise ApplyError(problems)
+        if problems_of(fm, al) - baseline:                               # last look at the finished result
+            raise ApplyError(sorted(problems_of(fm, al) - baseline))
         try:
-            food_master_path.write_text(json.dumps(fm, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-            allergen_map_path.write_text(json.dumps(al, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-        except OSError:
-            food_master_path.write_text(old_fm_text, encoding="utf-8")
-            allergen_map_path.write_text(old_al_text, encoding="utf-8")
-            raise
+            self._write_atomically(food_master_path, json.dumps(fm, indent=2, ensure_ascii=False) + "\n")
+            self._write_atomically(allergen_map_path, json.dumps(al, indent=2, ensure_ascii=False) + "\n")
+        except OSError as exc:
+            for path, text in ((food_master_path, old_fm_text), (allergen_map_path, old_al_text)):
+                try:
+                    self._write_atomically(path, text)
+                except OSError:
+                    pass
+            raise ApplyError([f"the files could not be written ({exc.__class__.__name__}). The earlier food list was put back."]) from exc
         with self._lock, self._connect() as con:
             for item in done:
                 con.execute("UPDATE items SET status='applied', applied_in=? WHERE word=? AND kind=?", (new_version, item["word"], item["kind"]))
+        for item in done:
+            self._note(item["word"], item["kind"], "")
         return {"applied": len(changes), "version": new_version, "changes": changes, "skipped": skipped}
 
 

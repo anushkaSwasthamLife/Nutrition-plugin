@@ -83,6 +83,20 @@ def find_problems(data, library, index, environment: str) -> list[str]:
             if key.startswith("FOOD-"):
                 need(key, f"tip {tip['tip_id']}")
 
+    # ---- every nutrient marked checkable must be one the recipe maths adds up, and the library must carry it
+    from .recipes import NUTRIENTS
+    for nutrient in data.condition_limits.get("verifiable_nutrients", []):
+        if nutrient not in NUTRIENTS:
+            problems.append(f"limits: {nutrient} is marked checkable but the recipe maths does not add it up")
+        elif nutrient not in {"energy_kcal", "carbohydrate_g", "fiber_g", "protein_g", "fat_g"}:
+            carried = [rid for rid in {f.get("ingredient_record") for f in foods.values()} if rid and rid in library.records
+                       and (library.records[rid].get("nutrients_per_100g") or {}).get(nutrient) is not None]
+            if not carried:
+                problems.append(f"limits: {nutrient} is marked checkable but no ingredient record in the library has a value for it")
+    for row in data.condition_limits["limits"]:
+        if row["nutrient"] not in NUTRIENTS and row["nutrient"] not in {"added_sugar_g"}:
+            problems.append(f"limits: {row['condition']}/{row['nutrient']} is not a nutrient we know")
+
     # ---- limits and the Golden Rules
     for row in data.condition_limits["limits"]:
         if row.get("daily_max") is not None and (not isinstance(row["daily_max"], (int, float)) or row["daily_max"] <= 0):

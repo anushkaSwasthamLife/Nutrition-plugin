@@ -145,7 +145,8 @@ def test_limits_strictest_wins_and_clinician_target_tightens(engine):
     assert both["energy_kcal"].release_at == Decimal(1800) * Decimal("0.9")
     tight = svc.compile_limits(Person(clinician_targets={"energy_kcal": 800}))
     assert tight["energy_kcal"].limit_max == Decimal(800)
-    assert not svc.compile_limits(Person(conditions=["hypertension"]))["sodium_mg"].verifiable   # no sodium data yet
+    assert svc.compile_limits(Person(conditions=["hypertension"]))["sodium_mg"].verifiable       # library v1.0.4 has sodium
+    assert not svc.compile_limits(Person(conditions=["diabetes"]))["added_sugar_g"].verifiable    # no USDA download publishes added sugars
 
 
 def test_stale_intake_is_ignored_not_treated_as_nothing_eaten(engine):
@@ -253,8 +254,8 @@ def test_ai_draft_with_amounts_in_steps_is_rejected(settings):
 
 def test_unverifiable_limit_keeps_ai_drafting_off(settings):
     engine, llm = make_engine(settings, [GOOD])
-    r = engine.answer("I have lauki and tomato, what can I cook? I have high bp", None, {"allergies": []})
-    assert not llm.requests and "AI-suggested" not in r.answer         # sodium can't be checked yet
+    r = engine.answer("I have lauki and tomato, what can I cook?", None, {"allergies": [], "conditions": ["diabetes"]})
+    assert not llm.requests and "AI-suggested" not in r.answer         # added sugars can't be checked yet
 
 
 def test_production_never_drafts_with_ai(settings):

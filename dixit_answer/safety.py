@@ -57,8 +57,7 @@ def check(text: str, state: ChatState, word_lists: dict, emergency_rules: Emerge
     negations = word_lists["negation_words"]
     result.em = (emergency_rules or default_emergency_rules()).check(text, negations)
     if result.em.is_emergency:
-        result.emergency, result.emergency_phrase = True, result.em.matched[0]["what"]
-        return result
+        result.emergency, result.emergency_phrase = True, result.em.matched[0]["what"]     # (the risk words below are still read)
 
     for field_name, terms in word_lists["risk_terms"].items():
         for term in terms:

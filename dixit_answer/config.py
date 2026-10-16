@@ -14,7 +14,7 @@ PACKAGE_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = PACKAGE_DIR.parent
 DATA_DIR = PACKAGE_DIR / "data"
 
-DEFAULT_LIBRARY_DIR = Path.home() / "Desktop" / "Nutrition" / "Swastham_Nutrition_Data_Library_v1_0_3"
+DEFAULT_LIBRARY_DIR = Path.home() / "Desktop" / "Nutrition" / "Swastham_Nutrition_Data_Library_v1_0_4"
 
 
 def _read_env_file(path: Path) -> dict[str, str]:

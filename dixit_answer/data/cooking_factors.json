@@ -1,6 +1,18 @@
 {
-  "version": "CF-0.1.0",
+  "version": "CF-0.2.0",
   "status": "TEST ONLY",
-  "note": "Whole-dish totals are summed from raw ingredient weights. Water lost in cooking changes weight, not the total energy or macronutrients, so the factor is 1.0 for these; USDA retention factors (public domain) matter for vitamins and minerals, which are not used yet. Oil is counted in full (nothing assumed left in the pan).",
-  "factors": {"energy_kcal": 1.0, "carbohydrate_g": 1.0, "fiber_g": 1.0, "protein_g": 1.0, "fat_g": 1.0}
+  "note": "Whole-dish totals are summed from raw ingredient weights. Water lost in cooking changes weight, not the total energy or macronutrients, so the factor is 1.0 for these; USDA retention factors (public domain) matter for vitamins and minerals, which are not used yet. Oil is counted in full (nothing assumed left in the pan). CF-0.2.0: the six extra nutrients also use 1.0, meaning no loss in cooking is assumed. Boiling can wash some potassium and sodium into the water, so this slightly over-counts them. That is the safe direction for a maximum limit; a reviewer may refine it with USDA retention factors.",
+  "factors": {
+    "energy_kcal": 1.0,
+    "carbohydrate_g": 1.0,
+    "fiber_g": 1.0,
+    "protein_g": 1.0,
+    "fat_g": 1.0,
+    "sodium_mg": 1.0,
+    "sugars_g": 1.0,
+    "saturated_fat_g": 1.0,
+    "cholesterol_mg": 1.0,
+    "potassium_mg": 1.0,
+    "phosphorus_mg": 1.0
+  }
 }

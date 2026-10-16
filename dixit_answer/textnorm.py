@@ -14,7 +14,7 @@ _SPACE_RE = re.compile(r"\s+")
 def clean(text: str, spelling_map: dict[str, str] | None = None) -> str:
     """Lower-case, strip accents and punctuation, collapse spaces, map spelling variants word by word."""
     text = unicodedata.normalize("NFKD", text or "")
-    text = "".join(ch for ch in text if not unicodedata.combining(ch))
+    text = "".join(ch for ch in text if not unicodedata.combining(ch) and unicodedata.category(ch) != "Cf")   # accents and invisible format marks
     text = text.lower().replace("’", "'").replace("–", " ").replace("—", " ")
     text = _PUNCT_RE.sub(" ", text)
     text = text.replace("-", " ")

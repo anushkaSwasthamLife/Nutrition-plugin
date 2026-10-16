@@ -18,13 +18,15 @@ from dataclasses import dataclass, field
 from .textnorm import clean, has_phrase
 
 _GLUCOSE_RE = re.compile(
-    r"\b(?:blood\s+)?(?:sugar|glucose|bg|rbs|fbs|ppbs|grbs)\b"
+    r"(?<![\w])(?:blood\s+)?(?:sugar|glucose|bg|rbs|fbs|ppbs|grbs|\u0936\u0941\u0917\u0930|\u0917\u094d\u0932\u0942\u0915\u094b\u095b|\u0917\u094d\u0932\u0942\u0915\u094b\u091c)(?![\w])"
     r"(?:\s+(?:level|levels|reading|readings|is|was|at|of|came|comes|now|just|only|showing|shows|around|about|went|has|have|"
-    r"dropped|fell|gone|down|up|to|ho|gayi|gaya|hai|aa|rahi|raha))*"
+    r"dropped|fell|gone|down|up|to|ho|gayi|gaya|hai|aa|rahi|raha|\u0932\u0947\u0935\u0932|\u0939\u0948|\u0939\u094b|\u0917\u0908|\u0917\u092f\u093e|\u0905\u092d\u0940|\u0906\u091c))*"
     r"\s*[:=-]?\s*(\d{1,3}(?:\.\d+)?)\s*(mg\s*/?\s*dl|mg|mmol(?:\s*/\s*l)?)?",
 )
+_CLAUSE_SPLIT = re.compile(r"[.,;:!?\u0964]+|(?<![\w])(?:but|however|although|lekin|magar)(?![\w])", re.IGNORECASE)   # \u0964 is the Hindi full stop
+_DEVANAGARI_DIGITS = str.maketrans("\u0966\u0967\u0968\u0969\u096a\u096b\u096c\u096d\u096e\u096f", "0123456789")
 _FOOD_UNIT_RE = re.compile(r"^\s*(?:g|gm|gms|gram|grams|kg|ml|l|litre|liter|tsp|tbsp|spoons?|teaspoons?|tablespoons?|cups?|"
-                           r"kcal|cal|calories|%|percent|pieces?)\b")
+                           r"kcal|cal|calories|%|percent|pieces?)(?![\w])")
 
 
 @dataclass
@@ -50,27 +52,76 @@ class EmergencyRules:
         self.glucose = rules["glucose"]
         self.categories = sorted(rules["categories"], key=lambda c: c["priority"])
         self.by_id = {c["id"]: c for c in self.categories}
+        info = rules.get("informational", {})
+        self.definition_starts = [clean(x) for x in info.get("definition_starts", [])]
+        self.food_words = {clean(x) for x in info.get("food_words", [])}
+        self.urgent_words = {clean(x) for x in info.get("urgent_words", [])}
+        self.fillers = {clean(x) for x in rules.get("negation_fillers", [])}
+        self.past_re = re.compile(r"(?<![\w])(?:" + "|".join(re.escape(clean(x)) for x in info.get("past_markers", ["\0"])) + r")(?![\w])")
+        art = r"(?: (?:a|an|the|my|his|her|your))?"
+        self.before_re = re.compile(r"(?<![\w])(?:" + "|".join(re.escape(clean(x)) for x in info.get("before_markers", ["\0"])) + r")" + art + r"$")
+        self.after_re = re.compile(r"^ (?:" + "|".join(re.escape(clean(x)) for x in info.get("after_markers", ["\0"])) + r")(?![\w])")
+        self.hazard_re = re.compile(r"^ (?:" + "|".join(re.escape(clean(x)) for x in info.get("hazard_markers", ["\0"])) + r")(?![\w])")
         for cat in self.categories:
             cat["_phrases"] = [clean(p) for p in cat["phrases"]]
             cat["_combos"] = [[[clean(w) for w in group] for group in combo] for combo in cat.get("combos", [])]
+        self.symptom_words = {w for c in self.categories for p in c["_phrases"] for w in p.split()} | \
+            {w for c in self.categories for combo in c["_combos"] for group in combo for x in group for w in x.split()}
 
     # ------------------------------------------------------------------
-    def _negated(self, cleaned: str, phrase: str, negations) -> bool:
-        """True only if EVERY occurrence of the phrase has a negation in the few words just before it."""
-        found = False
-        for match in re.finditer(r"(?<![\w])" + re.escape(phrase) + r"(?![\w])", cleaned):
-            found = True
-            before = cleaned[:match.start()].split()[-self.window:]
-            joined = " ".join(before)
-            if not (any(n in before for n in negations if " " not in n) or
-                    any(has_phrase(joined, n) for n in negations if " " in n)):
+    def _negated_before(self, tokens: list[str], negations) -> bool:
+        """A negation counts only when it sits right in front of the symptom: nothing but small filler words, or other symptoms in a
+        list ("without fainting or chest pain"), may stand between them. "without help I can't breathe" is not negated."""
+        single = {n for n in negations if " " not in n}
+        multi = [n.split() for n in negations if " " in n]
+        joined = False                                    # have we passed "or" / "and", so earlier symptoms belong to the same list?
+        for steps, i in enumerate(range(len(tokens) - 1, -1, -1)):
+            if steps >= 6:
                 return False
-        return found
+            tok = tokens[i]
+            if tok in single or any(tokens[max(0, i - len(m) + 1):i + 1] == m for m in multi):
+                return True
+            if tok in ("or", "and"):
+                joined = True
+            elif tok in self.symptom_words and joined:
+                continue                              # "without fainting or chest pain": fainting belongs to the same negated list
+            elif tok not in self.fillers:
+                return False                          # "no chest pain I fainted": a symptom with no "or" in between starts a new statement
+        return False
+
+    def _informational(self, clause: str, start: int, end: int) -> bool:
+        """The symptom is named, but nobody is describing something happening now: a definition ("what is anaphylaxis"), a long-past
+        event ("my father had a heart attack last year"), or a diet question about it ("what to eat after a stroke")."""
+        before, after = clause[:start].strip(), clause[end:]
+        if set(clause.split()) & self.urgent_words:         # "now", "still", "again", "help" ...: it is happening, whatever else the sentence says
+            return False
+        if any(before in (s, f"{s} a", f"{s} an", f"{s} the") for s in self.definition_starts):
+            return True
+        if self.past_re.search(clause):
+            return True
+        if set(clause.split()) & self.food_words:
+            if self.before_re.search(before) or self.after_re.search(after):
+                return True
+        return bool(self.hazard_re.search(after))
+
+    def _scan(self, clauses: list[str], phrase: str, negations, negatable: bool = True) -> tuple[bool, bool]:
+        """(found and counts, found but set aside). Set aside means negated ("no chest pain") or only talked about (see _informational).
+        Both are judged inside one clause (clauses end at . , ; : ! ? and at "but"). A category that is not negatable (self-harm)
+        is never set aside."""
+        positive = set_aside = False
+        pattern = re.compile(r"(?<![\w])" + re.escape(phrase) + r"(?![\w])")
+        for clause in clauses:
+            for match in pattern.finditer(clause):
+                aside = negatable and (self._negated_before(clause[:match.start()].split(), negations)
+                                       or self._informational(clause, match.start(), match.end()))
+                positive |= not aside
+                set_aside |= aside
+        return positive, set_aside
 
     def reading(self, text: str) -> float | None:
         """The lowest or highest blood-sugar reading in the message, in mg/dL (the one furthest from normal)."""
         values = []
-        lowered = (text or "").lower()
+        lowered = (text or "").lower().translate(_DEVANAGARI_DIGITS)
         for m in _GLUCOSE_RE.finditer(lowered):
             if _FOOD_UNIT_RE.match(lowered[m.end():]) and not m.group(2):
                 continue
@@ -86,19 +137,21 @@ class EmergencyRules:
         return min(values, key=lambda v: -abs(v - 120))
 
     def check(self, text: str, negations) -> EmergencyResult:
-        cleaned = clean(text)
+        text = text if isinstance(text, str) else ""
+        clauses = [c for c in (clean(part) for part in _CLAUSE_SPLIT.split(text)) if c]
         out = EmergencyResult()
         for cat in self.categories:
+            negatable = cat.get("negatable", True)
             for phrase in cat["_phrases"]:
-                if has_phrase(cleaned, phrase):
-                    if self._negated(cleaned, phrase, negations):
-                        out.negated.append(phrase)
-                    else:
-                        out.matched.append({"category": cat["id"], "how": "phrase", "what": phrase})
+                positive, negated = self._scan(clauses, phrase, negations, negatable)
+                if positive:
+                    out.matched.append({"category": cat["id"], "how": "phrase", "what": phrase})
+                elif negated:
+                    out.negated.append(phrase)
             for combo in cat["_combos"]:
                 hits = []
                 for group in combo:
-                    hit = next((w for w in group if has_phrase(cleaned, w) and not self._negated(cleaned, w, negations)), None)
+                    hit = next((w for w in group if self._scan(clauses, w, negations, negatable)[0]), None)
                     if hit is None:
                         break
                     hits.append(hit)
