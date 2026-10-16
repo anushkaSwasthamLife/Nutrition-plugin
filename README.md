@@ -7,7 +7,7 @@ Standalone Python package until the Dixit app code is available. **Development b
 ## Run
 
 ```
-.venv\Scripts\python.exe -m pytest -q              # 1368 tests, about 5 minutes (no AI calls; the AI is mocked)
+.venv\Scripts\python.exe -m pytest -q              # 1438 tests, about 5 minutes (no AI calls; the AI is mocked)
 .venv\Scripts\python.exe -m dixit_answer.web       # chat page on http://127.0.0.1:8100
 ```
 

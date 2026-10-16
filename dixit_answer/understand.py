@@ -81,6 +81,15 @@ def _conditions(cleaned: str, word_lists: dict) -> list[str]:
     return [name for name, terms in word_lists["conditions"].items() if any(has_phrase(cleaned, clean(t)) for t in terms)]
 
 
+def scrub_conditions(cleaned: str, word_lists: dict) -> str:
+    """The message with every health-condition phrase taken out, so "I have obesity" is not read as a list of foods."""
+    terms = sorted({clean(t) for terms in word_lists["conditions"].values() for t in terms}, key=len, reverse=True)
+    for term in terms:
+        if term:
+            cleaned = re.sub(r"(?<![\w])" + re.escape(term) + r"(?![\w])", " ", cleaned)
+    return re.sub(r"\s+", " ", cleaned).strip()
+
+
 def _preference(cleaned: str, word_lists: dict) -> str:
     # Most specific first: "non veg" also contains "veg".
     for name in ("non_vegetarian", "egg", "jain", "vegetarian"):
@@ -223,7 +232,7 @@ def read_reply(cleaned: str, slot: str, foods: list[str], index: FoodIndex, word
 
 def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_finder=None, allergy_reader=None) -> Understanding:
     cleaned = clean(text, word_lists["spelling_map"])
-    mentions = index.find(cleaned, already_clean=True)
+    mentions = index.find(scrub_conditions(cleaned, word_lists), already_clean=True)       # "high sugar" is a condition, not the food sugar
     foods = [m.food_id for m in mentions]
     u = Understanding(cleaned=cleaned, type="", foods=foods, conditions=_conditions(cleaned, word_lists),
                       preference=_preference(cleaned, word_lists))
@@ -255,7 +264,10 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
                 u.unknown_dish = dish
     if INGREDIENTS.search(cleaned) and question_type == "meal_from_ingredients":
         u.ingredients = foods
-        u.unknown_words, u.suggestion = pantry_words(cleaned, index, word_lists.get("ingredient_stop_words", []))
+        u.unknown_words, u.suggestion = pantry_words(scrub_conditions(cleaned, word_lists), index, word_lists.get("ingredient_stop_words", []))
+        if u.conditions and not u.ingredients and not u.unknown_words and not u.recipe_ids:
+            question_type = "recipe_request"        # "I have obesity, what sabji would you recommend": no foods at home were named
+            u.suggestion = None
     if u.slot_fill:
         # A short answer with no question of its own is a pure reply (R6). A longer message can carry a new question too:
         # "No medicines. I have chapati, what sabji can I eat?"
@@ -266,5 +278,7 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
             u.type, u.is_reply = "followup_reply", True
             return u
         u.is_reply = True
+    if question_type == "out_of_scope" and u.conditions and not u.slot_fill:
+        question_type = "food_choice_guidance"       # "I have obesity": a health condition on its own is a food question in this programme
     u.type = question_type
     return u

@@ -21,6 +21,8 @@ Hard rules:
 - Do not write any digits or numbers yourself. Numbers only ever come from placeholders.
 - Do not name any food, dish or ingredient that is not already written in the draft outside the placeholders.
 - Do not add advice, foods, amounts, portions, meal plans, snacks, health claims, links or images.
+- Never put words directly in front of a {{PLACEHOLDER}} on the same line (no "Sure, {{T1}}", no "Let me know {{T2}}"): a
+  placeholder starts its own sentence or line, and the sentence before it must end with . ! ? or :
 - Keep markdown: **bold** labels and "- " bullet lines. Stay within max_words.
 - Use plain words. Never blame the person. No filler praise such as "great question".
 - Do not add new sentences, intros or outros: reword only the sentences that are already in the draft. Never use the words

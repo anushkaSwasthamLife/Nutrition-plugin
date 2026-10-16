@@ -48,6 +48,9 @@ def check_ai_text(ai_text: str, draft: Draft, plan: AnswerPlan, index: FoodIndex
         detail = f"missing {missing}, extra {extra}" if (missing or extra) else "placeholders out of order or repeated"
         results.append(_fail("PH", "critical", detail))
     free_text = PLACEHOLDER_RE.sub(" ", ai_text)
+    glued = _glued_before_placeholder(ai_text)
+    if glued:
+        results.append(_fail("JOIN", "major", f"words were put in front of a locked sentence on the same line: {glued[:3]}"))
     if MARKUP_RE.search(ai_text):
         results.append(_fail("MARKUP", "critical", "links, images, HTML or control characters in the wording"))
     if NUMBER_RE.search(free_text):
@@ -65,6 +68,19 @@ def check_ai_text(ai_text: str, draft: Draft, plan: AnswerPlan, index: FoodIndex
     if word_count(draft.fill(ai_text)) > plan.max_words * 1.25:
         results.append(_fail("LEN", "major", f"longer than {plan.max_words} words"))
     return results
+
+
+def _glued_before_placeholder(ai_text: str) -> list[str]:
+    """Words the AI put straight in front of a locked sentence ("Sure, {{T1}}", "Let me know {{T2}}"), which read badly because the
+    locked sentence starts with a capital letter. A full sentence or a label ending in . ! ? : before it is fine."""
+    found = []
+    for line in ai_text.splitlines():
+        for m in PLACEHOLDER_RE.finditer(line):
+            before = re.split(r"[.!?:]\s", line[:m.start()])[-1]
+            before = before.replace("*", "").replace("-", " ").strip()
+            if re.search(r"[A-Za-z]", before) and not re.search(r"[.!?:]\s*$", before) and PLACEHOLDER_RE.sub("", before).strip():
+                found.append(before)
+    return found
 
 
 def _word_checks(cleaned: str, words: dict) -> list[CheckResult]:
@@ -154,4 +170,4 @@ def blocking(results: list[CheckResult]) -> list[CheckResult]:
     failed = [r for r in results if not r.passed]
     critical = [r for r in failed if r.level == "critical"]
     major = [r for r in failed if r.level == "major"]
-    return failed if (critical or len(major) >= 2 or any(r.check_id in {"PH", "LEN", "N22", "N23"} for r in failed)) else []
+    return failed if (critical or len(major) >= 2 or any(r.check_id in {"PH", "LEN", "N22", "N23", "JOIN"} for r in failed)) else []

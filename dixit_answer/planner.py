@@ -71,7 +71,7 @@ def _choose_followup(plan: AnswerPlan, state: ChatState, allergies_known: bool =
         elif status.value == "currently_non_diabetic" and status.consultant_validated is None \
                 and state.consultant_asked_turn is None:
             ladder.append("FU-CONSULTANT")
-    if plan.type in RECIPE_TYPES and not allergies_known and state.allergy_asked_turn is None:
+    if (plan.type in RECIPE_TYPES or plan.wants_list) and not allergies_known and state.allergy_asked_turn is None:
         ladder.append("FU-ALLERGY")          # before the first food or recipe answer, ask once
     if plan.timing_advice and state.safety_asked_turn is None and state.risk_level() == "unknown":
         ladder.append("FU-SAFETY")
@@ -201,7 +201,13 @@ def make_plan(u: Understanding, state: ChatState, emergency: bool = False, aller
             blocks += ["direct"]
             if plan.protocol_level == "full":
                 blocks += ["safety_caution", "protocol_full"]
-            blocks += ["choices", "tip"]
+            if u.conditions and not u.foods and plan.protocol_level != "full":
+                # A person with a health condition asking what to eat: the general guidance, plus dishes that pass every check for them.
+                # (Not on the answer that explains the whole programme: it ends with the medicines question, and the dishes come next turn.)
+                plan.wants_list, plan.ingredients, plan.recipe_ids = True, [], []
+                blocks += ["choices", "recipe"]
+            else:
+                blocks += ["choices", "tip"]
     elif plan.type in {"food_allowed", "protocol_permission", "personal_suitability"}:
         plan.focus_foods = [f for f in u.foods if f not in u.pairs_with][:1] or u.foods[:1]
         plan.needs_status = bool(set(plan.focus_foods) & set(u.fruit_foods))

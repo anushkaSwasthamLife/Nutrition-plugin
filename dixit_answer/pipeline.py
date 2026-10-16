@@ -128,6 +128,8 @@ class Engine:
                 state.conditions_mentioned.append(condition)
         if not u.conditions and state.conditions_mentioned:
             u.conditions = list(state.conditions_mentioned)
+        if not u.conditions:
+            u.conditions = [c for c in profile.get("conditions", []) if c in self.words["conditions"]]      # the app already knows
         if u.preference and state.food_preference == "unknown":
             state.food_preference = u.preference
         if u.ingredients:

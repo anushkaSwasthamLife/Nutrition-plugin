@@ -249,6 +249,9 @@ class Composer:
     # ---------- recipes (stage 6d) ----------
     def _recipe_block(self, plan, state, u, person, d: Draft, lock, free, name, given: set) -> None:
         reply = bool(plan.reply_slot)
+        if person is None:                                  # no profile at all: allergies unknown, so the most careful rules apply
+            from .person import Person
+            person = Person()
         out = self.recipes.run(person=person, have=list(plan.ingredients), dish_ids=list(plan.recipe_ids),
                                unknown_words=[] if reply else list(u.unknown_words),
                                suggestion=None if reply else u.suggestion, wants_list=plan.wants_list,
