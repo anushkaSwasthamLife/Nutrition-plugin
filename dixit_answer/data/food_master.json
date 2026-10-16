@@ -1,7 +1,7 @@
 {
- "version": "FM-0.3.0",
+ "version": "FM-0.3.2",
  "status": "TEST ONLY",
- "note": "Draft food master table for development. Allergens, record choices and unit weights need dietitian review; unit weights are typical values to verify against USDA FoodData Central portion data. ingredient_record = USDA per-100 g record used for recipe maths. No IFCT links. FM-0.3.0 (16 Oct 2026): 35 more vegetables, leafy greens, roots and pulses/legumes added, each mapped to one USDA record; the vegetables people cook most in India were missing (capsicum, brinjal, karela, carrot and others). Names and aliases (Hindi, regional) need dietitian review; only carrot, beetroot and capsicum have a unit weight, the rest have none until a dietitian enters one. dry_weight = the record is for the dry, uncooked pulse: the AI is never asked to build a recipe around it (it needs soaking and boiling), approved recipes may use it.",
+ "note": "Draft food master table for development. Allergens, record choices and unit weights need dietitian review; unit weights are typical values to verify against USDA FoodData Central portion data. ingredient_record = USDA per-100 g record used for recipe maths. No IFCT links. FM-0.3.0 (16 Oct 2026): 35 more vegetables, leafy greens, roots and pulses/legumes added, each mapped to one USDA record; the vegetables people cook most in India were missing (capsicum, brinjal, karela, carrot and others). Names and aliases (Hindi, regional) need dietitian review; only carrot, beetroot and capsicum have a unit weight, the rest have none until a dietitian enters one. dry_weight = the record is for the dry, uncooked pulse: the AI is never asked to build a recipe around it (it needs soaking and boiling), approved recipes may use it. FM-0.3.2: rice now has a USDA record so approved recipes (khichdi, pulao, lemon rice) can use it; besan and suji added. The AI is never asked to draft around them.",
  "foods": [
   {
    "id": "FOOD-CHAPATI",
@@ -49,8 +49,9 @@
      "SURVEY-2710788"
     ]
    },
-   "ingredient_record": null,
-   "unit_weights_g": {}
+   "ingredient_record": "LEGACY-168877",
+   "unit_weights_g": {},
+   "dry_weight": true
   },
   {
    "id": "FOOD-DAL",
@@ -651,7 +652,11 @@
     "moong dal",
     "mung dal",
     "yellow moong dal",
-    "dhuli moong"
+    "dhuli moong",
+    "moong daal",
+    "mung daal",
+    "moong dhuli",
+    "green gram dal"
    ],
    "allergens": [],
    "unit_weights_g": {},
@@ -674,7 +679,9 @@
    "aliases": [
     "chana dal",
     "channa dal",
-    "bengal gram"
+    "bengal gram",
+    "chana daal",
+    "channa daal"
    ],
    "allergens": [
     "chickpea"
@@ -1627,7 +1634,9 @@
     "rajma",
     "kidney beans",
     "kidney bean",
-    "red kidney beans"
+    "red kidney beans",
+    "rajma beans",
+    "rajmah"
    ],
    "allergens": [],
    "unit_weights_g": {},
@@ -1680,7 +1689,9 @@
     "masoor",
     "red lentils",
     "red lentil",
-    "lal masoor"
+    "lal masoor",
+    "masoor daal",
+    "lal masoor dal"
    ],
    "allergens": [],
    "unit_weights_g": {},
@@ -1708,7 +1719,11 @@
     "toor",
     "pigeon peas",
     "red gram",
-    "tuvar dal"
+    "tuvar dal",
+    "toor daal",
+    "tur daal",
+    "tuvar daal",
+    "arhar daal"
    ],
    "allergens": [],
    "unit_weights_g": {},
@@ -1735,7 +1750,9 @@
     "black eyed beans",
     "chawli",
     "cowpeas",
-    "rongi"
+    "rongi",
+    "lobiya",
+    "lobhia"
    ],
    "allergens": [],
    "unit_weights_g": {},
@@ -1800,6 +1817,55 @@
      "LEGACY-172476"
     ]
    }
+  },
+  {
+   "id": "FOOD-BESAN",
+   "name": "besan",
+   "category": "pulse",
+   "aliases": [
+    "besan",
+    "gram flour",
+    "chickpea flour"
+   ],
+   "allergens": [
+    "chickpea"
+   ],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-174288",
+   "fact_records": {
+    "development": [
+     "LEGACY-174288"
+    ],
+    "production": [
+     "LEGACY-174288"
+    ]
+   },
+   "dry_weight": true
+  },
+  {
+   "id": "FOOD-SUJI",
+   "name": "suji",
+   "category": "staple",
+   "aliases": [
+    "suji",
+    "sooji",
+    "rava",
+    "semolina"
+   ],
+   "allergens": [
+    "gluten"
+   ],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-168933",
+   "fact_records": {
+    "development": [
+     "LEGACY-168933"
+    ],
+    "production": [
+     "LEGACY-168933"
+    ]
+   },
+   "dry_weight": true
   }
  ]
 }

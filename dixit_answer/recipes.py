@@ -28,6 +28,7 @@ NUTRIENT_WORDS = {"energy_kcal": "kcal", "carbohydrate_g": "carbohydrate", "fibe
 ALLOWED_KINDS = {"sabji", "dal"}
 AI_LABEL = ("AI-suggested recipe, checked by our system against general limits for your conditions. "
             "Your doctor or dietitian has the final say.")
+MAX_CHOICES = 6
 TIME_BUDGET_SECONDS = 15
 
 
@@ -109,6 +110,7 @@ class RecipeService:
         self.limits_cfg = data.condition_limits
         self.factors = {k: _d(v) for k, v in data.cooking_factors["factors"].items()}
         self.pantry = {f for f, food in index.foods.items() if food["category"] == "pantry"}
+        self.last_leftover: list[str] = []
         self.alias_to_recipe = {}
         for rid, recipe in self.recipes.items():
             for alias in [recipe["name"], *recipe.get("aliases", [])]:
@@ -132,6 +134,7 @@ class RecipeService:
                 if rid not in found:
                     found.append(rid)
                 text = text.replace(needle, " ")
+        self.last_leftover = text.split()           # words of the message that are not part of a dish name
         return found
 
     def compile_limits(self, person: Person) -> dict[str, Limit]:
@@ -342,14 +345,18 @@ class RecipeService:
 
         # R4: approved collection.
         candidates = [self._from_collection(rid) for rid in dish_ids if rid in self.recipes]
+        matchable = set(usable_have)
         if not candidates and usable_have:
+            # "dal" on its own means any of the dals; a named dal means that one
+            matchable = set(usable_have) | {f for f, food in self.index.foods.items() if food.get("generic") in set(usable_have)}
             ranked = []
             for rid, raw in self.recipes.items():
                 main = set(raw["main_ingredients"])
-                overlap = main & set(usable_have)
+                overlap = main & matchable
                 if overlap:
-                    ranked.append((len(main - set(usable_have)) == 0, len(overlap), -len(main), rid))
-            ranked.sort(reverse=True)
+                    ranked.append((len(main - matchable) == 0, len(overlap), -len(main), rid))
+            ranked.sort(key=lambda t: t[3])
+            ranked.sort(key=lambda t: t[:3], reverse=True)          # stable: the recipe list order decides ties
             full = [self._from_collection(rid) for is_full, _, _, rid in ranked if is_full]
             partial = [self._from_collection(rid) for is_full, _, _, rid in ranked if not is_full]
         else:
@@ -361,6 +368,7 @@ class RecipeService:
             out.trace.append(f"R4: offering {[r.name for r in out.choices]}")
             if out.choices:
                 return out
+        passed_full: list[CheckedRecipe] = []
         for recipe in full:
             check(recipe)
             for _ in range(2):                    # R8 also applies to approved recipes (e.g. ghee -> oil for a milk allergy)
@@ -370,13 +378,36 @@ class RecipeService:
             out.trace.append(f"R4/R7: {recipe.name}: {'pass' if recipe.gate.passed else recipe.gate.reasons}"
                              + (f" after repairs {recipe.repairs}" if recipe.repairs else ""))
             if recipe.gate.passed:
-                out.status, out.recipe = "recipe", recipe
-                return out
-            if dish_ids:
+                passed_full.append(recipe)
+            elif dish_ids:
                 out.rejected.append((recipe.name, recipe.gate.reasons))
+        if passed_full:
+            options = passed_full[:MAX_CHOICES]
+            if not dish_ids and len(options) < MAX_CHOICES:
+                # Dishes that need one more thing from the market are offered too, marked as such.
+                for recipe in partial:
+                    if len(options) >= MAX_CHOICES:
+                        break
+                    check(recipe)
+                    for _ in range(2):
+                        if recipe.gate.passed or not self.repair(recipe, recipe.gate):
+                            break
+                        check(recipe)
+                    if recipe.gate.passed:
+                        recipe.also_need = [f for f in recipe_main(recipe, self.recipes) if f not in matchable]
+                        options.append(recipe)
+            if len(options) >= 2 and not dish_ids:
+                # Several approved dishes use what the person has: offer them (up to six) instead of picking one for them.
+                out.status, out.choices = "choices", options
+                out.trace.append(f"R4: {len(options)} approved dishes fit what you have, offering {[r.name for r in out.choices]}")
+            else:
+                out.status, out.recipe = "recipe", passed_full[0]
+            return out
         if dish_ids and out.rejected:
             # A named dish that doesn't suit this person: offer approved dishes that do.
             pool = sorted(self.recipes, key=lambda rid: -len(set(self.recipes[rid]["main_ingredients"]) & set(home_foods)))
+            asked_main = {m for rid in dish_ids if rid in self.recipes for m in self.recipes[rid]["main_ingredients"]}
+            pool.sort(key=lambda rid: -len(asked_main & set(self.recipes[rid]["main_ingredients"])))      # dishes with the same main food first (stable)
             alternatives = [r for r in (check(self._from_collection(rid)) for rid in pool if rid not in dish_ids)
                             if r.gate.passed]
             if alternatives:

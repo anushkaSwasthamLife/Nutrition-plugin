@@ -114,7 +114,7 @@ class GoldenRules:
     def recipe_violations(self, foods: list[str], index_foods: dict, status: Status, kind: str, meal_place: str) -> list[tuple[str, str]]:
         """[(tag, reason)] for a recipe. Conservative: fruit only passes for a confirmed non-diabetic status."""
         out: list[tuple[str, str]] = []
-        if kind not in {"sabji", "dal"} or meal_place != "home_meal":
+        if kind not in {"sabji", "dal", "khichdi", "chilla"} or meal_place != "home_meal":
             out.append(("golden_rule:meal_place", "it isn't a home-meal dish (the programme allows nothing between meals)"))
         if any(index_foods[f]["category"] == "sweet" for f in foods):
             out.append(("golden_rule:sugar", "it adds sugar (the programme asks you to reduce sugar and sweets)"))

@@ -108,7 +108,7 @@ def test_apply_alias_and_new_food_with_allergen(env):
     env.queue.decide("khoa", "ingredient", "new_food", "Dr Rao", env.index, lib, alg, cats, name="khoa", category="dairy",
                      allergens=["milk"], allergens_confirmed=True, record_id=env.kale())
     result = env.queue.apply(env.engine_, env.fm, env.al, "Dr Rao")
-    assert result["applied"] == 3 and result["version"] == "FM-0.3.1" and not result["skipped"]
+    assert result["applied"] == 3 and result["version"] == "FM-0.3.3" and not result["skipped"]
     fm, al = json.loads(env.fm.read_text(encoding="utf-8")), json.loads(env.al.read_text(encoding="utf-8"))
     assert "lady finger fry" in next(f for f in fm["foods"] if f["id"] == "FOOD-BHINDI")["aliases"]
     kale = next(f for f in fm["foods"] if f["id"] == "FOOD-KALE")
@@ -117,7 +117,7 @@ def test_apply_alias_and_new_food_with_allergen(env):
     assert len(fm["review_log"]) == 3 and fm["review_log"][0]["applied_by"] == "Dr Rao"
     new_index = FoodIndex(fm, env.engine_.words["spelling_map"])
     assert [m.food_id for m in new_index.find("I have lady finger fry and kale leaves")] == ["FOOD-BHINDI", "FOOD-KALE"]
-    assert {i["status"] for i in env.queue.items()} == {"applied"} and env.queue.items()[0]["applied_in"] == "FM-0.3.1"
+    assert {i["status"] for i in env.queue.items()} == {"applied"} and env.queue.items()[0]["applied_in"] == "FM-0.3.3"
     assert env.queue.apply(env.engine_, env.fm, env.al, "Dr Rao")["applied"] == 0           # nothing left to apply
     with pytest.raises(QueueError, match="already been applied"):
         env.queue.decide("kale", "ingredient", "reject", "Dr Rao", env.index, lib, alg, cats, reason="changed my mind")

@@ -66,4 +66,4 @@ def test_unused_pantry_food_is_said_not_dropped(engine):
 
 def test_hinglish_foods_plus_what_to_make_is_a_recipe_request(engine):
     r = _ask(engine, "aloo pyaz hai kya banau", {"allergies": []})
-    assert r.plan["type"] == "meal_from_ingredients" and "You need" in r.answer
+    assert r.plan["type"] == "meal_from_ingredients" and ("You need" in r.answer or "Which one should I show?" in r.answer)

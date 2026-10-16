@@ -1,84 +1,4510 @@
 {
-  "collection_version": "RCP-0.1.0",
-  "status": "TEST ONLY",
-  "approved_by": null,
-  "approved_on": null,
-  "note": "Draft recipes for development, written from the analysis examples. A dietitian must write and sign the real collection; production refuses this file. Amounts are for the whole dish, never per person. Steps carry no amounts.",
-  "recipes": [
-    {"recipe_id": "RCP-SABJI-001", "name": "Aloo Pyaz ki Sabji (dry, light)", "aliases": ["aloo pyaz", "aloo pyaz ki sabji", "aloo onion sabji", "potato onion sabji"],
-     "kind": "sabji", "main_ingredients": ["FOOD-ALOO", "FOOD-ONION"], "diet": "vegetarian", "makes": "1 dish for 2 people",
-     "ingredients": [{"food": "FOOD-ALOO", "grams": 300, "unit": "2 medium"}, {"food": "FOOD-ONION", "grams": 110, "unit": "1 medium"},
-                     {"food": "FOOD-OIL", "grams": 9, "unit": "2 tsp"}, {"food": "FOOD-JEERA", "grams": 2}, {"food": "FOOD-HALDI", "grams": 1},
-                     {"food": "FOOD-DHANIA-POWDER", "grams": 2}, {"food": "FOOD-CHILLI-POWDER", "grams": 1}, {"food": "FOOD-SALT", "grams": 3}],
-     "steps": ["Heat the oil, add jeera, then the sliced onion; cook till soft.",
-               "Add the cubed potato with haldi, dhania powder, chilli powder and salt, and a splash of water.",
-               "Cover and cook for 12 to 15 minutes till the potato is soft, stirring now and then."],
-     "why_it_fits": "Dry preparation keeps the oil low.", "meal_place": "home_meal", "golden_rules_checked": true},
-    {"recipe_id": "RCP-SABJI-002", "name": "Bhindi Sabji (dry)", "aliases": ["bhindi sabji", "bhindi", "okra sabji", "bhindi fry"],
-     "kind": "sabji", "main_ingredients": ["FOOD-BHINDI"], "diet": "vegetarian", "makes": "1 dish for 2 people",
-     "ingredients": [{"food": "FOOD-BHINDI", "grams": 300}, {"food": "FOOD-ONION", "grams": 60, "unit": "half"},
-                     {"food": "FOOD-OIL", "grams": 9, "unit": "2 tsp"}, {"food": "FOOD-JEERA", "grams": 2}, {"food": "FOOD-HALDI", "grams": 1},
-                     {"food": "FOOD-DHANIA-POWDER", "grams": 2}, {"food": "FOOD-CHILLI-POWDER", "grams": 1}, {"food": "FOOD-SALT", "grams": 3}],
-     "steps": ["Wash the bhindi and dry it fully, then cut it into small pieces.",
-               "Heat the oil, add jeera, then the onion; cook till soft.",
-               "Add the bhindi, haldi, dhania powder and chilli powder; cook uncovered on low heat, stirring gently, till tender.",
-               "Add salt at the end so the bhindi stays crisp."],
-     "why_it_fits": "Fibre-rich and cooked with little oil.", "meal_place": "home_meal", "golden_rules_checked": true},
-    {"recipe_id": "RCP-SABJI-003", "name": "Aloo Gobhi (dry)", "aliases": ["aloo gobhi", "aloo gobi", "potato cauliflower"],
-     "kind": "sabji", "main_ingredients": ["FOOD-ALOO", "FOOD-CAULIFLOWER"], "diet": "vegetarian", "makes": "1 dish for 2 to 3 people",
-     "ingredients": [{"food": "FOOD-CAULIFLOWER", "grams": 300}, {"food": "FOOD-ALOO", "grams": 150, "unit": "1 medium"},
-                     {"food": "FOOD-OIL", "grams": 9, "unit": "2 tsp"}, {"food": "FOOD-JEERA", "grams": 2}, {"food": "FOOD-HALDI", "grams": 1},
-                     {"food": "FOOD-GINGER", "grams": 5}, {"food": "FOOD-DHANIA-POWDER", "grams": 2}, {"food": "FOOD-CHILLI-POWDER", "grams": 1},
-                     {"food": "FOOD-SALT", "grams": 3}],
-     "steps": ["Heat the oil, add jeera and the grated ginger.",
-               "Add the cauliflower florets and cubed potato with haldi, dhania powder, chilli powder and salt.",
-               "Cover and cook on low heat for 15 to 20 minutes till both are soft, stirring now and then."],
-     "why_it_fits": "Mixes a starchy vegetable with a fibre-rich one.", "meal_place": "home_meal", "golden_rules_checked": true},
-    {"recipe_id": "RCP-SABJI-004", "name": "Lauki Chana Dal", "aliases": ["lauki chana dal", "lauki dal", "ghiya chana dal"],
-     "kind": "dal", "main_ingredients": ["FOOD-LAUKI", "FOOD-CHANA-DAL"], "diet": "vegetarian", "makes": "1 dish for 3 people",
-     "ingredients": [{"food": "FOOD-LAUKI", "grams": 300}, {"food": "FOOD-CHANA-DAL", "grams": 60}, {"food": "FOOD-TOMATO", "grams": 100, "unit": "1 small"},
-                     {"food": "FOOD-OIL", "grams": 9, "unit": "2 tsp"}, {"food": "FOOD-JEERA", "grams": 2}, {"food": "FOOD-HALDI", "grams": 1},
-                     {"food": "FOOD-CHILLI-POWDER", "grams": 1}, {"food": "FOOD-SALT", "grams": 3}],
-     "steps": ["Soak the chana dal for an hour.",
-               "Pressure-cook the dal with the cubed lauki, haldi and salt till soft.",
-               "Heat the oil, add jeera, the chopped tomato and chilli powder; cook till soft and pour over the dal."],
-     "why_it_fits": "Filling, with protein from the dal.", "meal_place": "home_meal", "golden_rules_checked": true},
-    {"recipe_id": "RCP-SABJI-005", "name": "Cabbage Matar Sabji", "aliases": ["cabbage matar", "patta gobhi matar", "cabbage peas sabji"],
-     "kind": "sabji", "main_ingredients": ["FOOD-CABBAGE", "FOOD-PEAS"], "diet": "vegetarian", "makes": "1 dish for 2 to 3 people",
-     "ingredients": [{"food": "FOOD-CABBAGE", "grams": 300}, {"food": "FOOD-PEAS", "grams": 80}, {"food": "FOOD-GREEN-CHILLI", "grams": 5, "unit": "1"},
-                     {"food": "FOOD-OIL", "grams": 9, "unit": "2 tsp"}, {"food": "FOOD-JEERA", "grams": 2}, {"food": "FOOD-HALDI", "grams": 1},
-                     {"food": "FOOD-SALT", "grams": 3}],
-     "steps": ["Heat the oil, add jeera and the slit green chilli.",
-               "Add the shredded cabbage, peas, haldi and salt; mix well.",
-               "Cover and cook on low heat for about 10 minutes till just soft."],
-     "why_it_fits": "Mostly fibre-rich vegetables, cooked with little oil.", "meal_place": "home_meal", "golden_rules_checked": true},
-    {"recipe_id": "RCP-SABJI-006", "name": "Palak Sabji (dry)", "aliases": ["palak sabji", "palak", "spinach sabji"],
-     "kind": "sabji", "main_ingredients": ["FOOD-PALAK"], "diet": "vegetarian", "makes": "1 dish for 2 people",
-     "ingredients": [{"food": "FOOD-PALAK", "grams": 400, "unit": "about 2 bunches"}, {"food": "FOOD-ONION", "grams": 60, "unit": "half"},
-                     {"food": "FOOD-GARLIC", "grams": 6, "unit": "2 cloves"}, {"food": "FOOD-OIL", "grams": 9, "unit": "2 tsp"},
-                     {"food": "FOOD-JEERA", "grams": 2}, {"food": "FOOD-CHILLI-POWDER", "grams": 1}, {"food": "FOOD-SALT", "grams": 3}],
-     "steps": ["Wash and chop the palak.",
-               "Heat the oil, add jeera, garlic and the onion; cook till soft.",
-               "Add the palak, chilli powder and salt; cook uncovered till the water dries."],
-     "why_it_fits": "A fill-up green vegetable, cooked dry.", "meal_place": "home_meal", "golden_rules_checked": true},
-    {"recipe_id": "RCP-DAL-001", "name": "Moong Dal Tadka", "aliases": ["moong dal tadka", "moong dal", "dal tadka"],
-     "kind": "dal", "main_ingredients": ["FOOD-MOONG-DAL"], "diet": "vegetarian", "makes": "1 dish for 3 people",
-     "ingredients": [{"food": "FOOD-MOONG-DAL", "grams": 120}, {"food": "FOOD-TOMATO", "grams": 80, "unit": "1 small"},
-                     {"food": "FOOD-ONION", "grams": 50, "unit": "half"}, {"food": "FOOD-GHEE", "grams": 9, "unit": "2 tsp"},
-                     {"food": "FOOD-JEERA", "grams": 2}, {"food": "FOOD-HALDI", "grams": 1}, {"food": "FOOD-GARLIC", "grams": 6, "unit": "2 cloves"},
-                     {"food": "FOOD-SALT", "grams": 3}],
-     "steps": ["Pressure-cook the moong dal with haldi and salt till soft.",
-               "Heat the ghee, add jeera, garlic, onion and tomato; cook till soft.",
-               "Pour the tadka over the dal and mix."],
-     "why_it_fits": "Protein from the dal, with a small tadka.", "meal_place": "home_meal", "golden_rules_checked": true},
-    {"recipe_id": "RCP-SABJI-007", "name": "Palak Paneer Bhurji", "aliases": ["palak paneer bhurji", "palak paneer", "paneer bhurji"],
-     "kind": "sabji", "main_ingredients": ["FOOD-PALAK", "FOOD-PANEER"], "diet": "vegetarian", "makes": "1 dish for 2 people",
-     "ingredients": [{"food": "FOOD-PANEER", "grams": 150}, {"food": "FOOD-PALAK", "grams": 250, "unit": "1 bunch"},
-                     {"food": "FOOD-TOMATO", "grams": 100, "unit": "1 small"}, {"food": "FOOD-OIL", "grams": 9, "unit": "2 tsp"},
-                     {"food": "FOOD-JEERA", "grams": 2}, {"food": "FOOD-SALT", "grams": 3}],
-     "steps": ["Heat the oil, add jeera and the chopped tomato; cook till soft.",
-               "Add the chopped palak and cook till wilted.",
-               "Crumble in the paneer with salt and mix for a few minutes."],
-     "why_it_fits": "Vegetables with protein from paneer.", "meal_place": "home_meal", "golden_rules_checked": true}
-  ]
+ "collection_version": "RCP-0.2.0",
+ "status": "TEST ONLY",
+ "approved_by": null,
+ "approved_on": null,
+ "note": "Draft recipes for development, written from the analysis examples. A dietitian must write and sign the real collection; production refuses this file. Amounts are for the whole dish, never per person. Steps carry no amounts. RCP-0.2.0 (16 Oct 2026): 69 more development recipes so that each food has several dishes (dals, khichdi, chilla, upma, pulao and sabjis for every vegetable in the food list). Names, amounts and steps are drafts for the dietitian to rewrite. Moong dal halwa is included only so that a request for it is answered honestly: it is a sweet, and the Golden Rules do not allow a sweet as a home-meal dish.",
+ "recipes": [
+  {
+   "recipe_id": "RCP-SABJI-001",
+   "name": "Aloo Pyaz ki Sabji (dry, light)",
+   "aliases": [
+    "aloo pyaz",
+    "aloo pyaz ki sabji",
+    "aloo onion sabji",
+    "potato onion sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-ALOO",
+    "FOOD-ONION"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-ALOO",
+     "grams": 300,
+     "unit": "2 medium"
+    },
+    {
+     "food": "FOOD-ONION",
+     "grams": 110,
+     "unit": "1 medium"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Heat the oil, add jeera, then the sliced onion; cook till soft.",
+    "Add the cubed potato with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook for 12 to 15 minutes till the potato is soft, stirring now and then."
+   ],
+   "why_it_fits": "Dry preparation keeps the oil low.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-002",
+   "name": "Bhindi Sabji (dry)",
+   "aliases": [
+    "bhindi sabji",
+    "bhindi",
+    "okra sabji",
+    "bhindi fry"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-BHINDI"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-BHINDI",
+     "grams": 300
+    },
+    {
+     "food": "FOOD-ONION",
+     "grams": 60,
+     "unit": "half"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Wash the bhindi and dry it fully, then cut it into small pieces.",
+    "Heat the oil, add jeera, then the onion; cook till soft.",
+    "Add the bhindi, haldi, dhania powder and chilli powder; cook uncovered on low heat, stirring gently, till tender.",
+    "Add salt at the end so the bhindi stays crisp."
+   ],
+   "why_it_fits": "Fibre-rich and cooked with little oil.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-003",
+   "name": "Aloo Gobhi (dry)",
+   "aliases": [
+    "aloo gobhi",
+    "aloo gobi",
+    "potato cauliflower"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-ALOO",
+    "FOOD-CAULIFLOWER"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 to 3 people",
+   "ingredients": [
+    {
+     "food": "FOOD-CAULIFLOWER",
+     "grams": 300
+    },
+    {
+     "food": "FOOD-ALOO",
+     "grams": 150,
+     "unit": "1 medium"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-GINGER",
+     "grams": 5
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Heat the oil, add jeera and the grated ginger.",
+    "Add the cauliflower florets and cubed potato with haldi, dhania powder, chilli powder and salt.",
+    "Cover and cook on low heat for 15 to 20 minutes till both are soft, stirring now and then."
+   ],
+   "why_it_fits": "Mixes a starchy vegetable with a fibre-rich one.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-004",
+   "name": "Lauki Chana Dal",
+   "aliases": [
+    "lauki chana dal",
+    "lauki dal",
+    "ghiya chana dal"
+   ],
+   "kind": "dal",
+   "main_ingredients": [
+    "FOOD-LAUKI",
+    "FOOD-CHANA-DAL"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 3 people",
+   "ingredients": [
+    {
+     "food": "FOOD-LAUKI",
+     "grams": 300
+    },
+    {
+     "food": "FOOD-CHANA-DAL",
+     "grams": 60
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Soak the chana dal for an hour.",
+    "Pressure-cook the dal with the cubed lauki, haldi and salt till soft.",
+    "Heat the oil, add jeera, the chopped tomato and chilli powder; cook till soft and pour over the dal."
+   ],
+   "why_it_fits": "Filling, with protein from the dal.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-005",
+   "name": "Cabbage Matar Sabji",
+   "aliases": [
+    "cabbage matar",
+    "patta gobhi matar",
+    "cabbage peas sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-CABBAGE",
+    "FOOD-PEAS"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 to 3 people",
+   "ingredients": [
+    {
+     "food": "FOOD-CABBAGE",
+     "grams": 300
+    },
+    {
+     "food": "FOOD-PEAS",
+     "grams": 80
+    },
+    {
+     "food": "FOOD-GREEN-CHILLI",
+     "grams": 5,
+     "unit": "1"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Heat the oil, add jeera and the slit green chilli.",
+    "Add the shredded cabbage, peas, haldi and salt; mix well.",
+    "Cover and cook on low heat for about 10 minutes till just soft."
+   ],
+   "why_it_fits": "Mostly fibre-rich vegetables, cooked with little oil.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-006",
+   "name": "Palak Sabji (dry)",
+   "aliases": [
+    "palak sabji",
+    "palak",
+    "spinach sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-PALAK"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-PALAK",
+     "grams": 400,
+     "unit": "about 2 bunches"
+    },
+    {
+     "food": "FOOD-ONION",
+     "grams": 60,
+     "unit": "half"
+    },
+    {
+     "food": "FOOD-GARLIC",
+     "grams": 6,
+     "unit": "2 cloves"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Wash and chop the palak.",
+    "Heat the oil, add jeera, garlic and the onion; cook till soft.",
+    "Add the palak, chilli powder and salt; cook uncovered till the water dries."
+   ],
+   "why_it_fits": "A fill-up green vegetable, cooked dry.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-DAL-001",
+   "name": "Moong Dal Tadka",
+   "aliases": [
+    "moong dal tadka",
+    "moong dal",
+    "dal tadka"
+   ],
+   "kind": "dal",
+   "main_ingredients": [
+    "FOOD-MOONG-DAL"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 3 people",
+   "ingredients": [
+    {
+     "food": "FOOD-MOONG-DAL",
+     "grams": 120
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 80,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-ONION",
+     "grams": 50,
+     "unit": "half"
+    },
+    {
+     "food": "FOOD-GHEE",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-GARLIC",
+     "grams": 6,
+     "unit": "2 cloves"
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Pressure-cook the moong dal with haldi and salt till soft.",
+    "Heat the ghee, add jeera, garlic, onion and tomato; cook till soft.",
+    "Pour the tadka over the dal and mix."
+   ],
+   "why_it_fits": "Protein from the dal, with a small tadka.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-007",
+   "name": "Palak Paneer Bhurji",
+   "aliases": [
+    "palak paneer bhurji",
+    "palak paneer",
+    "paneer bhurji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-PALAK",
+    "FOOD-PANEER"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-PANEER",
+     "grams": 150
+    },
+    {
+     "food": "FOOD-PALAK",
+     "grams": 250,
+     "unit": "1 bunch"
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Heat the oil, add jeera and the chopped tomato; cook till soft.",
+    "Add the chopped palak and cook till wilted.",
+    "Crumble in the paneer with salt and mix for a few minutes."
+   ],
+   "why_it_fits": "Vegetables with protein from paneer.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-DAL-002",
+   "name": "Moong Dal Khichdi",
+   "aliases": [
+    "moong dal khichdi",
+    "moong khichdi",
+    "dal khichdi",
+    "khichdi",
+    "moong daal khichdi",
+    "daal khichdi"
+   ],
+   "kind": "khichdi",
+   "main_ingredients": [
+    "FOOD-MOONG-DAL"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-MOONG-DAL",
+     "grams": 60
+    },
+    {
+     "food": "FOOD-RICE",
+     "grams": 60
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Wash the moong dal and rice together.",
+    "Pressure-cook them with haldi, salt and plenty of water till soft and mushy.",
+    "Heat the oil, add jeera, and pour it over the khichdi; mix well."
+   ],
+   "why_it_fits": "A one-pot meal with protein from the dal.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-DAL-003",
+   "name": "Moong Dal Chilla",
+   "aliases": [
+    "moong dal chilla",
+    "moong chilla",
+    "moong dal cheela",
+    "moong cheela",
+    "moong daal chilla",
+    "moong daal cheela"
+   ],
+   "kind": "chilla",
+   "main_ingredients": [
+    "FOOD-MOONG-DAL"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-MOONG-DAL",
+     "grams": 80
+    },
+    {
+     "food": "FOOD-GREEN-CHILLI",
+     "grams": 5
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    }
+   ],
+   "steps": [
+    "Soak the moong dal for three hours, then grind it with the green chilli, jeera and salt into a smooth batter.",
+    "Heat a flat pan with a little oil and spread a ladle of batter thin.",
+    "Cook both sides till golden and serve hot."
+   ],
+   "why_it_fits": "High in protein and cooked with very little oil.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-DAL-004",
+   "name": "Moong Dal Soup",
+   "aliases": [
+    "moong dal soup",
+    "moong soup",
+    "dal soup",
+    "moong daal soup",
+    "daal soup"
+   ],
+   "kind": "dal",
+   "main_ingredients": [
+    "FOOD-MOONG-DAL"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-MOONG-DAL",
+     "grams": 50
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 4.5,
+     "unit": "1 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Pressure-cook the moong dal with the tomato, haldi and salt till very soft.",
+    "Mash lightly and add water to get a thin soup.",
+    "Heat the oil, add jeera, pour it over the soup and simmer for a few minutes."
+   ],
+   "why_it_fits": "Light and easy to digest.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-DAL-005",
+   "name": "Palak Moong Dal",
+   "aliases": [
+    "palak moong dal",
+    "palak dal",
+    "spinach moong dal",
+    "moong palak",
+    "palak moong daal",
+    "palak daal",
+    "spinach moong daal"
+   ],
+   "kind": "dal",
+   "main_ingredients": [
+    "FOOD-MOONG-DAL",
+    "FOOD-PALAK"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-MOONG-DAL",
+     "grams": 60
+    },
+    {
+     "food": "FOOD-PALAK",
+     "grams": 250,
+     "unit": "1 bunch"
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Pressure-cook the moong dal with haldi and salt till soft.",
+    "Heat the oil, add jeera and the tomato; cook till soft, then add the chopped palak till wilted.",
+    "Mix the palak into the dal and simmer for five minutes."
+   ],
+   "why_it_fits": "Iron-rich greens with protein from the dal.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-DAL-006",
+   "name": "Lauki Moong Dal",
+   "aliases": [
+    "lauki moong dal",
+    "ghiya moong dal",
+    "dudhi moong dal",
+    "lauki moong daal",
+    "ghiya moong daal",
+    "dudhi moong daal"
+   ],
+   "kind": "dal",
+   "main_ingredients": [
+    "FOOD-LAUKI",
+    "FOOD-MOONG-DAL"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-LAUKI",
+     "grams": 250
+    },
+    {
+     "food": "FOOD-MOONG-DAL",
+     "grams": 60
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Pressure-cook the moong dal with the cubed lauki, haldi and salt till soft.",
+    "Heat the oil, add jeera and the tomato; cook till soft.",
+    "Pour it over the dal and mix."
+   ],
+   "why_it_fits": "A light, filling dal with plenty of fibre.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-DAL-007",
+   "name": "Jain Moong Dal Tadka",
+   "aliases": [
+    "jain moong dal tadka",
+    "moong dal tadka jain style",
+    "plain moong dal",
+    "jain moong daal tadka",
+    "moong daal tadka jain style",
+    "plain moong daal"
+   ],
+   "kind": "dal",
+   "main_ingredients": [
+    "FOOD-MOONG-DAL"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-MOONG-DAL",
+     "grams": 100
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 80,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-GREEN-CHILLI",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Pressure-cook the moong dal with haldi and salt till soft.",
+    "Heat the oil, add jeera, the green chilli and the tomato; cook till soft.",
+    "Pour the tadka over the dal and mix."
+   ],
+   "why_it_fits": "Protein from the dal, made the Jain way.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SWEET-001",
+   "name": "Moong Dal Halwa (lighter)",
+   "aliases": [
+    "moong dal halwa",
+    "moong ka halwa",
+    "halwa moong dal ka",
+    "moong dal ka halwa",
+    "moong halwa",
+    "dal halwa",
+    "halwa",
+    "moong daal halwa",
+    "halwa moong daal ka",
+    "moong daal ka halwa",
+    "daal halwa"
+   ],
+   "kind": "sweet",
+   "main_ingredients": [
+    "FOOD-MOONG-DAL"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-MOONG-DAL",
+     "grams": 80
+    },
+    {
+     "food": "FOOD-GHEE",
+     "grams": 30,
+     "unit": "2 tbsp"
+    },
+    {
+     "food": "FOOD-SUGAR",
+     "grams": 40,
+     "unit": "8 tsp"
+    },
+    {
+     "food": "FOOD-ALMOND",
+     "grams": 10
+    }
+   ],
+   "steps": [
+    "Soak the moong dal for three hours and grind it coarse.",
+    "Roast it in the ghee on low heat, stirring all the time, till golden and fragrant.",
+    "Add hot water and the sugar and cook till the ghee separates; top with chopped almonds."
+   ],
+   "why_it_fits": "A sweet: the programme asks to have sweets less often, so this is only for a special occasion.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-DAL-008",
+   "name": "Toor Dal Tadka",
+   "aliases": [
+    "toor dal tadka",
+    "arhar dal tadka",
+    "toor dal",
+    "tuvar dal",
+    "toor daal tadka",
+    "arhar daal tadka",
+    "toor daal",
+    "tuvar daal"
+   ],
+   "kind": "dal",
+   "main_ingredients": [
+    "FOOD-TOOR-DAL"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-TOOR-DAL",
+     "grams": 80
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Pressure-cook the toor dal with haldi and salt till soft, then mash lightly.",
+    "Heat the oil, add jeera, the tomato and chilli powder; cook till soft.",
+    "Pour the tadka over the dal and simmer for five minutes."
+   ],
+   "why_it_fits": "Protein from the dal, with a small tadka.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-DAL-009",
+   "name": "Toor Dal with Drumstick",
+   "aliases": [
+    "drumstick dal",
+    "sahjan dal",
+    "toor dal drumstick",
+    "sambar style dal",
+    "toor daal with drumstick",
+    "drumstick daal",
+    "sahjan daal",
+    "toor daal drumstick",
+    "sambar style daal"
+   ],
+   "kind": "dal",
+   "main_ingredients": [
+    "FOOD-TOOR-DAL",
+    "FOOD-DRUMSTICK"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-TOOR-DAL",
+     "grams": 70
+    },
+    {
+     "food": "FOOD-DRUMSTICK",
+     "grams": 150
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Pressure-cook the toor dal with the drumstick pieces, haldi and salt till soft.",
+    "Heat the oil, add jeera, the tomato and chilli powder; cook till soft.",
+    "Mix the tadka into the dal and simmer for five minutes."
+   ],
+   "why_it_fits": "Fibre from the drumstick and protein from the dal.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-DAL-010",
+   "name": "Toor Dal Lauki",
+   "aliases": [
+    "toor dal lauki",
+    "lauki toor dal",
+    "ghiya dal",
+    "toor daal lauki",
+    "lauki toor daal",
+    "ghiya daal"
+   ],
+   "kind": "dal",
+   "main_ingredients": [
+    "FOOD-TOOR-DAL",
+    "FOOD-LAUKI"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-TOOR-DAL",
+     "grams": 60
+    },
+    {
+     "food": "FOOD-LAUKI",
+     "grams": 250
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Pressure-cook the toor dal with the cubed lauki, haldi and salt till soft.",
+    "Heat the oil, add jeera and the tomato; cook till soft.",
+    "Mix the tadka into the dal."
+   ],
+   "why_it_fits": "A light dal with plenty of fibre.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-DAL-011",
+   "name": "Masoor Dal",
+   "aliases": [
+    "masoor dal",
+    "red lentil dal",
+    "masoor dal tadka",
+    "masoor daal",
+    "red lentil daal",
+    "masoor daal tadka"
+   ],
+   "kind": "dal",
+   "main_ingredients": [
+    "FOOD-MASOOR-DAL"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-MASOOR-DAL",
+     "grams": 70
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Wash the masoor dal and cook it with haldi and salt till soft; it needs no soaking.",
+    "Heat the oil, add jeera, the tomato and chilli powder; cook till soft.",
+    "Pour the tadka over the dal and mix."
+   ],
+   "why_it_fits": "Quick to cook, with protein and fibre.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-DAL-012",
+   "name": "Masoor Dal Palak",
+   "aliases": [
+    "masoor dal palak",
+    "palak masoor dal",
+    "spinach masoor dal",
+    "masoor daal palak",
+    "palak masoor daal",
+    "spinach masoor daal"
+   ],
+   "kind": "dal",
+   "main_ingredients": [
+    "FOOD-MASOOR-DAL",
+    "FOOD-PALAK"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-MASOOR-DAL",
+     "grams": 60
+    },
+    {
+     "food": "FOOD-PALAK",
+     "grams": 250,
+     "unit": "1 bunch"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Cook the masoor dal with haldi and salt till soft.",
+    "Heat the oil, add jeera and the chopped palak; cook till wilted.",
+    "Mix the palak into the dal and simmer for five minutes."
+   ],
+   "why_it_fits": "Greens and lentils together.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-DAL-013",
+   "name": "Chana Dal Tadka",
+   "aliases": [
+    "chana dal tadka",
+    "chana dal",
+    "channa dal tadka",
+    "chana daal tadka",
+    "chana daal",
+    "channa daal tadka"
+   ],
+   "kind": "dal",
+   "main_ingredients": [
+    "FOOD-CHANA-DAL"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-CHANA-DAL",
+     "grams": 70
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Soak the chana dal for an hour, then pressure-cook it with haldi and salt till soft.",
+    "Heat the oil, add jeera, the tomato and chilli powder; cook till soft.",
+    "Pour the tadka over the dal and mix."
+   ],
+   "why_it_fits": "High in fibre and protein.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-DAL-014",
+   "name": "Rajma Masala",
+   "aliases": [
+    "rajma masala",
+    "rajma",
+    "rajma curry",
+    "kidney bean curry"
+   ],
+   "kind": "dal",
+   "main_ingredients": [
+    "FOOD-RAJMA"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-RAJMA",
+     "grams": 80
+    },
+    {
+     "food": "FOOD-ONION",
+     "grams": 110,
+     "unit": "1 medium"
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 150,
+     "unit": "1 large"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 14,
+     "unit": "1 tbsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Soak the rajma overnight, then pressure-cook it with salt till soft.",
+    "Heat the oil, add jeera, then the onion; cook till golden.",
+    "Add the tomato, haldi, dhania powder and chilli powder; cook till the oil separates.",
+    "Add the rajma with a little of its water and simmer for fifteen minutes."
+   ],
+   "why_it_fits": "High in fibre and protein.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-DAL-015",
+   "name": "Jain Rajma",
+   "aliases": [
+    "jain rajma",
+    "rajma jain style",
+    "plain rajma"
+   ],
+   "kind": "dal",
+   "main_ingredients": [
+    "FOOD-RAJMA"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-RAJMA",
+     "grams": 80
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 200,
+     "unit": "2 medium"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 14,
+     "unit": "1 tbsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Soak the rajma overnight, then pressure-cook it with salt till soft.",
+    "Heat the oil, add jeera, the tomato, haldi, dhania powder and chilli powder; cook till the oil separates.",
+    "Add the rajma with a little of its water and simmer for fifteen minutes."
+   ],
+   "why_it_fits": "Rajma made the Jain way.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-DAL-016",
+   "name": "Chana Masala",
+   "aliases": [
+    "chana masala",
+    "chole",
+    "chole masala",
+    "kabuli chana masala",
+    "chickpea curry"
+   ],
+   "kind": "dal",
+   "main_ingredients": [
+    "FOOD-CHICKPEAS"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-CHICKPEAS",
+     "grams": 80
+    },
+    {
+     "food": "FOOD-ONION",
+     "grams": 110,
+     "unit": "1 medium"
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 150,
+     "unit": "1 large"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 14,
+     "unit": "1 tbsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Soak the chickpeas overnight, then pressure-cook them with salt till soft.",
+    "Heat the oil, add jeera, then the onion; cook till golden.",
+    "Add the tomato, haldi, dhania powder and chilli powder; cook till the oil separates.",
+    "Add the chickpeas with a little of their water and simmer for fifteen minutes."
+   ],
+   "why_it_fits": "High in fibre and protein.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-DAL-017",
+   "name": "Chana Palak",
+   "aliases": [
+    "chana palak",
+    "chole palak",
+    "palak chana",
+    "chickpea spinach"
+   ],
+   "kind": "dal",
+   "main_ingredients": [
+    "FOOD-CHICKPEAS",
+    "FOOD-PALAK"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-CHICKPEAS",
+     "grams": 70
+    },
+    {
+     "food": "FOOD-PALAK",
+     "grams": 250,
+     "unit": "1 bunch"
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Soak the chickpeas overnight, then pressure-cook them with salt till soft.",
+    "Heat the oil, add jeera and the tomato; cook till soft, then add the palak till wilted.",
+    "Add the chickpeas and simmer for ten minutes."
+   ],
+   "why_it_fits": "Fibre and iron-rich greens together.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-DAL-018",
+   "name": "Lobia Masala",
+   "aliases": [
+    "lobia masala",
+    "lobia",
+    "black eyed peas curry",
+    "chawli masala"
+   ],
+   "kind": "dal",
+   "main_ingredients": [
+    "FOOD-LOBIA"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-LOBIA",
+     "grams": 70
+    },
+    {
+     "food": "FOOD-ONION",
+     "grams": 110,
+     "unit": "1 medium"
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 150,
+     "unit": "1 large"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Soak the lobia for four hours, then pressure-cook it with salt till soft.",
+    "Heat the oil, add jeera, then the onion; cook till soft.",
+    "Add the tomato, haldi and chilli powder; cook till mushy.",
+    "Add the lobia and simmer for ten minutes."
+   ],
+   "why_it_fits": "High in fibre and protein.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-DAL-019",
+   "name": "Lobia with Lauki",
+   "aliases": [
+    "lobia lauki",
+    "lauki lobia",
+    "chawli lauki"
+   ],
+   "kind": "dal",
+   "main_ingredients": [
+    "FOOD-LOBIA",
+    "FOOD-LAUKI"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-LOBIA",
+     "grams": 60
+    },
+    {
+     "food": "FOOD-LAUKI",
+     "grams": 250
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Soak the lobia for four hours, then pressure-cook it with the cubed lauki, haldi and salt till soft.",
+    "Heat the oil, add jeera and the tomato; cook till soft.",
+    "Mix the tadka into the lobia and simmer for five minutes."
+   ],
+   "why_it_fits": "Light, with fibre from both.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-020",
+   "name": "Tofu Bhurji",
+   "aliases": [
+    "tofu bhurji",
+    "tofu scramble",
+    "soya paneer bhurji",
+    "tofu sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-TOFU"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-TOFU",
+     "grams": 200
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-CAPSICUM",
+     "grams": 80
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Crumble the tofu.",
+    "Heat the oil, add jeera, then the capsicum and tomato; cook till soft.",
+    "Add the tofu with haldi, chilli powder and salt and cook for five minutes."
+   ],
+   "why_it_fits": "High in protein.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-021",
+   "name": "Tofu Capsicum Sabji",
+   "aliases": [
+    "tofu capsicum",
+    "capsicum tofu",
+    "tofu shimla mirch"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-TOFU",
+    "FOOD-CAPSICUM"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-TOFU",
+     "grams": 150
+    },
+    {
+     "food": "FOOD-CAPSICUM",
+     "grams": 200,
+     "unit": "2 medium"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Cut the tofu into cubes and the capsicum into strips.",
+    "Heat the oil, add jeera and the capsicum; cook for a few minutes.",
+    "Add the tofu with haldi, chilli powder and salt and cook gently for five minutes."
+   ],
+   "why_it_fits": "Protein with a crunchy vegetable.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-CHILLA-001",
+   "name": "Besan Chilla",
+   "aliases": [
+    "besan chilla",
+    "besan cheela",
+    "chickpea flour pancake",
+    "gram flour chilla"
+   ],
+   "kind": "chilla",
+   "main_ingredients": [
+    "FOOD-BESAN"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-BESAN",
+     "grams": 80
+    },
+    {
+     "food": "FOOD-ONION",
+     "grams": 55,
+     "unit": "half"
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 50,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-GREEN-CHILLI",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    }
+   ],
+   "steps": [
+    "Mix the besan with water, salt and jeera into a smooth batter, then stir in the chopped onion, tomato and green chilli.",
+    "Heat a flat pan with a little oil and spread a ladle of batter thin.",
+    "Cook both sides till golden and serve hot."
+   ],
+   "why_it_fits": "High in protein and cooked with very little oil.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-KHICHDI-002",
+   "name": "Vegetable Khichdi",
+   "aliases": [
+    "vegetable khichdi",
+    "veg khichdi",
+    "sabzi khichdi"
+   ],
+   "kind": "khichdi",
+   "main_ingredients": [
+    "FOOD-MOONG-DAL",
+    "FOOD-CARROT"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-MOONG-DAL",
+     "grams": 50
+    },
+    {
+     "food": "FOOD-RICE",
+     "grams": 60
+    },
+    {
+     "food": "FOOD-CARROT",
+     "grams": 60
+    },
+    {
+     "food": "FOOD-PEAS",
+     "grams": 50
+    },
+    {
+     "food": "FOOD-CAULIFLOWER",
+     "grams": 100
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Wash the moong dal and rice together.",
+    "Pressure-cook them with the carrot, peas, cauliflower, haldi, salt and plenty of water till soft.",
+    "Heat the oil, add jeera, and pour it over the khichdi; mix well."
+   ],
+   "why_it_fits": "A one-pot meal with vegetables and protein.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-KHICHDI-003",
+   "name": "Vegetable Pulao",
+   "aliases": [
+    "vegetable pulao",
+    "veg pulao",
+    "pulao"
+   ],
+   "kind": "khichdi",
+   "main_ingredients": [
+    "FOOD-PEAS",
+    "FOOD-CARROT"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-RICE",
+     "grams": 80
+    },
+    {
+     "food": "FOOD-PEAS",
+     "grams": 60
+    },
+    {
+     "food": "FOOD-CARROT",
+     "grams": 60
+    },
+    {
+     "food": "FOOD-ONION",
+     "grams": 55,
+     "unit": "half"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Wash the rice.",
+    "Heat the oil, add jeera, then the onion; cook till soft, then add the peas and carrot for two minutes.",
+    "Add the rice, haldi, salt and water, cover and cook on low heat till the rice is done."
+   ],
+   "why_it_fits": "Rice with vegetables.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-KHICHDI-004",
+   "name": "Vegetable Upma",
+   "aliases": [
+    "vegetable upma",
+    "suji upma",
+    "rava upma",
+    "upma"
+   ],
+   "kind": "khichdi",
+   "main_ingredients": [
+    "FOOD-SUJI"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-SUJI",
+     "grams": 70
+    },
+    {
+     "food": "FOOD-ONION",
+     "grams": 55,
+     "unit": "half"
+    },
+    {
+     "food": "FOOD-CARROT",
+     "grams": 50
+    },
+    {
+     "food": "FOOD-PEAS",
+     "grams": 40
+    },
+    {
+     "food": "FOOD-GREEN-CHILLI",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Dry-roast the suji on low heat till fragrant and set it aside.",
+    "Heat the oil, add jeera, then the onion and green chilli; cook till soft, then add the carrot and peas.",
+    "Add water and salt, bring to a boil, then stir in the suji and cook till it absorbs the water."
+   ],
+   "why_it_fits": "A light breakfast-style dish with vegetables.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-KHICHDI-005",
+   "name": "Lemon Rice",
+   "aliases": [
+    "lemon rice",
+    "nimbu chawal"
+   ],
+   "kind": "khichdi",
+   "main_ingredients": [
+    "FOOD-RICE"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-RICE",
+     "grams": 80
+    },
+    {
+     "food": "FOOD-PEANUT",
+     "grams": 15
+    },
+    {
+     "food": "FOOD-LEMON",
+     "grams": 30,
+     "unit": "half"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-GREEN-CHILLI",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Cook the rice till each grain is separate and let it cool a little.",
+    "Heat the oil, add jeera, the peanuts, green chilli and haldi; stir for a minute.",
+    "Mix this into the rice with salt and the lemon juice."
+   ],
+   "why_it_fits": "A simple rice dish.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-008",
+   "name": "Capsicum Aloo Sabji",
+   "aliases": [
+    "capsicum aloo",
+    "shimla mirch aloo",
+    "aloo capsicum"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-CAPSICUM",
+    "FOOD-ALOO"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-CAPSICUM",
+     "grams": 200
+    },
+    {
+     "food": "FOOD-ALOO",
+     "grams": 150,
+     "unit": "1 medium"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Wash and cut the capsicum into small pieces.",
+    "Heat the oil, add jeera.",
+    "Add the capsicum with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "Dry preparation keeps the oil low.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-009",
+   "name": "Capsicum Sabji (dry)",
+   "aliases": [
+    "capsicum sabji",
+    "shimla mirch sabji",
+    "capsicum fry",
+    "bell pepper sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-CAPSICUM"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-CAPSICUM",
+     "grams": 300
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Wash and cut the capsicum into small pieces.",
+    "Heat the oil, add jeera and the tomato; cook till soft.",
+    "Add the capsicum with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "Dry preparation keeps the oil low.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-010",
+   "name": "Capsicum Paneer Sabji",
+   "aliases": [
+    "capsicum paneer",
+    "shimla mirch paneer",
+    "paneer capsicum"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-CAPSICUM",
+    "FOOD-PANEER"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-CAPSICUM",
+     "grams": 200,
+     "unit": "2 medium"
+    },
+    {
+     "food": "FOOD-PANEER",
+     "grams": 100
+    },
+    {
+     "food": "FOOD-ONION",
+     "grams": 55,
+     "unit": "half"
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Cut the capsicum into strips and the paneer into cubes.",
+    "Heat the oil, add jeera, then the onion; cook till soft, then add the tomato.",
+    "Add the capsicum with haldi, chilli powder and salt and cook for five minutes, then fold in the paneer."
+   ],
+   "why_it_fits": "Protein from the paneer with a crunchy vegetable.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-011",
+   "name": "Baingan Bharta",
+   "aliases": [
+    "baingan bharta",
+    "brinjal bharta",
+    "eggplant bharta",
+    "baigan bharta"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-BRINJAL"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-BRINJAL",
+     "grams": 400,
+     "unit": "1 large"
+    },
+    {
+     "food": "FOOD-ONION",
+     "grams": 110,
+     "unit": "1 medium"
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Roast the whole brinjal on a flame or in the oven till the skin is charred and the flesh is soft, then peel and mash it.",
+    "Heat the oil, add jeera, then the onion; cook till soft, then add the tomato, haldi and chilli powder.",
+    "Add the mashed brinjal and salt and cook for five minutes."
+   ],
+   "why_it_fits": "Roasting instead of frying keeps the oil low.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-012",
+   "name": "Aloo Baingan",
+   "aliases": [
+    "aloo baingan",
+    "baingan aloo",
+    "brinjal potato sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-BRINJAL",
+    "FOOD-ALOO"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-BRINJAL",
+     "grams": 250
+    },
+    {
+     "food": "FOOD-ALOO",
+     "grams": 150,
+     "unit": "1 medium"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Wash and cut the brinjal into small pieces.",
+    "Heat the oil, add jeera.",
+    "Add the brinjal with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "Dry preparation keeps the oil low.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-013",
+   "name": "Baingan Sabji (dry)",
+   "aliases": [
+    "baingan sabji",
+    "brinjal sabji",
+    "baingan fry",
+    "eggplant sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-BRINJAL"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-BRINJAL",
+     "grams": 350
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Wash and cut the brinjal into small pieces.",
+    "Heat the oil, add jeera and the tomato; cook till soft.",
+    "Add the brinjal with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "Dry preparation keeps the oil low.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-014",
+   "name": "Karela Sabji (dry)",
+   "aliases": [
+    "karela sabji",
+    "bitter gourd sabji",
+    "karela fry",
+    "karele ki sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-KARELA"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-KARELA",
+     "grams": 250
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Wash the karela, scrape off the rough skin, cut it into slices and rub with a little salt; rinse after ten minutes.",
+    "Heat the oil, add jeera.",
+    "Add the karela with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "Dry preparation keeps the oil low.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-015",
+   "name": "Turai Sabji",
+   "aliases": [
+    "turai sabji",
+    "tori sabji",
+    "ridge gourd sabji",
+    "turai ki sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-TURAI"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-TURAI",
+     "grams": 300
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Peel the turai and cut it into pieces.",
+    "Heat the oil, add jeera and the tomato; cook till soft.",
+    "Add the turai with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "Light, with a lot of water and fibre.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-016",
+   "name": "Kaddu Sabji",
+   "aliases": [
+    "kaddu sabji",
+    "pumpkin sabji",
+    "kaddu ki sabji",
+    "sitaphal sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-KADDU"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-KADDU",
+     "grams": 350
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Peel the kaddu, remove the seeds and cut it into cubes.",
+    "Heat the oil, add jeera.",
+    "Add the kaddu with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "Dry preparation keeps the oil low.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-017",
+   "name": "Gajar Matar Sabji",
+   "aliases": [
+    "gajar matar",
+    "carrot peas sabji",
+    "gajar matar sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-CARROT",
+    "FOOD-PEAS"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-CARROT",
+     "grams": 200
+    },
+    {
+     "food": "FOOD-PEAS",
+     "grams": 100
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Wash and cut the carrot into small pieces.",
+    "Heat the oil, add jeera.",
+    "Add the carrot with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "Dry preparation keeps the oil low.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-018",
+   "name": "Carrot Beans Sabji",
+   "aliases": [
+    "carrot beans",
+    "gajar beans",
+    "carrot beans sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-CARROT",
+    "FOOD-BEANS"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-CARROT",
+     "grams": 150
+    },
+    {
+     "food": "FOOD-BEANS",
+     "grams": 150
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Wash and cut the carrot into small pieces.",
+    "Heat the oil, add jeera.",
+    "Add the carrot with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "Dry preparation keeps the oil low.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-019",
+   "name": "Beetroot Sabji (dry)",
+   "aliases": [
+    "beetroot sabji",
+    "beet sabji",
+    "chukandar sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-BEETROOT"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-BEETROOT",
+     "grams": 300
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Peel the beetroot and cut it into small pieces.",
+    "Heat the oil, add jeera.",
+    "Add the beetroot with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "Dry preparation keeps the oil low.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-022",
+   "name": "Mooli Sabji",
+   "aliases": [
+    "mooli sabji",
+    "radish sabji",
+    "mooli ki sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-MOOLI"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-MOOLI",
+     "grams": 300
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Peel the mooli and cut it into pieces.",
+    "Heat the oil, add jeera and the tomato; cook till soft.",
+    "Add the mooli with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "Dry preparation keeps the oil low.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-023",
+   "name": "Shalgam Sabji",
+   "aliases": [
+    "shalgam sabji",
+    "turnip sabji",
+    "shalgam ki sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-SHALGAM"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-SHALGAM",
+     "grams": 300
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Peel the shalgam and cut it into pieces.",
+    "Heat the oil, add jeera and the tomato; cook till soft.",
+    "Add the shalgam with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "Dry preparation keeps the oil low.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-024",
+   "name": "Sarson Saag (light)",
+   "aliases": [
+    "sarson saag",
+    "sarson ka saag",
+    "mustard greens saag"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-SARSON"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-SARSON",
+     "grams": 300,
+     "unit": "1 bunch"
+    },
+    {
+     "food": "FOOD-PALAK",
+     "grams": 150
+    },
+    {
+     "food": "FOOD-ONION",
+     "grams": 55,
+     "unit": "half"
+    },
+    {
+     "food": "FOOD-GINGER",
+     "grams": 10,
+     "unit": "2 inch"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 14,
+     "unit": "1 tbsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Wash the sarson and palak and cook them with the ginger and a little water till soft, then blend coarsely.",
+    "Heat the oil, add jeera, then the onion; cook till golden.",
+    "Add the greens, haldi and salt and simmer for ten minutes."
+   ],
+   "why_it_fits": "Leafy greens with fibre and iron, with less oil than the traditional dish.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-025",
+   "name": "Chaulai Sabji",
+   "aliases": [
+    "chaulai sabji",
+    "amaranth sabji",
+    "lal saag sabji",
+    "chauli saag"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-CHAULAI"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-CHAULAI",
+     "grams": 300
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Wash the chaulai and chop it fine.",
+    "Heat the oil, add jeera.",
+    "Add the chaulai with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "Leafy greens with little oil.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-026",
+   "name": "Drumstick Curry",
+   "aliases": [
+    "drumstick curry",
+    "sahjan curry",
+    "drumstick sabji",
+    "sahjan ki sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-DRUMSTICK"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-DRUMSTICK",
+     "grams": 250
+    },
+    {
+     "food": "FOOD-ONION",
+     "grams": 55,
+     "unit": "half"
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 150,
+     "unit": "1 large"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Cut the drumstick into pieces.",
+    "Heat the oil, add jeera, then the onion; cook till soft, then add the tomato, haldi and chilli powder.",
+    "Add the drumstick, salt and a little water, cover and cook till tender."
+   ],
+   "why_it_fits": "A light curry with fibre.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-027",
+   "name": "Raw Banana Sabji",
+   "aliases": [
+    "raw banana sabji",
+    "kachche kele ki sabji",
+    "kaccha kela sabji",
+    "plantain sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-RAW-BANANA"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-RAW-BANANA",
+     "grams": 250
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Peel the raw banana, cut it into pieces and keep it in water so it does not darken.",
+    "Heat the oil, add jeera.",
+    "Add the raw banana with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "A filling starchy sabji, closer to the chapati or rice part of the meal.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-028",
+   "name": "Arbi Sabji (dry)",
+   "aliases": [
+    "arbi sabji",
+    "arvi sabji",
+    "colocasia sabji",
+    "arbi fry"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-ARBI"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-ARBI",
+     "grams": 250
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Boil the arbi, peel it and cut it into pieces.",
+    "Heat the oil, add jeera.",
+    "Add the arbi with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "A starchy sabji, closer to the chapati or rice part of the meal.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-029",
+   "name": "Broccoli Stir Fry",
+   "aliases": [
+    "broccoli stir fry",
+    "broccoli sabji",
+    "broccoli fry"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-BROCCOLI",
+    "FOOD-CAPSICUM"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-BROCCOLI",
+     "grams": 250
+    },
+    {
+     "food": "FOOD-CAPSICUM",
+     "grams": 100
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Cut the broccoli into small florets.",
+    "Heat the oil, add jeera.",
+    "Add the broccoli with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "Quick to cook and high in fibre.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-030",
+   "name": "Mushroom Matar",
+   "aliases": [
+    "mushroom matar",
+    "matar mushroom",
+    "mushroom sabji",
+    "mushroom curry"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-MUSHROOM"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-MUSHROOM",
+     "grams": 200
+    },
+    {
+     "food": "FOOD-PEAS",
+     "grams": 100
+    },
+    {
+     "food": "FOOD-ONION",
+     "grams": 55,
+     "unit": "half"
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Slice the mushroom.",
+    "Heat the oil, add jeera, then the onion; cook till soft, then add the tomato, haldi and chilli powder.",
+    "Add the mushroom, peas and salt and cook till the water dries."
+   ],
+   "why_it_fits": "Light, with protein from the peas.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-031",
+   "name": "Corn Capsicum Sabji",
+   "aliases": [
+    "corn capsicum",
+    "sweet corn sabji",
+    "corn sabji",
+    "makka capsicum"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-SWEET-CORN",
+    "FOOD-CAPSICUM"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-SWEET-CORN",
+     "grams": 150
+    },
+    {
+     "food": "FOOD-CAPSICUM",
+     "grams": 150
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Boil the sweet corn kernels till tender and cut the capsicum into strips.",
+    "Heat the oil, add jeera.",
+    "Add the sweet corn with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "A starchy vegetable with a crunchy one.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-032",
+   "name": "Zucchini Sabji (dry)",
+   "aliases": [
+    "zucchini sabji",
+    "courgette sabji",
+    "zucchini fry"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-ZUCCHINI"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-ZUCCHINI",
+     "grams": 300
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Wash the zucchini and cut it into pieces.",
+    "Heat the oil, add jeera and the tomato; cook till soft.",
+    "Add the zucchini with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "Dry preparation keeps the oil low.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-033",
+   "name": "Petha Sabji",
+   "aliases": [
+    "petha sabji",
+    "ash gourd sabji",
+    "white pumpkin sabji",
+    "winter melon sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-PETHA"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-PETHA",
+     "grams": 350
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Peel the petha, remove the seeds and cut it into cubes.",
+    "Heat the oil, add jeera and the tomato; cook till soft.",
+    "Add the petha with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "Dry preparation keeps the oil low.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-034",
+   "name": "Kamal Kakdi Sabji",
+   "aliases": [
+    "kamal kakdi sabji",
+    "lotus stem sabji",
+    "bhein sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-LOTUS-STEM"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-LOTUS-STEM",
+     "grams": 250
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Peel the lotus stem, slice it and boil for ten minutes.",
+    "Heat the oil, add jeera.",
+    "Add the lotus stem with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "A starchy sabji, closer to the chapati or rice part of the meal.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-035",
+   "name": "Kathal Sabji",
+   "aliases": [
+    "kathal sabji",
+    "raw jackfruit sabji",
+    "jackfruit sabji",
+    "kathal ki sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-KATHAL"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-KATHAL",
+     "grams": 300
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Cut the raw jackfruit into pieces and boil it till tender.",
+    "Heat the oil, add jeera and the tomato; cook till soft.",
+    "Add the kathal with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "A starchy sabji, closer to the chapati or rice part of the meal.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-036",
+   "name": "Knol Khol Sabji",
+   "aliases": [
+    "knol khol sabji",
+    "kohlrabi sabji",
+    "ganth gobhi sabji",
+    "monji sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-KOHLRABI"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-KOHLRABI",
+     "grams": 300
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Peel the kohlrabi and cut it into pieces.",
+    "Heat the oil, add jeera and the tomato; cook till soft.",
+    "Add the kohlrabi with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "Dry preparation keeps the oil low.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-037",
+   "name": "Chow Chow Sabji",
+   "aliases": [
+    "chow chow sabji",
+    "chayote sabji",
+    "chow chow curry"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-CHAYOTE"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-CHAYOTE",
+     "grams": 300
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Peel the chayote, remove the seed and cut it into pieces.",
+    "Heat the oil, add jeera and the tomato; cook till soft.",
+    "Add the chayote with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "Dry preparation keeps the oil low.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-038",
+   "name": "Lauki Sabji (dry)",
+   "aliases": [
+    "lauki sabji",
+    "ghiya sabji",
+    "lauki ki sabji",
+    "bottle gourd sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-LAUKI"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-LAUKI",
+     "grams": 350
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Peel the lauki and cut it into cubes.",
+    "Heat the oil, add jeera and the tomato; cook till soft.",
+    "Add the lauki with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "Dry preparation keeps the oil low.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-039",
+   "name": "Cauliflower Sabji (dry)",
+   "aliases": [
+    "gobhi sabji",
+    "cauliflower sabji",
+    "gobi ki sabji",
+    "phool gobhi sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-CAULIFLOWER"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-CAULIFLOWER",
+     "grams": 350
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Cut the cauliflower into small florets.",
+    "Heat the oil, add jeera and the tomato; cook till soft.",
+    "Add the cauliflower with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "Dry preparation keeps the oil low.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-040",
+   "name": "Cabbage Sabji (dry)",
+   "aliases": [
+    "patta gobhi sabji",
+    "cabbage sabji",
+    "band gobhi sabji",
+    "cabbage fry"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-CABBAGE"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-CABBAGE",
+     "grams": 350
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Shred the cabbage.",
+    "Heat the oil, add jeera.",
+    "Add the cabbage with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "Dry preparation keeps the oil low.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-041",
+   "name": "Beans Sabji (dry)",
+   "aliases": [
+    "beans sabji",
+    "french beans sabji",
+    "beans ki sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-BEANS"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-BEANS",
+     "grams": 300
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Trim the beans and cut them into small pieces.",
+    "Heat the oil, add jeera and the tomato; cook till soft.",
+    "Add the beans with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "Dry preparation keeps the oil low.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-042",
+   "name": "Matar Sabji",
+   "aliases": [
+    "matar sabji",
+    "peas sabji",
+    "green peas sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-PEAS"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-PEAS",
+     "grams": 250
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Rinse the peas.",
+    "Heat the oil, add jeera and the tomato; cook till soft.",
+    "Add the peas with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "Protein and fibre from the peas.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-043",
+   "name": "Jeera Aloo",
+   "aliases": [
+    "jeera aloo",
+    "aloo jeera",
+    "cumin potatoes"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-ALOO"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-ALOO",
+     "grams": 300
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Boil the aloo, peel it and cut it into cubes.",
+    "Heat the oil, add jeera.",
+    "Add the aloo with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "Simple, with little oil.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-044",
+   "name": "Aloo Matar",
+   "aliases": [
+    "aloo matar",
+    "matar aloo",
+    "potato peas curry"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-ALOO",
+    "FOOD-PEAS"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-ALOO",
+     "grams": 200
+    },
+    {
+     "food": "FOOD-PEAS",
+     "grams": 100
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Wash and cut the aloo into small pieces.",
+    "Heat the oil, add jeera and the tomato; cook till soft.",
+    "Add the aloo with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "Dry preparation keeps the oil low.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-045",
+   "name": "Tomato Sabji",
+   "aliases": [
+    "tomato sabji",
+    "tamatar sabji",
+    "tamatar ki sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-TOMATO"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 400
+    },
+    {
+     "food": "FOOD-ONION",
+     "grams": 60,
+     "unit": "half"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Chop the tomato.",
+    "Heat the oil, add jeera, then the onion; cook till soft.",
+    "Add the tomato with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "Light and quick.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-046",
+   "name": "Sweet Potato Sabji",
+   "aliases": [
+    "sweet potato sabji",
+    "shakarkandi sabji",
+    "shakarkandi ki sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-SWEET-POTATO"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-SWEET-POTATO",
+     "grams": 300
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Boil the sweet potato, peel it and cut it into cubes.",
+    "Heat the oil, add jeera.",
+    "Add the sweet potato with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "A starchy sabji, closer to the chapati or rice part of the meal.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-047",
+   "name": "Suran Sabji",
+   "aliases": [
+    "suran sabji",
+    "yam sabji",
+    "elephant foot yam sabji",
+    "jimikand sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-SURAN"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-SURAN",
+     "grams": 250
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Peel the suran, boil it till tender and cut it into pieces.",
+    "Heat the oil, add jeera.",
+    "Add the suran with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "A starchy sabji, closer to the chapati or rice part of the meal.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-048",
+   "name": "Spring Onion Sabji",
+   "aliases": [
+    "spring onion sabji",
+    "hara pyaz sabji",
+    "green onion sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-SPRING-ONION",
+    "FOOD-PEAS"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-SPRING-ONION",
+     "grams": 250
+    },
+    {
+     "food": "FOOD-PEAS",
+     "grams": 100
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Chop the spring onion, white and green parts.",
+    "Heat the oil, add jeera.",
+    "Add the spring onion with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "Dry preparation keeps the oil low.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-049",
+   "name": "Arbi Leaves Sabji",
+   "aliases": [
+    "arbi leaves sabji",
+    "arvi ke patte",
+    "taro leaves sabji",
+    "patra sabji"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-ARBI-LEAVES"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-ARBI-LEAVES",
+     "grams": 250
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 100,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-DHANIA-POWDER",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-CHILLI-POWDER",
+     "grams": 1
+    }
+   ],
+   "steps": [
+    "Wash the arbi leaves well and chop them fine.",
+    "Heat the oil, add jeera and the tomato; cook till soft.",
+    "Add the arbi leaves with haldi, dhania powder, chilli powder and salt, and a splash of water.",
+    "Cover and cook on low heat till tender, stirring now and then."
+   ],
+   "why_it_fits": "Dry preparation keeps the oil low.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-050",
+   "name": "Palak Corn Sabji",
+   "aliases": [
+    "palak corn",
+    "corn palak",
+    "spinach corn"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-PALAK",
+    "FOOD-SWEET-CORN"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-PALAK",
+     "grams": 250,
+     "unit": "1 bunch"
+    },
+    {
+     "food": "FOOD-SWEET-CORN",
+     "grams": 100
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-GREEN-CHILLI",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Boil the sweet corn till tender.",
+    "Heat the oil, add jeera and the green chilli, then the chopped palak; cook till wilted.",
+    "Add the corn, haldi and salt and cook for five minutes."
+   ],
+   "why_it_fits": "Leafy greens with a little sweet corn.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-051",
+   "name": "Lettuce and Cucumber Salad",
+   "aliases": [
+    "lettuce salad",
+    "cucumber lettuce salad",
+    "green salad"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-LETTUCE",
+    "FOOD-CUCUMBER"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-LETTUCE",
+     "grams": 100
+    },
+    {
+     "food": "FOOD-CUCUMBER",
+     "grams": 150,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-TOMATO",
+     "grams": 80,
+     "unit": "1 small"
+    },
+    {
+     "food": "FOOD-LEMON",
+     "grams": 15,
+     "unit": "a squeeze"
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 2
+    }
+   ],
+   "steps": [
+    "Wash and chop the lettuce, cucumber and tomato.",
+    "Toss them with the lemon juice and salt just before serving."
+   ],
+   "why_it_fits": "Raw vegetables, with nothing cooked.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  },
+  {
+   "recipe_id": "RCP-SABJI-052",
+   "name": "Celery and Cabbage Stir Fry",
+   "aliases": [
+    "celery stir fry",
+    "celery sabji",
+    "celery cabbage"
+   ],
+   "kind": "sabji",
+   "main_ingredients": [
+    "FOOD-CELERY",
+    "FOOD-CABBAGE"
+   ],
+   "diet": "vegetarian",
+   "makes": "1 dish for 2 people",
+   "ingredients": [
+    {
+     "food": "FOOD-CELERY",
+     "grams": 150
+    },
+    {
+     "food": "FOOD-CABBAGE",
+     "grams": 200
+    },
+    {
+     "food": "FOOD-OIL",
+     "grams": 9,
+     "unit": "2 tsp"
+    },
+    {
+     "food": "FOOD-JEERA",
+     "grams": 2
+    },
+    {
+     "food": "FOOD-HALDI",
+     "grams": 1
+    },
+    {
+     "food": "FOOD-GREEN-CHILLI",
+     "grams": 3
+    },
+    {
+     "food": "FOOD-SALT",
+     "grams": 3
+    }
+   ],
+   "steps": [
+    "Chop the celery and shred the cabbage.",
+    "Heat the oil, add jeera and the green chilli, then the celery and cabbage with haldi and salt.",
+    "Cook uncovered on medium heat for ten minutes, stirring now and then."
+   ],
+   "why_it_fits": "Quick, crunchy and low in oil.",
+   "meal_place": "home_meal",
+   "golden_rules_checked": true
+  }
+ ]
 }

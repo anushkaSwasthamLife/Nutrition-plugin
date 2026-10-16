@@ -339,16 +339,23 @@ class Composer:
                 text = f"I can't show {dish} for you: {reasons[0]}."
                 d.exclusion_texts.append(text)
                 d.lines.append(lock("T", text))
-            d.lines.append(lock("T", "Here are some light dishes you could make instead:" if out.rejected
-                                else "Here are some light dishes you could make:"))
+            if plan.ingredients and not out.rejected:
+                have = _join([self.index.name(f) for f in plan.ingredients if f not in d.blocked_foods
+                              and self.index.foods[f]["category"] not in {"pantry", "sweet", "fruit"}])
+                intro = f"With {have} you can make any of these:" if have else "Here are some dishes you could make:"
+            else:
+                intro = "Here are some light dishes you could make instead:" if out.rejected else "Here are some light dishes you could make:"
+            d.lines.append(lock("T", intro))
             for recipe in out.choices:
-                d.lines.append("- " + lock("T", recipe.name))
+                more = f" (also needs {_join([self.index.name(f) for f in recipe.also_need])})" if recipe.also_need else ""
+                d.lines.append("- " + lock("T", recipe.name + more))
             state.recipe_choices = [r.recipe_id for r in out.choices]
-            plan.followup = {"id": "FU-RECIPE-CHOICE", "slot": "recipe_choice", "text": FOLLOWUP_CHOICE}
+            if not (plan.followup and plan.followup.get("id") == "FU-ALLERGY"):        # the allergy question comes first, once
+                plan.followup = {"id": "FU-RECIPE-CHOICE", "slot": "recipe_choice", "text": FOLLOWUP_CHOICE}
             d.suppress.add("meal_place")
             return
         if out.status == "recipe":
-            self._render_recipe(out.recipe, plan, d, lock, free, name)
+            self._render_recipe(out.recipe, plan, d, lock, free, name, state)
             return
         # tips_only (R9): honest about it, say why, give approved cooking tips, and log the request for the dietitian.
         d.backlog_request = out.backlog
@@ -359,8 +366,12 @@ class Composer:
         d.lines.append(lock("T", "We don't have a checked recipe for this yet, so here is what helps most:"))
         self._tips_lines(plan, state, d, lock, given)
 
-    def _render_recipe(self, recipe, plan, d: Draft, lock, free, name) -> None:
+    def _render_recipe(self, recipe, plan, d: Draft, lock, free, name, state=None) -> None:
         d.recipe = recipe
+        if not recipe.also_need and state is not None and state.ingredients_on_hand and recipe.origin == "approved" and plan.recipe_ids:
+            # A dish picked from a list for what the person has: say what else it needs (never a food they cannot have).
+            have = self.index.with_generics(set(state.ingredients_on_hand))
+            recipe.also_need = [f for f in self.recipes.recipes[recipe.recipe_id]["main_ingredients"] if f not in have and f not in d.blocked_foods]
         for item in recipe.ingredients:
             d.foods_named.add(item["food"])
         used = [f for f in plan.ingredients if f in {i["food"] for i in recipe.ingredients} and f not in d.blocked_foods

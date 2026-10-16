@@ -25,6 +25,8 @@ GREETING = re.compile(r"^(hi|hello|hey|namaste|good (morning|evening|afternoon)|
 INGREDIENTS = re.compile(r"\b(i have|i've got|i got|we have|at home (i|we) have|there is|there's|have only|only have|my paas)\b")
 HINDI_MAKE = re.compile(r"\b(bana|banau|banaun|banaye|pakau|pakaun|pakana|pakaye|kya bana)\b")   # not "banana": that's a fruit
 DISH_AFTER = re.compile(r"(?:recipe (?:for|of)|how (?:do|to|can|should) (?:i |you |we )?(?:make|cook|prepare)|make|cook|prepare)\s+(.+)$")
+DISH_FILLER = {"please", "pls", "show", "me", "the", "a", "an", "recipe", "recipes", "for", "i", "want", "give", "ka", "ki", "ke", "ko", "dikhao", "batao",
+               "chahiye", "of", "to", "and", "ok", "okay", "yes", "this", "that", "one", "sure", "make", "how"}
 GENERIC_DISH = {"recipes", "recipe", "some recipes", "a recipe", "something", "food", "a dish", "dish", "dishes", "some dishes",
                 "me recipes", "it", "this", "that", "meal", "meals", "lunch", "dinner"}
 MAKE = re.compile(r"\b(make|prepare|cook|dish|meal|recipe|what can i (make|cook|prepare))\b")
@@ -262,6 +264,11 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
     u.frequency_question = bool(FREQUENCY.search(cleaned)) and question_type == "meal_protocol_application"
     if question_type == "out_of_scope" and not u.slot_fill and parse_status(cleaned):
         question_type = "status_dependent_protocol_question"       # "yes, my consultant confirmed it": a status statement
+    if u.recipe_ids and question_type in {"food_allowed", "food_choice_guidance", "meal_from_ingredients"} and "?" not in text:
+        # A dish name on its own ("Moong Dal Chilla", "show me jeera aloo please") is a request for that recipe.
+        leftover = set(getattr(recipe_finder, "__self__", None).last_leftover) if hasattr(recipe_finder, "__self__") else set()
+        if leftover <= DISH_FILLER:
+            question_type = "recipe_request"
     if question_type != "recipe_request" and not (u.slot_fill and "recipe_choice" in u.slot_fill):
         u.recipe_ids = []                # a dish name only counts when the person is asking for that recipe
     if question_type == "recipe_request" and not u.recipe_ids:

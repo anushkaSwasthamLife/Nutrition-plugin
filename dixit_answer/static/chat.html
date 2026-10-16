@@ -299,6 +299,9 @@
         var head = m[1].replace(/:$/, ''), rest = ((m[2] || '') + ' ' + (m[3] || '')).trim(), sec = null;
         SECTION_ICON.forEach(function (s) { if (!sec && s[0].test(head)) sec = s; });
         closeList();
+        if (sec && !rest && i + 1 < lines.length && lines[i + 1].trim() && !/^\s*- /.test(lines[i + 1]) && !/^\*\*/.test(lines[i + 1])) {
+          rest = lines[i + 1].trim(); i++;          // the wording model sometimes puts the text on the line after the label
+        }
         if (sec) {
           if (sec[2] === 'Nutrition, whole dish') {
             var chips = rest.replace(/\bfor the whole dish.*$/i, '').replace(/^about\s+/i, '').split(/,\s*|\s+and\s+/).filter(Boolean);
@@ -380,6 +383,14 @@
   function suggestions(r) {
     var t = r.type || '', a = r.answer || '', asksAllergy = /do you have any food allergies/i.test(a);
     if (t === 'emergency') return [];
+    if (/Which one should I show\?/.test(a)) {          // a list of dishes: one tap per dish
+      var dishes = [];
+      a.split(/\r?\n/).forEach(function (line) {
+        var m = line.match(/^- (.+?)(?: \(also needs [^)]*\))?$/);
+        if (m && dishes.length < 6 && !/^\*\*/.test(line.slice(2))) dishes.push(['🍲 ' + line.slice(2), m[1]]);
+      });
+      if (dishes.length) return dishes;
+    }
     if (t === 'support_wellbeing') return [['🍽️ Meals that fit the programme', 'what should I eat?'], ['🙏 Thank you', 'thanks']];
     if (asksAllergy) return [['🚫 No allergies', 'No allergies'], ['🥛 Milk', 'I am allergic to milk'], ['🥜 Peanuts', 'I am allergic to peanuts'], ['🌾 Gluten', 'I am allergic to gluten']];
     if (/sprouts step/i.test(a)) return [['🌱 I have moong', 'I have moong'], ['🥚 Eggs instead', 'I would prefer eggs']];

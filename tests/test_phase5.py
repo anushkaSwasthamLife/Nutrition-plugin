@@ -162,7 +162,7 @@ def test_stale_intake_is_ignored_not_treated_as_nothing_eaten(engine):
 def test_allergy_question_is_asked_once_and_the_reply_is_not_repeated_back(chat):
     r = chat("I have aloo and onion, what can I make?", "none", "what can I make with aloo and onion?")
     assert "food allergies" in r[0].answer and "Aloo Pyaz" in r[0].answer     # approved, allergen-free recipe is still shown
-    assert r[1].answer.startswith("Thanks, noted.") and "You need" not in r[1].answer
+    assert "food allergies" not in r[1].answer and "Which one should I show?" in r[1].answer and "You need" not in r[1].answer   # the list again, now checked for no allergies
     assert "food allergies" not in r[2].answer and not failed(r[2])
 
 
@@ -329,7 +329,8 @@ class RewordLLM(DraftLLM):
 def test_makes_line_is_locked_and_wording_cannot_hint_at_portions(settings):
     s = copy.copy(settings)
     engine = Engine(s, llm=RewordLLM())
-    r = engine.answer("I have aloo and onion, what can I make?", None, {"allergies": []})
+    first = engine.answer("I have aloo and onion, what can I make?", None, {"allergies": []})
+    r = engine.answer("Aloo Pyaz ki Sabji", first.conversation_id, {"allergies": []})
     assert "(1 dish for 2 people)" in r.answer and "small serving" not in r.answer and "simple plan" not in r.answer
 
 

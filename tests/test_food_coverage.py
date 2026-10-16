@@ -20,7 +20,7 @@ DRY = ["FOOD-RAJMA", "FOOD-CHICKPEAS", "FOOD-MASOOR-DAL", "FOOD-TOOR-DAL", "FOOD
 
 
 def test_the_list_grew_and_says_so(engine):
-    assert engine.data.food_master["version"] == "FM-0.3.0" and len(engine.index.foods) == 77
+    assert engine.data.food_master["version"] == "FM-0.3.2" and len(engine.index.foods) == 79
     assert all(f in engine.index.foods for f in NEW)
 
 
@@ -260,6 +260,8 @@ def test_nothing_that_was_there_before_changed(engine):
     """The 42 foods of FM-0.2.2 keep their USDA record, allergens and category; every one of their names still finds them."""
     for fid, (record, allergens, category) in ORIGINAL.items():
         food = engine.index.foods[fid]
+        if fid == "FOOD-RICE":
+            record = "LEGACY-168877"                         # rice got a USDA record in FM-0.3.2 so approved recipes can use it
         assert (food["ingredient_record"], sorted(food["allergens"]), food["category"]) == (record, allergens, category), fid
         for alias in food["aliases"]:
             if fid == "FOOD-DAL" or alias in {"toor dal", "arhar dal", "masoor dal"}:

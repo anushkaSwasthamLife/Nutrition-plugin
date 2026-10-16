@@ -7,7 +7,7 @@ Standalone Python package until the Dixit app code is available. **Development b
 ## Run
 
 ```
-.venv\Scripts\python.exe -m pytest -q              # 1717 tests, about 5 minutes (no AI calls; the AI is mocked)
+.venv\Scripts\python.exe -m pytest -q              # 1808 tests, about 6 minutes (no AI calls; the AI is mocked)
 .venv\Scripts\python.exe -m dixit_answer.web       # chat page on http://127.0.0.1:8100
 ```
 
@@ -220,3 +220,15 @@ from the US National Institute of Mental Health fact sheet (public domain; regul
 plain statement that food can't treat anxiety and no supplement is suggested, where to get help (a doctor or counsellor, Tele-MANAS 14416) and
 112 for chest pain, trouble breathing or thoughts of self-harm. The AI is never used for it. An emergency phrase in the same message still wins.
 A feeling together with a food question gets the kind line and the help line, then the normal food answer. Tests: `tests/test_wellbeing_support.py`.
+
+## More dishes for what a person has (RCP-0.2.0, 16 Oct 2026)
+
+The approved recipe collection grew from 8 to 77 development dishes (`recipes_test.json`, still TEST ONLY: a dietitian rewrites and signs
+them): several dals and pulses (moong dal khichdi, chilla, soup, tadka, rajma, chana masala, lobia, tofu bhurji, besan chilla...), rice and suji
+dishes (khichdi, pulao, upma, lemon rice), and a sabji for every vegetable in the food list, with Jain-friendly versions that use no onion,
+garlic or root vegetables. When a person says what they have, the chat lists every approved dish that passes their checks (up to six, dishes
+that need one more food marked "also needs"), shown as tap buttons in the chat page; one dish is shown in full. Foods with no approved dish
+still get an AI-drafted, gate-checked recipe, except dry pulses (they need soaking). Moong dal halwa is in the collection only so a request
+for it gets an honest answer: it is a sweet, and the Golden Rules do not allow a sweet as a home-meal dish, so it is never offered on its
+own. `khichdi` and `chilla` were added as allowed home-meal dish kinds (to confirm with Dixit). Most older tests run against the first eight
+recipes (`CLASSIC_RECIPES` in `tests/conftest.py`); `tests/test_recipe_variety.py` covers the full collection.

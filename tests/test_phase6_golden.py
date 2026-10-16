@@ -145,7 +145,8 @@ def test_profile_status_beats_asking(ask):
 def test_fruit_is_left_out_of_recipes_unless_confirmed_non_diabetic(ask):
     r = ask("I have mango, onion and aloo, what can I make?")
     assert "I left out mango because of the programme's fruit rule" in r.answer and not failed(r)
-    assert "mango" not in r.answer.split("**You need**")[1].lower()
+    picked = ask("Aloo Pyaz ki Sabji", cid=r.conversation_id)
+    assert "mango" not in picked.answer.split("**You need**")[1].lower()
 
 
 def test_recipe_gate_names_the_golden_rule(engine):

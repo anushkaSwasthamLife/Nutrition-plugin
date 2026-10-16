@@ -14,7 +14,9 @@ def test_six_turn_conversation(chat):
         "bhindi, aloo, cauliflower",
         "aloo",
         "give me recipes",
+        "none",
         "I have aloo and onion, what Indian meal can I prepare?",
+        "Aloo Pyaz ki Sabji",
     )
     for result in r:
         assert not failed(result), (result.turn, failed(result))
@@ -45,9 +47,10 @@ def test_six_turn_conversation(chat):
     assert "starchy" in r[3].answer and "dry potato" in r[3].answer
 
     # Turn 5: "give me recipes" offers approved dishes and asks which; turn 6 builds the aloo-onion recipe from the library.
-    assert "light dishes" in r[4].answer and "Which one should I show?" in r[4].answer
-    assert "In your meal" not in r[4].answer
-    t6 = r[5].answer
+    assert "light dishes" in r[4].answer and "In your meal" not in r[4].answer
+    assert "Which one should I show?" in r[5].answer                      # allergies answered: the same list, now with the question to pick
+    assert "Aloo Pyaz ki Sabji" in r[6].answer and "Which one should I show?" in r[6].answer      # aloo and onion fit several approved dishes: they are listed
+    t6 = r[7].answer
     assert "Aloo Pyaz ki Sabji" in t6 and "**You need**" in t6 and "**How:**" in t6
     assert "372 kcal" in t6 and "calculated from USDA" in t6             # whole-dish numbers worked out by code
     assert "In your meal" in t6 and "Thanks, noted" not in t6
