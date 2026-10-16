@@ -7,7 +7,7 @@ Standalone Python package until the Dixit app code is available. **Development b
 ## Run
 
 ```
-.venv\Scripts\python.exe -m pytest -q              # 1270 tests, about 5 minutes (no AI calls; the AI is mocked)
+.venv\Scripts\python.exe -m pytest -q              # 1368 tests, about 5 minutes (no AI calls; the AI is mocked)
 .venv\Scripts\python.exe -m dixit_answer.web       # chat page on http://127.0.0.1:8100
 ```
 
@@ -179,3 +179,27 @@ refuses unsigned data and the report that lists what is left.
   It changes no file.
 - Still waiting on people: the real numbers and sources, food_item v1.0 (allergen and diet tags, paneer proxy), the swap table and the
   30 to 50 approved recipes. Tests: `tests/test_readiness.py` (126).
+
+## The 100-recipe review tool (item G, tooling part, 16 Oct 2026)
+
+Switching on AI recipe drafting in production needs a dietitian to score 100 AI-drafted recipes first. The tool does the preparation
+and the arithmetic; people do the scoring.
+
+```
+.venv\Scripts\python.exe -m dixit_answer.sample_review make  [--out var\sample_review] [--size N]
+.venv\Scripts\python.exe -m dixit_answer.sample_review score SHEET.csv --sample var\sample_review\sample.json
+```
+
+- **`make`** draws different people (conditions, allergies, diet, what is in the kitchen), runs each through the real recipe flow with
+  every check on, and keeps the recipes the AI drafted that passed the gate. It then re-checks every kept recipe straight from the raw
+  data files (allergens, vegetarian and Jain rules, limits) without using the recipe code, and stops if one breaks a rule. It writes
+  `sample.json` and `scoring_sheet.csv` (plain food names, no codes). The same seed draws the same people. It asks for the coverage the
+  rules file lists (for example at least 5 people per allergy) and says in plain words which group fell short.
+- **`score`** reads the filled sheet. Each recipe needs `safe` (Y or N), `sensible` and `cookable` (whole numbers 1 to 5), a reviewer name
+  and a review date; a missing, doubled or unknown recipe, or a bad cell, makes the sheet INVALID. The pass mark is in
+  `data/sample_review_rules.json` (SR-0.1.0, PROPOSED): no recipe unsafe, mean at least 4.0 on both scores, at least 90% scoring 3 or
+  more. The sample records a fingerprint of that file, so a pass mark changed after the sample was drawn is refused. The verdict
+  PASSED needs a signed rules file, otherwise it prints PASSED_UNSIGNED. It never edits `manifest.json`; switching
+  `recipe_ai_drafting` on is a manual step after PASSED.
+- **Today's finding:** for a person with diabetes the AI is never asked to draft, because the added-sugar limit cannot be checked (item E,
+  open decision). So a sample cannot yet include diabetes, and `make` reports that shortfall instead of hiding it. Tests: `tests/test_sample_review.py` (98).
