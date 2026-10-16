@@ -2,186 +2,555 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dixit Answer Test</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dixit Nutrition Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
+  /* Same palette and type as the plan page (workflow.html): pale green clinical light theme */
   :root {
-    --bg: #f4f6fb; --surface: #ffffff; --fg: #1d2330; --muted: #5b6475; --line: #d5dae3;
-    --me: #1f6feb; --me-fg: #ffffff; --bot: #ffffff; --ok: #1a7f37; --ok-bg: #e6f4ea; --bad: #c62828; --bad-bg: #fdecea;
-    --warn: #9a6700; --warn-bg: #fff4d6; --code-bg: #eef1f5;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #12151b; --surface: #1a1f27; --fg: #e4e8ef; --muted: #9aa4b5; --line: #2c3340;
-      --me: #3b7be0; --me-fg: #ffffff; --bot: #1f2530; --ok: #5cc27a; --ok-bg: #16301f; --bad: #ff7b72; --bad-bg: #3a1a1a;
-      --warn: #e0b54a; --warn-bg: #352a10; --code-bg: #222833;
-    }
+    color-scheme: light;
+    --bg: #F5F8F4; --surface: #FFFFFF; --ink: #15261E; --muted: #52645A; --line: #D9E4DB;
+    --lane: #EDF3EE; --code-bg: #EAEFEB;
+    --green: #1D7A57; --green-dark: #165F44; --green-soft: #DCF0E5;
+    --amber: #B96F00; --amber-soft: #FCEBC6; --red: #B63A25; --red-soft: #F8DDD5;
+    --serif: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+    --sans: "DM Sans", "Segoe UI", system-ui, sans-serif;
+    --shadow: 0 14px 40px -24px rgba(21, 38, 30, .35);
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.55 "Segoe UI", system-ui, sans-serif; }
-  .app { max-width: 820px; margin: 0 auto; padding: 16px; min-height: 100vh; display: flex; flex-direction: column; }
-  header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-bottom: 10px; }
-  header h1 { font-size: 19px; margin: 0; }
-  .meta { color: var(--muted); font-size: 12.5px; }
-  header .spacer { flex: 1; }
-  button, select { font: inherit; font-size: 13.5px; border: 1px solid var(--line); background: var(--surface); color: var(--fg);
-    border-radius: 8px; padding: 6px 12px; cursor: pointer; }
-  button:hover { border-color: var(--me); }
-  .log { flex: 1; display: flex; flex-direction: column; gap: 12px; padding: 8px 0 16px; }
-  .msg { max-width: 88%; padding: 10px 14px; border-radius: 12px; overflow-wrap: anywhere; }
-  .me { align-self: flex-end; background: var(--me); color: var(--me-fg); border-bottom-right-radius: 4px; }
-  .bot { align-self: flex-start; background: var(--bot); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
-  .bot p { margin: 4px 0; } .bot ul { margin: 4px 0; padding-left: 20px; }
-  .fb { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-  .fb button { font-size: 12px; padding: 3px 9px; border-radius: 999px; }
-  .fb button.done { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); }
-  details { margin-top: 8px; font-size: 12.5px; color: var(--muted); }
-  details pre { background: var(--code-bg); padding: 8px; border-radius: 6px; overflow-x: auto; white-space: pre-wrap; font-size: 11.5px; }
-  .tag { display: inline-block; border-radius: 999px; padding: 0 8px; font-size: 11.5px; font-weight: 600; margin-right: 4px; }
-  .tag.ok { background: var(--ok-bg); color: var(--ok); } .tag.bad { background: var(--bad-bg); color: var(--bad); }
-  .tag.warn { background: var(--warn-bg); color: var(--warn); }
-  form { display: flex; gap: 8px; position: sticky; bottom: 0; background: var(--bg); padding: 10px 0; }
-  textarea { flex: 1; font: inherit; resize: none; min-height: 44px; max-height: 140px; padding: 10px 12px; border-radius: 10px;
-    border: 1px solid var(--line); background: var(--surface); color: var(--fg); }
-  form button { background: var(--me); color: var(--me-fg); border-color: var(--me); padding: 0 18px; }
-  .examples { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
-  .examples button { font-size: 12.5px; border-radius: 999px; }
-  .profile { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; margin-bottom: 8px; font-size: 13px; }
-  .profile summary { cursor: pointer; color: var(--muted); }
-  .prow { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; margin: 6px 0; }
-  .note { font-size: 12.5px; color: var(--warn); background: var(--warn-bg); border-radius: 8px; padding: 6px 10px; margin-bottom: 8px; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 var(--sans); -webkit-font-smoothing: antialiased; }
+  button, select, textarea, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  [hidden] { display: none !important; }
+  :focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; border-radius: 6px; }
+
+  .shell { height: 100%; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); max-width: 1120px; margin: 0 auto; }
+  @media (min-width: 900px) { .shell { grid-template-columns: minmax(0, 1fr) 320px; } header { grid-column: 1 / -1; } }
+
+  header { display: flex; align-items: center; gap: 12px; padding: 10px max(16px, env(safe-area-inset-left)) 10px; background: var(--surface);
+    border-bottom: 1px solid var(--line); position: relative; z-index: 5; }
+  .logo { width: 40px; height: 40px; border-radius: 12px; background: var(--green); color: #fff; display: grid; place-items: center; font-size: 22px; flex: none; }
+  .title { font-family: var(--serif); font-weight: 800; font-size: 1.15rem; line-height: 1.1; }
+  .sub { font-size: .8rem; color: var(--muted); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); display: inline-block; }
+  .dot.off { background: var(--red); }
+  .spacer { flex: 1; }
+  .hbtn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 7px 14px; font-size: .88rem; font-weight: 500; display: inline-flex; gap: 6px; align-items: center; }
+  .hbtn:hover { border-color: var(--green); }
+  .hbtn[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .only-small { display: inline-flex; }
+  @media (min-width: 900px) { .only-small { display: none; } }
+
+  /* chat column */
+  main { display: flex; flex-direction: column; min-height: 0; position: relative; }
+  .scroll { flex: 1; overflow-y: auto; padding: 18px max(16px, env(safe-area-inset-left)) 8px; scroll-behavior: smooth; }
+  .stream { display: flex; flex-direction: column; gap: 14px; max-width: 760px; margin: 0 auto; padding-bottom: 8px; }
+
+  .welcome { text-align: center; padding: 28px 8px 8px; }
+  .welcome .big { font-size: 46px; }
+  .welcome h1 { font-family: var(--serif); font-weight: 800; font-size: clamp(1.6rem, 5vw, 2.2rem); line-height: 1.1; margin: 8px 0 8px; text-wrap: balance; }
+  .welcome p { color: var(--muted); margin: 0 auto 20px; max-width: 46ch; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; text-align: left; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; display: flex; gap: 10px; align-items: flex-start;
+    transition: border-color .15s, transform .15s, box-shadow .15s; box-shadow: var(--shadow); }
+  .card:hover { border-color: var(--green); transform: translateY(-1px); }
+  .card { text-align: left; width: 100%; }
+  .card .ico { font-size: 22px; line-height: 1.2; }
+  .card b { display: block; font-size: .95rem; }
+  .card span.s { font-size: .82rem; color: var(--muted); line-height: 1.35; display: block; }
+
+  .row { display: flex; gap: 10px; align-items: flex-end; animation: rise .22s ease-out; }
+  .row.me { justify-content: flex-end; }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--green-soft); display: grid; place-items: center; font-size: 18px; flex: none; border: 1px solid var(--line); }
+  .bubble { max-width: min(86%, 620px); padding: 11px 15px; border-radius: 18px; overflow-wrap: anywhere; position: relative; }
+  .me .bubble { background: var(--green); color: #fff; border-bottom-right-radius: 5px; white-space: pre-wrap; }
+  .bot .bubble { background: var(--surface); border: 1px solid var(--line); border-bottom-left-radius: 5px; box-shadow: var(--shadow); }
+  .time { font-size: .72rem; color: var(--muted); margin: 3px 4px 0; }
+  .me .time { text-align: right; }
+  .bubble.plain { background: transparent; border: 0; box-shadow: none; padding: 0; }
+  .bubble.plain .tools, .bubble.plain details.tech { padding-left: 4px; }
+  .bubble p { margin: 5px 0; }
+  .bubble ul { margin: 5px 0; padding-left: 20px; }
+  .bubble li { margin: 2px 0; }
+
+  /* recipe-style sections */
+  .dish { font-family: var(--serif); font-weight: 700; font-size: 1.12rem; margin: 2px 0 2px; }
+  .sect { margin-top: 10px; border-top: 1px dashed var(--line); padding-top: 8px; }
+  .sect h4 { margin: 0 0 3px; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--green); display: flex; gap: 6px; align-items: center; }
+  .lead { color: var(--muted); font-size: .9rem; }
+  .nutri { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 2px; }
+  .chip { background: var(--green-soft); color: var(--green-dark); border-radius: 999px; padding: 3px 10px; font-size: .84rem; font-weight: 700; }
+  .src { color: var(--muted); font-size: .78rem; }
+
+  /* emergency cards */
+  .alert { border: 2px solid var(--red); background: var(--red-soft); border-radius: 18px; padding: 12px 15px; }
+  .alert .head { font-family: var(--serif); font-weight: 800; color: var(--red); display: flex; gap: 8px; align-items: center; font-size: 1.05rem; }
+  .alert.care { border-color: var(--amber); background: var(--amber-soft); }
+  .alert.care .head { color: var(--amber); }
+  .call { display: inline-flex; gap: 8px; align-items: center; margin: 8px 8px 2px 0; padding: 9px 16px; border-radius: 999px; background: var(--red); color: #fff;
+    font-weight: 700; text-decoration: none; }
+  .alert.care .call { background: var(--amber); }
+  .call:hover { filter: brightness(1.08); }
+
+  /* typing */
+  .typing { display: inline-flex; gap: 4px; padding: 6px 2px; }
+  .typing i { width: 7px; height: 7px; border-radius: 50%; background: var(--green); opacity: .35; animation: bob 1s infinite ease-in-out; }
+  .typing i:nth-child(2) { animation-delay: .15s; } .typing i:nth-child(3) { animation-delay: .3s; }
+  @keyframes bob { 0%, 80%, 100% { opacity: .25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-4px); } }
+
+  /* under-message controls */
+  .tools { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; align-items: center; }
+  .tbtn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 3px 10px; font-size: .82rem; }
+  .tbtn:hover { border-color: var(--green); }
+  .tbtn.done { background: var(--green-soft); border-color: var(--green); color: var(--green-dark); }
+  .why { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .replies { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 0 44px; animation: rise .25s ease-out; }
+  .qr { border: 1.5px solid var(--green); color: var(--green-dark); background: var(--surface); border-radius: 999px; padding: 6px 14px; font-weight: 500; font-size: .92rem; }
+  .qr:hover { background: var(--green); color: #fff; }
+  .retry { margin-top: 8px; }
+
+  details.tech { margin-top: 8px; font-size: .8rem; color: var(--muted); }
+  details.tech summary { cursor: pointer; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+  details.tech pre { background: var(--code-bg); padding: 8px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; font-size: .74rem; }
+  .tag { border-radius: 999px; padding: 0 8px; font-size: .74rem; font-weight: 700; background: var(--code-bg); }
+  .tag.ok { background: var(--green-soft); color: var(--green-dark); } .tag.warn { background: var(--amber-soft); color: var(--amber); } .tag.bad { background: var(--red-soft); color: var(--red); }
+
+  .jump { position: absolute; right: 18px; bottom: 112px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface);
+    box-shadow: var(--shadow); font-size: 18px; display: none; }
+  .jump.show { display: block; }
+
+  /* composer */
+  .composer { padding: 8px max(16px, env(safe-area-inset-left)) calc(10px + env(safe-area-inset-bottom)); background: linear-gradient(to top, var(--bg) 70%, transparent); }
+  .composer-in { max-width: 760px; margin: 0 auto; }
+  form { display: flex; gap: 8px; align-items: flex-end; background: var(--surface); border: 1.5px solid var(--line); border-radius: 22px; padding: 6px 6px 6px 16px;
+    box-shadow: var(--shadow); transition: border-color .15s; }
+  form:focus-within { border-color: var(--green); }
+  textarea { flex: 1; border: 0; outline: 0; resize: none; background: transparent; padding: 9px 0; max-height: 140px; min-height: 24px; line-height: 1.4; }
+  .send { width: 42px; height: 42px; border-radius: 50%; border: 0; background: var(--green); color: #fff; font-size: 18px; display: grid; place-items: center; flex: none; }
+  .send:disabled { background: var(--line); cursor: not-allowed; }
+  .send:not(:disabled):hover { background: var(--green-dark); }
+  .hint { display: flex; justify-content: space-between; gap: 10px; font-size: .74rem; color: var(--muted); padding: 5px 8px 0; }
+  .hint .count.warn { color: var(--red); font-weight: 700; }
+
+  /* profile side panel */
+  aside { background: var(--surface); border-left: 1px solid var(--line); padding: 16px; overflow-y: auto; display: none; }
+  @media (min-width: 900px) { aside { display: block; } }
+  aside.sheet { display: block; position: fixed; inset: 0 0 0 auto; width: min(360px, 92vw); z-index: 20; box-shadow: -20px 0 50px -20px rgba(21, 38, 30, .4); }
+  @media (min-width: 900px) { aside.sheet { position: static; width: auto; box-shadow: none; } }
+  aside h2 { font-family: var(--serif); font-size: 1.05rem; margin: 0 0 2px; }
+  aside .note { font-size: .82rem; color: var(--muted); margin: 0 0 12px; }
+  .grp { margin: 14px 0; } .grp > b { display: block; font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .opts { display: flex; flex-wrap: wrap; gap: 6px; }
+  .opt { position: relative; }
+  .opt input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+  .opt span { display: inline-block; border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; font-size: .88rem; background: var(--surface); }
+  .opt input:checked + span { background: var(--green); border-color: var(--green); color: #fff; }
+  .opt input:focus-visible + span { outline: 3px solid var(--amber); outline-offset: 2px; }
+  .opt input:disabled + span { opacity: .45; }
+  aside select { width: 100%; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); }
+  .close { float: right; border: 0; background: transparent; font-size: 22px; }
+  .scrim { position: fixed; inset: 0; background: rgba(21, 38, 30, .35); z-index: 15; display: none; }
+  .scrim.show { display: block; }
+  .fine { font-size: .76rem; color: var(--muted); margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .banner { background: var(--amber-soft); color: #6d4300; border-radius: 12px; padding: 7px 12px; font-size: .8rem; margin: 0 0 10px; }
+
+  @media (max-width: 600px) {
+    header { gap: 8px; padding-block: 8px; }
+    .logo { width: 34px; height: 34px; font-size: 18px; border-radius: 10px; }
+    .title { font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 38vw; }
+    .sub { font-size: .72rem; white-space: nowrap; max-width: 38vw; overflow: hidden; text-overflow: ellipsis; display: block; }
+    .hbtn { padding: 8px 11px; } .hbtn .lbl { display: none; }
+    .hint.long { display: none; }
+    .bubble { max-width: 92%; }
+    .replies { margin-left: 0; }
+    .avatar { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 </style>
 </head>
 <body>
-<div class="app">
+<div class="shell">
   <header>
-    <h1>Dixit answer pipeline</h1>
-    <span class="meta" id="meta">loading…</span>
+    <div class="logo" aria-hidden="true">🥗</div>
+    <div>
+      <div class="title">Dixit Nutrition Assistant</div>
+      <div class="sub"><span class="dot" id="dot"></span><span id="meta">connecting…</span></div>
+    </div>
     <span class="spacer"></span>
-    <label class="meta"><input type="checkbox" id="debug" checked> show details</label>
-    <button id="newchat" type="button">New chat</button>
+    <button class="hbtn only-small" id="openProfile" type="button" aria-label="Your profile">👤 <span class="lbl">Profile</span></button>
+    <button class="hbtn" id="tech" type="button" aria-pressed="false" title="Show the checks behind each answer (for the care team)" aria-label="Details">🔍 <span class="lbl">Details</span></button>
+    <button class="hbtn" id="newchat" type="button" aria-label="New chat">✨ <span class="lbl">New chat</span></button>
   </header>
-  <div class="note">Development build. Food lists, tips and Golden Rules are TEST ONLY drafts; "dev data" numbers come from the Indian library (licence pending).</div>
-  <details class="profile" id="profile">
-    <summary>My profile (what the Dixit app would send)</summary>
-    <div class="prow"><b>Allergies:</b>
-      <label><input type="radio" name="allergy_mode" value="unknown" checked> not told yet (it will ask)</label>
-      <label><input type="radio" name="allergy_mode" value="none"> none</label>
-      <label><input type="radio" name="allergy_mode" value="list"> allergic to:</label>
-      <label><input type="checkbox" class="al" value="milk"> milk</label>
-      <label><input type="checkbox" class="al" value="peanut"> peanuts</label>
-      <label><input type="checkbox" class="al" value="tree_nut"> nuts</label>
-      <label><input type="checkbox" class="al" value="gluten"> gluten</label>
-      <label><input type="checkbox" class="al" value="egg"> eggs</label>
+
+  <main>
+    <div class="scroll" id="scroll">
+      <div class="stream" id="stream" aria-live="polite" aria-label="Conversation"></div>
     </div>
-    <div class="prow"><b>Diet:</b>
-      <select id="diet"><option value="">not told</option><option value="vegetarian">vegetarian</option>
-        <option value="egg">eggs ok</option><option value="non_vegetarian">non-vegetarian</option><option value="jain">jain</option></select>
-      <label><input type="checkbox" id="insulin"> takes insulin / diabetes medicine</label>
-      <label><input type="checkbox" id="obesity"> obesity</label>
-      <label><input type="checkbox" id="hbp"> high blood pressure</label>
+    <button class="jump" id="jump" type="button" aria-label="Scroll to the latest message">⬇️</button>
+    <div class="composer">
+      <div class="composer-in">
+        <form id="form" autocomplete="off">
+          <textarea id="input" rows="1" maxlength="2000" placeholder="Ask about food or meals… 🍛" aria-label="Your message"></textarea>
+          <button class="send" id="send" type="submit" aria-label="Send message">➤</button>
+        </form>
+        <div class="hint long"><span>Enter to send · Shift+Enter for a new line</span><span class="count" id="count"></span></div>
+        <div class="hint"><span>ℹ️ Food information only, not medical advice. In an emergency call <b>112</b>.</span></div>
+      </div>
     </div>
-  </details>
-  <div class="examples" id="examples"></div>
-  <div class="log" id="log" aria-live="polite"></div>
-  <form id="form">
-    <textarea id="input" placeholder="Ask about food, meals or the Dixit programme…" aria-label="Message"></textarea>
-    <button type="submit">Send</button>
-  </form>
+  </main>
+
+  <aside id="profile" aria-label="Your health profile">
+    <button class="close" id="closeProfile" type="button" aria-label="Close profile">×</button>
+    <h2>👤 Your health profile</h2>
+    <p class="note">This is what the Dixit app would send. It makes answers safer and more personal.</p>
+    <div class="banner" id="devBanner" hidden>🧪 Development build: food lists, tips and rules are test drafts.</div>
+
+    <div class="grp"><b>🥜 Food allergies</b>
+      <div class="opts" id="allergyMode">
+        <label class="opt"><input type="radio" name="am" value="unknown" checked><span>Not told yet</span></label>
+        <label class="opt"><input type="radio" name="am" value="none"><span>None</span></label>
+        <label class="opt"><input type="radio" name="am" value="list"><span>Allergic to…</span></label>
+      </div>
+      <div class="opts" id="allergyList" style="margin-top:8px">
+        <label class="opt"><input type="checkbox" class="al" value="milk"><span>🥛 Milk</span></label>
+        <label class="opt"><input type="checkbox" class="al" value="peanut"><span>🥜 Peanuts</span></label>
+        <label class="opt"><input type="checkbox" class="al" value="tree_nut"><span>🌰 Nuts</span></label>
+        <label class="opt"><input type="checkbox" class="al" value="gluten"><span>🌾 Gluten</span></label>
+        <label class="opt"><input type="checkbox" class="al" value="egg"><span>🥚 Eggs</span></label>
+      </div>
+    </div>
+
+    <div class="grp"><b>🍽️ Diet</b>
+      <select id="diet" aria-label="Diet">
+        <option value="">Not told</option><option value="vegetarian">🥦 Vegetarian</option><option value="egg">🥚 Eats eggs</option>
+        <option value="non_vegetarian">🍗 Non-vegetarian</option><option value="jain">🪷 Jain</option>
+      </select>
+    </div>
+
+    <div class="grp"><b>🩺 Health</b>
+      <div class="opts">
+        <label class="opt"><input type="checkbox" id="insulin"><span>💉 Insulin or diabetes medicine</span></label>
+        <label class="opt"><input type="checkbox" id="obesity"><span>⚖️ Obesity</span></label>
+        <label class="opt"><input type="checkbox" id="hbp"><span>❤️ High blood pressure</span></label>
+      </div>
+    </div>
+    <p class="fine">Your choices stay in this browser tab only. The assistant never gives a diet plan or changes medicines. Ask your doctor or dietitian about those.</p>
+  </aside>
 </div>
+<div class="scrim" id="scrim"></div>
+
 <script>
 (function () {
-  var log = document.getElementById('log'), input = document.getElementById('input'), form = document.getElementById('form');
-  var debug = document.getElementById('debug');
-  var conversationId = null;
-  try { conversationId = sessionStorage.getItem('dixit_cid'); } catch (e) {}
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var stream = $('stream'), scroller = $('scroll'), input = $('input'), form = $('form'), sendBtn = $('send'), jump = $('jump');
+  var conversationId = null, busy = false, techOn = false, history = [];
+  var store = {
+    get: function (k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } },
+    set: function (k, v) { try { sessionStorage.setItem(k, v); } catch (e) {} },
+    del: function (k) { try { sessionStorage.removeItem(k); } catch (e) {} }
+  };
+  conversationId = store.get('dixit_cid');
 
-  var EXAMPLES = ['I have lauki and tomato, what can I cook?', 'how do I make palak paneer?', 'how do I make moong dal tadka?', 'i have obesity . so what should i eat to reduce it', 'No medicines. I have chapati, what sabji can I eat?',
-    'bhindi, aloo, cauliflower', 'aloo', 'give me recipes', 'I have aloo and onion, what Indian meal can I prepare?',
-    'How many carbs in one chapati?', 'Can I snack between meals?', 'I feel very hungry between meals', 'Which phone should I buy?'];
-  var ex = document.getElementById('examples');
-  EXAMPLES.forEach(function (t) {
-    var b = document.createElement('button'); b.type = 'button'; b.textContent = t;
-    b.addEventListener('click', function () { send(t); }); ex.appendChild(b);
-  });
+  var STARTERS = [
+    ['🍲', 'What can I cook?', 'I have lauki and tomato, what can I cook?'],
+    ['🥘', 'Get a recipe', 'how do I make palak paneer?'],
+    ['🫓', 'Carbs in a food', 'How many carbs in one chapati?'],
+    ['⏰', 'Snacking', 'Can I snack between meals?'],
+    ['😋', 'Feeling hungry', 'I feel very hungry between meals'],
+    ['⚖️', 'Weight loss eating', 'i have obesity. so what should i eat to reduce it']
+  ];
 
-  function esc(s) { return s.replace(/[&<>"']/g, function (c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
-  function md(text) {
-    var out = [], list = false;
-    text.split('\n').forEach(function (line) {
-      var h = esc(line).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-      if (/^\s*- /.test(line)) { if (!list) { out.push('<ul>'); list = true; } out.push('<li>' + h.replace(/^\s*- /, '') + '</li>'); }
-      else { if (list) { out.push('</ul>'); list = false; } if (h.trim()) out.push('<p>' + h + '</p>'); }
-    });
-    if (list) out.push('</ul>');
+  /* ---------- safe text helpers (everything is escaped before any markup is added) ---------- */
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[c]; }); }
+  function inline(s) { return esc(s).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>'); }
+  function clock() { var d = new Date(); return d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}); }
+
+  var SECTION_ICON = [[/^you need/i, '🛒', 'You need'], [/^how/i, '👩‍🍳', 'How to make it'], [/^whole dish/i, '📊', 'Nutrition, whole dish'],
+                      [/^in your meal/i, '🍽️', 'Where it fits in your meal']];
+
+  /* The answer text is the pipeline's own markdown; this only styles it, it never changes the words. */
+  function render(text) {
+    var lines = String(text || '').split('\n'), out = [], list = false, i, line, m;
+    function closeList() { if (list) { out.push('</ul>'); list = false; } }
+    var firstBold = true;
+    for (i = 0; i < lines.length; i++) {
+      line = lines[i];
+      if (!line.trim()) { closeList(); continue; }
+      m = line.match(/^\*\*(.+?)\*\*\s*(\(.*?\))?\s*:?\s*(.*)$/);
+      if (m && !/^\s*- /.test(line)) {
+        var head = m[1].replace(/:$/, ''), rest = ((m[2] || '') + ' ' + (m[3] || '')).trim(), sec = null;
+        SECTION_ICON.forEach(function (s) { if (!sec && s[0].test(head)) sec = s; });
+        closeList();
+        if (sec) {
+          if (sec[2] === 'Nutrition, whole dish') {
+            var chips = rest.replace(/\bfor the whole dish.*$/i, '').replace(/^about\s+/i, '').split(/,\s*|\s+and\s+/).filter(Boolean);
+            var src = (rest.match(/\(calculated[^)]*\)/i) || [''])[0];
+            out.push('<div class="sect"><h4>' + sec[1] + ' ' + sec[2] + '</h4><div class="nutri">' + chips.map(function (c) { return '<span class="chip">' + esc(c.replace(/\(calculated[^)]*\)/i, '').trim()) + '</span>'; }).join('') + '</div>' +
+                     (src ? '<div class="src">' + esc(src.replace(/[()]/g, '')) + '</div>' : '') + '</div>');
+          } else {
+            out.push('<div class="sect"><h4>' + sec[1] + ' ' + sec[2] + '</h4>' + (rest ? '<div>' + inline(rest) + '</div>' : ''));
+            var j = i + 1, items = [];
+            while (j < lines.length && /^\s*- /.test(lines[j])) { items.push(lines[j].replace(/^\s*- /, '')); j++; }
+            if (items.length) { out.push('<ul>' + items.map(function (t) { return '<li>' + inline(t) + '</li>'; }).join('') + '</ul>'); i = j - 1; }
+            out.push('</div>');
+          }
+        } else if (firstBold && !rest) {
+          out.push('<div class="dish">🥘 ' + esc(head) + '</div>'); firstBold = false;
+        } else {
+          out.push('<p><strong>' + esc(head) + '</strong> ' + inline(rest) + '</p>');
+        }
+        continue;
+      }
+      if (/^\s*- /.test(line)) { if (!list) { out.push('<ul>'); list = true; } out.push('<li>' + inline(line.replace(/^\s*- /, '')) + '</li>'); continue; }
+      closeList();
+      out.push('<p>' + inline(line) + '</p>');
+    }
+    closeList();
     return out.join('');
   }
-  function add(cls, html) { var d = document.createElement('div'); d.className = 'msg ' + cls; d.innerHTML = html; log.appendChild(d); d.scrollIntoView({block: 'end'}); return d; }
 
-  function feedbackRow(cid, turn) {
-    var row = document.createElement('div'); row.className = 'fb';
-    [['helpful', 'Helpful'], ['not_what_i_asked', 'Not what I asked'], ['cant_get_this', "Can't get / don't eat this"], ['something_wrong', "Something's wrong"]]
-      .forEach(function (k) {
-        var b = document.createElement('button'); b.type = 'button'; b.textContent = k[1];
-        b.addEventListener('click', function () {
-          fetch('/api/feedback', {method: 'POST', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({conversation_id: cid, turn: turn, kind: k[0]})}).then(function () { b.classList.add('done'); });
-        });
-        row.appendChild(b);
-      });
-    return row;
+  function alertHtml(text, kind) {
+    var care = kind === 'care', head = care ? '💛 You are not alone' : (kind === 'sugar' ? '⚠️ Blood sugar alert' : '🚨 This could be an emergency');
+    var calls = [];
+    if (/tele-manas|14416/i.test(text)) calls.push(['tel:14416', '💛 Call Tele-MANAS 14416']);
+    if (/\b112\b/.test(text)) calls.push(['tel:112', '📞 Call 112']);
+    return '<div class="alert' + (care ? ' care' : '') + '" role="alert"><div class="head">' + head + '</div>' + render(text) +
+      calls.map(function (c) { return '<a class="call" href="' + c[0] + '">' + c[1] + '</a>'; }).join('') + '</div>';
   }
 
+  /* ---------- message rows ---------- */
+  function scrollDown(force) {
+    var near = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 160;
+    if (force || near) scroller.scrollTop = scroller.scrollHeight; else jump.classList.add('show');
+  }
+  scroller.addEventListener('scroll', function () {
+    if (scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 80) jump.classList.remove('show');
+  });
+  jump.addEventListener('click', function () { scroller.scrollTop = scroller.scrollHeight; jump.classList.remove('show'); });
+
+  function addRow(kind, html, time) {
+    var row = document.createElement('div'); row.className = 'row ' + kind;
+    if (kind === 'bot') row.innerHTML = '<div class="avatar" aria-hidden="true">🥗</div><div><div class="bubble"></div><div class="time"></div></div>';
+    else row.innerHTML = '<div><div class="bubble"></div><div class="time"></div></div>';
+    row.querySelector('.bubble').innerHTML = html;
+    row.querySelector('.time').textContent = time || clock();
+    stream.appendChild(row);
+    return row;
+  }
+  function addMe(text) {
+    var row = document.createElement('div'); row.className = 'row me';
+    row.innerHTML = '<div><div class="bubble"></div><div class="time"></div></div>';
+    row.querySelector('.bubble').textContent = text;
+    row.querySelector('.time').textContent = clock();
+    stream.appendChild(row); scrollDown(true); return row;
+  }
+
+  function clearReplies() { var r = stream.querySelectorAll('.replies'); Array.prototype.forEach.call(r, function (n) { n.remove(); }); }
+  function addReplies(list) {
+    clearReplies();
+    if (!list || !list.length) return;
+    var box = document.createElement('div'); box.className = 'replies';
+    list.forEach(function (q) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'qr'; b.textContent = q[0];
+      b.addEventListener('click', function () { send(q[1] || q[0]); }); box.appendChild(b);
+    });
+    stream.appendChild(box);
+  }
+
+  function suggestions(r) {
+    var t = r.type || '', a = r.answer || '', asksAllergy = /allerg/i.test(a) && (/\?\s*$/.test(a.trim()) || /say "none"/i.test(a));
+    if (t === 'emergency') return [];
+    if (asksAllergy) return [['🚫 No allergies', 'No allergies'], ['🥛 Milk', 'I am allergic to milk'], ['🥜 Peanuts', 'I am allergic to peanuts'], ['🌾 Gluten', 'I am allergic to gluten']];
+    if (/sprouts step/i.test(a)) return [['🌱 I have moong', 'I have moong'], ['🥚 Eggs instead', 'I would prefer eggs']];
+    if (t === 'meal_from_ingredients' || t === 'recipe_request') return [['🔁 Another recipe', 'give me recipes'], ['🥦 Use different vegetables', 'bhindi, aloo, cauliflower']];
+    if (t === 'out_of_scope') return [['🍲 What can I cook?', 'I have lauki and tomato, what can I cook?'], ['🫓 Carbs in a food', 'How many carbs in one chapati?']];
+    if (t === 'greeting_thanks') return [['🍲 What can I cook?', 'I have lauki and tomato, what can I cook?'], ['⏰ Snacking', 'Can I snack between meals?']];
+    return [['🍲 What can I cook?', 'I have lauki and tomato, what can I cook?']];
+  }
+
+  function feedbackTools(row, r) {
+    var tools = document.createElement('div'); tools.className = 'tools';
+    var up = mk('👍 Helpful', function () { post('helpful', up, '👍 Thanks'); });
+    var down = mk('👎 Not right', function () { why.hidden = !why.hidden; });
+    var why = document.createElement('div'); why.className = 'why'; why.hidden = true;
+    [['not_what_i_asked', 'Not what I asked'], ['cant_get_this', "Can't get / don't eat this"], ['something_wrong', 'Something is wrong']].forEach(function (k) {
+      why.appendChild(mk(k[1], function (b) { post(k[0], b, '✓ Noted'); why.hidden = true; down.classList.add('done'); down.textContent = '👎 Noted'; }));
+    });
+    function mk(label, fn) { var b = document.createElement('button'); b.type = 'button'; b.className = 'tbtn'; b.textContent = label; b.addEventListener('click', function () { fn(b); }); return b; }
+    function post(kind, btn, done) {
+      fetch('/api/feedback', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({conversation_id: r.conversation_id, turn: r.turn, kind: kind})})
+        .then(function (x) { if (x.ok) { btn.classList.add('done'); btn.textContent = done; } });
+    }
+    tools.appendChild(up); tools.appendChild(down);
+    var bubble = row.querySelector('.bubble');
+    bubble.appendChild(tools); bubble.appendChild(why);
+  }
+
+  function techBlock(row, r) {
+    var failed = (r.checks || []).filter(function (c) { return !c.passed; });
+    var det = document.createElement('details'); det.className = 'tech';
+    det.innerHTML = '<summary><span class="tag ok">' + esc(r.type || '') + '</span>' +
+      (r.ai_used ? '<span class="tag ok">AI wording</span>' : '<span class="tag warn">template</span>') +
+      (r.fallback ? '<span class="tag warn">fallback</span>' : '') +
+      (failed.length ? '<span class="tag bad">' + failed.length + ' check(s) failed</span>' : '<span class="tag ok">checks passed</span>') +
+      '<span class="tag">' + esc(r.ms) + ' ms</span></summary><pre></pre>';
+    det.querySelector('pre').textContent = JSON.stringify({rules: r.plan && r.plan.rules, blocks: r.plan && r.plan.blocks, records: r.records, checks: r.checks}, null, 2);
+    row.querySelector('.bubble').appendChild(det);
+  }
+
+  function showAnswer(waitRow, r) {
+    var bubble = waitRow.querySelector('.bubble'), text = r.answer || '';
+    if (r.type === 'emergency') {
+      var kind = /tele-manas|14416|really sorry/i.test(text) ? 'care' : (/blood sugar/i.test(text) ? 'sugar' : 'urgent');
+      bubble.innerHTML = alertHtml(text, kind); bubble.classList.add('plain');
+    } else if (r.type === 'out_of_scope') {
+      bubble.innerHTML = '<p>🙂 ' + inline(text) + '</p>';
+    } else {
+      bubble.innerHTML = render(text);
+    }
+    waitRow.querySelector('.time').textContent = clock();
+    if (r.type !== 'emergency') feedbackTools(waitRow, r);
+    if (techOn) techBlock(waitRow, r);
+    waitRow.dataset.type = r.type || '';
+    waitRow._result = r;
+    history.push({role: 'bot', text: text, type: r.type, time: clock()});
+    saveHistory();
+    addReplies(suggestions(r));
+    scrollDown(true);
+  }
+
+  /* ---------- profile ---------- */
   function profile() {
-    var p = {}, mode = (document.querySelector('input[name="allergy_mode"]:checked') || {}).value;
+    var p = {}, mode = (document.querySelector('input[name="am"]:checked') || {}).value;
     if (mode === 'none') p.allergies = [];
     if (mode === 'list') p.allergies = Array.prototype.map.call(document.querySelectorAll('.al:checked'), function (c) { return c.value; });
-    var diet = document.getElementById('diet').value; if (diet) p.diet_type = diet;
-    if (document.getElementById('insulin').checked) p.medicines = ['insulin'];
-    var cond = []; if (document.getElementById('obesity').checked) cond.push('obesity');
-    if (document.getElementById('hbp').checked) cond.push('hypertension');
+    var diet = $('diet').value; if (diet) p.diet_type = diet;
+    if ($('insulin').checked) p.medicines = ['insulin'];
+    var cond = []; if ($('obesity').checked) cond.push('obesity'); if ($('hbp').checked) cond.push('hypertension');
     if (cond.length) p.conditions = cond;
     return p;
   }
+  function syncAllergyUi() {
+    var list = (document.querySelector('input[name="am"]:checked') || {}).value === 'list';
+    Array.prototype.forEach.call(document.querySelectorAll('.al'), function (c) { c.disabled = !list; if (!list) c.checked = false; });
+  }
+  function saveProfile() {
+    store.set('dixit_profile', JSON.stringify({am: (document.querySelector('input[name="am"]:checked') || {}).value, al: Array.prototype.map.call(document.querySelectorAll('.al:checked'), function (c) { return c.value; }),
+      diet: $('diet').value, insulin: $('insulin').checked, obesity: $('obesity').checked, hbp: $('hbp').checked}));
+  }
+  function loadProfile() {
+    var raw = store.get('dixit_profile'); if (!raw) return;
+    try {
+      var p = JSON.parse(raw), r = document.querySelector('input[name="am"][value="' + p.am + '"]'); if (r) r.checked = true;
+      (p.al || []).forEach(function (v) { var c = document.querySelector('.al[value="' + v + '"]'); if (c) c.checked = true; });
+      $('diet').value = p.diet || ''; $('insulin').checked = !!p.insulin; $('obesity').checked = !!p.obesity; $('hbp').checked = !!p.hbp;
+    } catch (e) {}
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('#profile input, #profile select'), function (el) {
+    el.addEventListener('change', function () { syncAllergyUi(); saveProfile(); });
+  });
+  function openProfile(open) { $('profile').classList.toggle('sheet', open); $('scrim').classList.toggle('show', open); }
+  $('openProfile').addEventListener('click', function () { openProfile(true); });
+  $('closeProfile').addEventListener('click', function () { openProfile(false); });
+  $('scrim').addEventListener('click', function () { openProfile(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') openProfile(false); });
 
+  /* ---------- sending ---------- */
+  function setBusy(v) { busy = v; sendBtn.disabled = v || !input.value.trim(); input.setAttribute('aria-busy', v ? 'true' : 'false'); }
   function send(text) {
-    text = (text || '').trim(); if (!text) return;
-    add('me', esc(text)); input.value = '';
-    var wait = add('bot', '<p class="meta">…</p>');
+    text = (text || '').trim();
+    if (!text || busy) return;
+    if (text.length > 2000) { text = text.slice(0, 2000); }
+    clearReplies(); removeWelcome();
+    addMe(text); history.push({role: 'me', text: text, time: clock()}); saveHistory();
+    input.value = ''; autosize(); setBusy(true);
+    var wait = addRow('bot', '<span class="typing" aria-label="The assistant is typing"><i></i><i></i><i></i></span>', '');
+    scrollDown(true);
+    var started = Date.now();
     fetch('/api/chat', {method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({message: text, conversation_id: conversationId, profile: profile()})})
-      .then(function (r) { return r.json(); })
+      .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
       .then(function (r) {
-        conversationId = r.conversation_id;
-        try { sessionStorage.setItem('dixit_cid', conversationId); } catch (e) {}
-        wait.innerHTML = md(r.answer || '');
-        wait.appendChild(feedbackRow(r.conversation_id, r.turn));
-        if (debug.checked) {
-          var failed = (r.checks || []).filter(function (c) { return !c.passed; });
-          var det = document.createElement('details');
-          det.innerHTML = '<summary><span class="tag ok">' + esc(r.type || '') + '</span>' +
-            (r.ai_used ? '<span class="tag ok">AI wording</span>' : '<span class="tag warn">template</span>') +
-            (r.fallback ? '<span class="tag warn">fallback</span>' : '') +
-            (failed.length ? '<span class="tag bad">' + failed.length + ' check(s) failed</span>' : '<span class="tag ok">checks passed</span>') +
-            ' ' + r.ms + ' ms</summary><pre>' + esc(JSON.stringify({rules: r.plan && r.plan.rules, blocks: r.plan && r.plan.blocks,
-            protocol_level: r.plan && r.plan.protocol_level, followup: r.plan && r.plan.followup, records: r.records,
-            checks: r.checks}, null, 2)) + '</pre>';
-          wait.appendChild(det);
-        }
+        conversationId = r.conversation_id; store.set('dixit_cid', conversationId);
+        var delay = Math.max(0, 450 - (Date.now() - started));       // a short pause so the typing dots are seen, never a long one
+        setTimeout(function () { showAnswer(wait, r); setBusy(false); input.focus(); }, delay);
       })
-      .catch(function () { wait.innerHTML = '<p>Something went wrong. Please try again.</p>'; });
+      .catch(function () {
+        wait.querySelector('.bubble').innerHTML = '<p>😕 I could not get an answer just now. Your message was not lost.</p>';
+        var b = document.createElement('button'); b.type = 'button'; b.className = 'tbtn retry'; b.textContent = '🔄 Try again';
+        b.addEventListener('click', function () { wait.remove(); setBusy(false); send(text); });
+        wait.querySelector('.bubble').appendChild(b);
+        setBusy(false);
+        history.pop(); saveHistory();
+      });
   }
 
+  function autosize() { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 140) + 'px'; updateCount(); }
+  function updateCount() {
+    var n = input.value.length, c = $('count');
+    c.textContent = n > 1500 ? n + ' / 2000' : ''; c.classList.toggle('warn', n > 1900);
+    sendBtn.disabled = busy || !input.value.trim();
+  }
+  input.addEventListener('input', autosize);
+  input.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(input.value); } });
   form.addEventListener('submit', function (e) { e.preventDefault(); send(input.value); });
-  input.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(input.value); } });
-  document.getElementById('newchat').addEventListener('click', function () {
-    conversationId = null; try { sessionStorage.removeItem('dixit_cid'); } catch (e) {}
-    log.innerHTML = '';
+
+  /* ---------- welcome, history, new chat ---------- */
+  function welcome() {
+    var w = document.createElement('div'); w.className = 'welcome'; w.id = 'welcome';
+    w.innerHTML = '<div class="big" aria-hidden="true">🥗</div><h1>Hello! 👋 What shall we eat today?</h1>' +
+      '<p>Ask me about food, recipes from what you have at home, or how a meal fits the Dixit programme.</p><div class="cards"></div>';
+    var cards = w.querySelector('.cards');
+    STARTERS.forEach(function (s) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'card';
+      b.innerHTML = '<span class="ico" aria-hidden="true">' + s[0] + '</span><span><b></b><span class="s"></span></span>';
+      b.querySelector('b').textContent = s[1]; b.querySelector('.s').textContent = s[2];
+      b.addEventListener('click', function () { send(s[2]); }); cards.appendChild(b);
+    });
+    stream.appendChild(w);
+  }
+  function removeWelcome() { var w = $('welcome'); if (w) w.remove(); }
+  function saveHistory() { store.set('dixit_history', JSON.stringify(history.slice(-60))); }
+  function restore() {
+    var raw = store.get('dixit_history'), saved = [];
+    try { saved = raw ? JSON.parse(raw) : []; } catch (e) { saved = []; }
+    if (!Array.isArray(saved) || !saved.length || !conversationId) { welcome(); return; }
+    saved.forEach(function (m) {
+      if (!m || typeof m.text !== 'string') return;
+      history.push(m);
+      if (m.role === 'me') { var row = document.createElement('div'); row.className = 'row me'; row.innerHTML = '<div><div class="bubble"></div><div class="time"></div></div>';
+        row.querySelector('.bubble').textContent = m.text; row.querySelector('.time').textContent = m.time || ''; stream.appendChild(row); }
+      else { var r = addRow('bot', '', m.time); var bub = r.querySelector('.bubble');
+        if (m.type === 'emergency') bub.classList.add('plain');
+        bub.innerHTML = m.type === 'emergency' ? alertHtml(m.text, /tele-manas|14416|really sorry/i.test(m.text) ? 'care' : (/blood sugar/i.test(m.text) ? 'sugar' : 'urgent')) : render(m.text); }
+    });
+    scrollDown(true);
+  }
+  $('newchat').addEventListener('click', function () {
+    if (conversationId) { fetch('/api/reset/' + encodeURIComponent(conversationId), {method: 'POST'}).catch(function () {}); }
+    conversationId = null; store.del('dixit_cid'); store.del('dixit_history'); history = [];
+    stream.innerHTML = ''; welcome(); input.focus();
   });
+  $('tech').addEventListener('click', function () {
+    techOn = !techOn; this.setAttribute('aria-pressed', techOn ? 'true' : 'false');
+    Array.prototype.forEach.call(stream.querySelectorAll('.row.bot'), function (row) {
+      var old = row.querySelector('details.tech'); if (old) old.remove();
+      if (techOn && row._result) techBlock(row, row._result);
+    });
+  });
+
   fetch('/api/info').then(function (r) { return r.json(); }).then(function (i) {
-    document.getElementById('meta').textContent = i.environment + ' · AI: ' + i.llm.provider + (i.llm.model ? ' (' + i.llm.model + ')' : '') +
-      ' · library ' + i.versions.library;
-  });
+    var dev = i.environment !== 'production';
+    $('meta').textContent = (dev ? 'Development build' : 'Live') + ' · AI wording: ' + (i.llm && i.llm.provider === 'mock' ? 'off (templates)' : (i.llm && i.llm.provider) || 'off');
+    $('devBanner').hidden = !dev;
+  }).catch(function () { $('dot').classList.add('off'); $('meta').textContent = 'offline: start the server'; });
+
+  loadProfile(); syncAllergyUi(); restore(); updateCount(); input.focus();
 })();
 </script>
 </body>
