@@ -7,7 +7,7 @@ Standalone Python package until the Dixit app code is available. **Development b
 ## Run
 
 ```
-.venv\Scripts\python.exe -m pytest -q              # 1144 tests, about 7 minutes (no AI calls; the AI is mocked)
+.venv\Scripts\python.exe -m pytest -q              # 1270 tests, about 5 minutes (no AI calls; the AI is mocked)
 .venv\Scripts\python.exe -m dixit_answer.web       # chat page on http://127.0.0.1:8100
 ```
 
@@ -84,7 +84,6 @@ corrupt or old chat state, bad profiles, every allergen × diet combination, tam
 
 - Real Golden Rules (base package v1.1 + v1.1.1): the file above is partial.
 - Phase 7: connecting to the Dixit app. Phase 8: dietitian / doctor / legal review.
-- Sodium and sugar for USDA records (library v1.0.4), so blood-pressure and diabetes limits can be checked.
 - Fixes D1–D3 in the Indian library itself (the loader's quality gates only block the bad records).
 
 ## Documents
@@ -160,3 +159,23 @@ Tests: `tests/test_extra_nutrients.py`.
 - **Known limits (listed for the doctor):** misspelled words are not caught; a second reading without the word "sugar" in front of it
   is not read; a self-harm phrase used as a joke still triggers. Invisible characters (zero-width marks) never hide a phrase.
 - An emergency message still records the risk words it contains (insulin, pregnancy), for the next answers.
+
+## Sign-off rules and readiness report (item F, tooling part, 16 Oct 2026)
+
+The real limits, food list, swap table and recipes need a dietitian and a doctor. What can be built before them is the gate that
+refuses unsigned data and the report that lists what is left.
+
+```
+.venv\Scripts\python.exe -m dixit_answer.readiness          # add --json for a machine-readable list; exit code 1 until everything is signed
+```
+
+- **Production refuses an unsigned limit.** At start-up (`consistency.py`, production only) every row of the limits table needs a
+  real `source`, a `reviewer` and a `review_date` written YYYY-MM-DD that is not in the future. Empty text, "PLACEHOLDER", "TBD",
+  "N/A", numbers and similar are refused, and so is a second row for the same condition and nutrient. Development is unchanged.
+- **The report** (`readiness.py`, rules in `sign_off.py`) reads the same files and lists every open point: each data file whose status is
+  TEST ONLY, STUB, PARTIAL, PROPOSED, PLACEHOLDER, DRAFT, empty or missing; each limit without source, reviewer or date; an empty
+  `approved_by` or `approved_on` on the approved list and the recipes; and the manifest switches (test-only data allowed, Indian
+  records without a licence ID, AI recipe drafting on before the item G review). A damaged or missing file is named, never a crash.
+  It changes no file.
+- Still waiting on people: the real numbers and sources, food_item v1.0 (allergen and diet tags, paneer proxy), the swap table and the
+  30 to 50 approved recipes. Tests: `tests/test_readiness.py` (126).
