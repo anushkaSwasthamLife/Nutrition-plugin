@@ -387,7 +387,8 @@ class RecipeService:
         # R5-R8: AI draft, only when allowed and safe to check.
         unverifiable = [n for n, l in limits.items() if not l.verifiable]
         # Sweets and pantry items are never "ingredients to cook with" (the programme asks to reduce sugar).
-        main_have = [f for f in usable_have if f not in self.pantry and self.index.foods[f]["category"] != "sweet"]
+        main_have = [f for f in usable_have if f not in self.pantry and self.index.foods[f]["category"] != "sweet"
+                     and not self.index.foods[f].get("dry_weight")]      # dry pulses need soaking and boiling: approved recipes only
         ai_ok = (self.ai_enabled and person.allergies_known and not person.unmapped_allergies and not unverifiable
                  and main_have and not dish_ids)
         if not ai_ok:

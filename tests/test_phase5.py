@@ -270,9 +270,9 @@ def test_production_never_drafts_with_ai(settings):
 
 def test_unknown_word_is_left_out_queued_and_never_sent_to_the_ai(settings):
     engine, llm = make_engine(settings, [GOOD])
-    r = engine.answer("I have lauki, tomato and kachalu, what can I cook?", None, {"allergies": []})
-    assert '"kachalu"' in r.answer and "passed to our dietitian" in r.answer
-    assert "kachalu" not in json.dumps(llm.requests)
+    r = engine.answer("I have lauki, tomato and zorblax, what can I cook?", None, {"allergies": []})
+    assert '"zorblax"' in r.answer and "passed to our dietitian" in r.answer
+    assert "zorblax" not in json.dumps(llm.requests)
     lines = [json.loads(x) for x in engine.settings.audit_log.read_text(encoding="utf-8").splitlines()]
     assert any(x["kind"] == "recipe_backlog" for x in lines)
 

@@ -1,7 +1,7 @@
 {
- "version": "FM-0.2.2",
+ "version": "FM-0.3.0",
  "status": "TEST ONLY",
- "note": "Draft food master table for development. Allergens, record choices and unit weights need dietitian review; unit weights are typical values to verify against USDA FoodData Central portion data. ingredient_record = USDA per-100 g record used for recipe maths. No IFCT links.",
+ "note": "Draft food master table for development. Allergens, record choices and unit weights need dietitian review; unit weights are typical values to verify against USDA FoodData Central portion data. ingredient_record = USDA per-100 g record used for recipe maths. No IFCT links. FM-0.3.0 (16 Oct 2026): 35 more vegetables, leafy greens, roots and pulses/legumes added, each mapped to one USDA record; the vegetables people cook most in India were missing (capsicum, brinjal, karela, carrot and others). Names and aliases (Hindi, regional) need dietitian review; only carrot, beetroot and capsicum have a unit weight, the rest have none until a dietitian enters one. dry_weight = the record is for the dry, uncooked pulse: the AI is never asked to build a recipe around it (it needs soaking and boiling), approved recipes may use it.",
  "foods": [
   {
    "id": "FOOD-CHAPATI",
@@ -59,10 +59,7 @@
    "aliases": [
     "dal",
     "daal",
-    "dhal",
-    "toor dal",
-    "arhar dal",
-    "masoor dal"
+    "dhal"
    ],
    "allergens": [],
    "fact_records": {
@@ -667,7 +664,8 @@
      "LEGACY-174256"
     ]
    },
-   "generic": "FOOD-DAL"
+   "generic": "FOOD-DAL",
+   "dry_weight": true
   },
   {
    "id": "FOOD-CHANA-DAL",
@@ -691,7 +689,8 @@
      "LEGACY-173756"
     ]
    },
-   "generic": "FOOD-DAL"
+   "generic": "FOOD-DAL",
+   "dry_weight": true
   },
   {
    "id": "FOOD-OIL",
@@ -964,6 +963,841 @@
     ],
     "production": [
      "SURVEY-2709168"
+    ]
+   }
+  },
+  {
+   "id": "FOOD-CAPSICUM",
+   "name": "capsicum",
+   "category": "vegetable",
+   "aliases": [
+    "capsicum",
+    "capsicums",
+    "shimla mirch",
+    "simla mirch",
+    "bell pepper",
+    "bell peppers",
+    "green pepper",
+    "sweet pepper"
+   ],
+   "allergens": [],
+   "unit_weights_g": {
+    "medium": 119
+   },
+   "ingredient_record": "LEGACY-170427",
+   "fact_records": {
+    "development": [
+     "LEGACY-170427"
+    ],
+    "production": [
+     "LEGACY-170427"
+    ]
+   }
+  },
+  {
+   "id": "FOOD-BRINJAL",
+   "name": "brinjal",
+   "category": "vegetable",
+   "aliases": [
+    "brinjal",
+    "brinjals",
+    "baingan",
+    "baigan",
+    "begun",
+    "eggplant",
+    "aubergine",
+    "vangi"
+   ],
+   "allergens": [],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-169228",
+   "fact_records": {
+    "development": [
+     "LEGACY-169228"
+    ],
+    "production": [
+     "LEGACY-169228"
+    ]
+   }
+  },
+  {
+   "id": "FOOD-KARELA",
+   "name": "karela",
+   "category": "vegetable",
+   "aliases": [
+    "karela",
+    "bitter gourd",
+    "bitter melon",
+    "karle",
+    "ucche"
+   ],
+   "allergens": [],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-168393",
+   "fact_records": {
+    "development": [
+     "LEGACY-168393"
+    ],
+    "production": [
+     "LEGACY-168393"
+    ]
+   }
+  },
+  {
+   "id": "FOOD-TURAI",
+   "name": "turai",
+   "category": "vegetable",
+   "aliases": [
+    "turai",
+    "torai",
+    "tori",
+    "ridge gourd",
+    "luffa",
+    "gilki",
+    "dodka"
+   ],
+   "allergens": [],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-168414",
+   "fact_records": {
+    "development": [
+     "LEGACY-168414"
+    ],
+    "production": [
+     "LEGACY-168414"
+    ]
+   }
+  },
+  {
+   "id": "FOOD-KADDU",
+   "name": "kaddu",
+   "category": "vegetable",
+   "aliases": [
+    "kaddu",
+    "pumpkin",
+    "sitaphal",
+    "kumro",
+    "bhopla"
+   ],
+   "allergens": [],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-168448",
+   "fact_records": {
+    "development": [
+     "LEGACY-168448"
+    ],
+    "production": [
+     "LEGACY-168448"
+    ]
+   }
+  },
+  {
+   "id": "FOOD-CARROT",
+   "name": "carrot",
+   "category": "vegetable",
+   "aliases": [
+    "carrot",
+    "carrots",
+    "gajar"
+   ],
+   "allergens": [],
+   "unit_weights_g": {
+    "medium": 61
+   },
+   "ingredient_record": "LEGACY-170393",
+   "fact_records": {
+    "development": [
+     "LEGACY-170393"
+    ],
+    "production": [
+     "LEGACY-170393"
+    ]
+   }
+  },
+  {
+   "id": "FOOD-BEETROOT",
+   "name": "beetroot",
+   "category": "vegetable",
+   "aliases": [
+    "beetroot",
+    "beetroots",
+    "beet",
+    "beets",
+    "chukandar"
+   ],
+   "allergens": [],
+   "unit_weights_g": {
+    "medium": 82
+   },
+   "ingredient_record": "LEGACY-169145",
+   "fact_records": {
+    "development": [
+     "LEGACY-169145"
+    ],
+    "production": [
+     "LEGACY-169145"
+    ]
+   }
+  },
+  {
+   "id": "FOOD-MOOLI",
+   "name": "mooli",
+   "category": "vegetable",
+   "aliases": [
+    "mooli",
+    "muli",
+    "radish",
+    "radishes",
+    "daikon"
+   ],
+   "allergens": [],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-169276",
+   "fact_records": {
+    "development": [
+     "LEGACY-169276"
+    ],
+    "production": [
+     "LEGACY-169276"
+    ]
+   }
+  },
+  {
+   "id": "FOOD-SHALGAM",
+   "name": "shalgam",
+   "category": "vegetable",
+   "aliases": [
+    "shalgam",
+    "turnip",
+    "turnips",
+    "shaljam"
+   ],
+   "allergens": [],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-170465",
+   "fact_records": {
+    "development": [
+     "LEGACY-170465"
+    ],
+    "production": [
+     "LEGACY-170465"
+    ]
+   }
+  },
+  {
+   "id": "FOOD-SARSON",
+   "name": "sarson",
+   "category": "vegetable",
+   "aliases": [
+    "sarson",
+    "sarson ka saag",
+    "sarson saag",
+    "mustard greens",
+    "mustard leaves"
+   ],
+   "allergens": [],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-169256",
+   "fact_records": {
+    "development": [
+     "LEGACY-169256"
+    ],
+    "production": [
+     "LEGACY-169256"
+    ]
+   }
+  },
+  {
+   "id": "FOOD-CHAULAI",
+   "name": "chaulai",
+   "category": "vegetable",
+   "aliases": [
+    "chaulai",
+    "chauli saag",
+    "amaranth",
+    "amaranth leaves",
+    "lal saag",
+    "thotakura"
+   ],
+   "allergens": [],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-168385",
+   "fact_records": {
+    "development": [
+     "LEGACY-168385"
+    ],
+    "production": [
+     "LEGACY-168385"
+    ]
+   }
+  },
+  {
+   "id": "FOOD-DRUMSTICK",
+   "name": "drumstick",
+   "category": "vegetable",
+   "aliases": [
+    "drumstick",
+    "drumsticks",
+    "sahjan",
+    "saijan",
+    "sahjna",
+    "shevga",
+    "murungakkai"
+   ],
+   "allergens": [],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-170483",
+   "fact_records": {
+    "development": [
+     "LEGACY-170483"
+    ],
+    "production": [
+     "LEGACY-170483"
+    ]
+   }
+  },
+  {
+   "id": "FOOD-RAW-BANANA",
+   "name": "raw banana",
+   "category": "starchy_vegetable",
+   "aliases": [
+    "raw banana",
+    "kaccha kela",
+    "kachcha kela",
+    "kacha kela",
+    "green banana",
+    "plantain",
+    "vazhakkai"
+   ],
+   "allergens": [],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-168215",
+   "fact_records": {
+    "development": [
+     "LEGACY-168215"
+    ],
+    "production": [
+     "LEGACY-168215"
+    ]
+   }
+  },
+  {
+   "id": "FOOD-ARBI",
+   "name": "arbi",
+   "category": "starchy_vegetable",
+   "aliases": [
+    "arbi",
+    "arvi",
+    "colocasia",
+    "taro",
+    "taro root",
+    "kachalu",
+    "seppankizhangu"
+   ],
+   "allergens": [],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-169308",
+   "fact_records": {
+    "development": [
+     "LEGACY-169308"
+    ],
+    "production": [
+     "LEGACY-169308"
+    ]
+   }
+  },
+  {
+   "id": "FOOD-ARBI-LEAVES",
+   "name": "arbi leaves",
+   "category": "vegetable",
+   "aliases": [
+    "arbi leaves",
+    "arvi leaves",
+    "taro leaves",
+    "colocasia leaves",
+    "patra"
+   ],
+   "allergens": [],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-168487",
+   "fact_records": {
+    "development": [
+     "LEGACY-168487"
+    ],
+    "production": [
+     "LEGACY-168487"
+    ]
+   }
+  },
+  {
+   "id": "FOOD-SURAN",
+   "name": "suran",
+   "category": "starchy_vegetable",
+   "aliases": [
+    "suran",
+    "yam",
+    "elephant foot yam",
+    "jimikand",
+    "ratalu"
+   ],
+   "allergens": [],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-170071",
+   "fact_records": {
+    "development": [
+     "LEGACY-170071"
+    ],
+    "production": [
+     "LEGACY-170071"
+    ]
+   }
+  },
+  {
+   "id": "FOOD-BROCCOLI",
+   "name": "broccoli",
+   "category": "vegetable",
+   "aliases": [
+    "broccoli"
+   ],
+   "allergens": [],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-170379",
+   "fact_records": {
+    "development": [
+     "LEGACY-170379"
+    ],
+    "production": [
+     "LEGACY-170379"
+    ]
+   }
+  },
+  {
+   "id": "FOOD-MUSHROOM",
+   "name": "mushroom",
+   "category": "vegetable",
+   "aliases": [
+    "mushroom",
+    "mushrooms",
+    "khumb",
+    "button mushroom"
+   ],
+   "allergens": [],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-169251",
+   "fact_records": {
+    "development": [
+     "LEGACY-169251"
+    ],
+    "production": [
+     "LEGACY-169251"
+    ]
+   }
+  },
+  {
+   "id": "FOOD-SWEET-CORN",
+   "name": "sweet corn",
+   "category": "starchy_vegetable",
+   "aliases": [
+    "sweet corn",
+    "corn",
+    "makka",
+    "bhutta",
+    "maize"
+   ],
+   "allergens": [],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-169998",
+   "fact_records": {
+    "development": [
+     "LEGACY-169998"
+    ],
+    "production": [
+     "LEGACY-169998"
+    ]
+   }
+  },
+  {
+   "id": "FOOD-SPRING-ONION",
+   "name": "spring onion",
+   "category": "vegetable",
+   "aliases": [
+    "spring onion",
+    "spring onions",
+    "green onion",
+    "green onions",
+    "scallion",
+    "hara pyaz",
+    "pyaz patta"
+   ],
+   "allergens": [],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-170005",
+   "fact_records": {
+    "development": [
+     "LEGACY-170005"
+    ],
+    "production": [
+     "LEGACY-170005"
+    ]
+   }
+  },
+  {
+   "id": "FOOD-ZUCCHINI",
+   "name": "zucchini",
+   "category": "vegetable",
+   "aliases": [
+    "zucchini",
+    "courgette"
+   ],
+   "allergens": [],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-169291",
+   "fact_records": {
+    "development": [
+     "LEGACY-169291"
+    ],
+    "production": [
+     "LEGACY-169291"
+    ]
+   }
+  },
+  {
+   "id": "FOOD-PETHA",
+   "name": "petha",
+   "category": "vegetable",
+   "aliases": [
+    "petha",
+    "ash gourd",
+    "white pumpkin",
+    "winter melon",
+    "wax gourd",
+    "kushmanda"
+   ],
+   "allergens": [],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-170069",
+   "fact_records": {
+    "development": [
+     "LEGACY-170069"
+    ],
+    "production": [
+     "LEGACY-170069"
+    ]
+   }
+  },
+  {
+   "id": "FOOD-LOTUS-STEM",
+   "name": "lotus stem",
+   "category": "starchy_vegetable",
+   "aliases": [
+    "lotus stem",
+    "lotus root",
+    "kamal kakdi",
+    "kamal kakri",
+    "bhein",
+    "nadru"
+   ],
+   "allergens": [],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-169250",
+   "fact_records": {
+    "development": [
+     "LEGACY-169250"
+    ],
+    "production": [
+     "LEGACY-169250"
+    ]
+   }
+  },
+  {
+   "id": "FOOD-KATHAL",
+   "name": "kathal",
+   "category": "starchy_vegetable",
+   "aliases": [
+    "kathal",
+    "jackfruit",
+    "raw jackfruit",
+    "phanas",
+    "enchor"
+   ],
+   "allergens": [],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-174687",
+   "fact_records": {
+    "development": [
+     "LEGACY-174687"
+    ],
+    "production": [
+     "LEGACY-174687"
+    ]
+   }
+  },
+  {
+   "id": "FOOD-KOHLRABI",
+   "name": "kohlrabi",
+   "category": "vegetable",
+   "aliases": [
+    "kohlrabi",
+    "knol khol",
+    "knolkhol",
+    "ganth gobhi",
+    "monji",
+    "nol khol"
+   ],
+   "allergens": [],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-168424",
+   "fact_records": {
+    "development": [
+     "LEGACY-168424"
+    ],
+    "production": [
+     "LEGACY-168424"
+    ]
+   }
+  },
+  {
+   "id": "FOOD-CHAYOTE",
+   "name": "chayote",
+   "category": "vegetable",
+   "aliases": [
+    "chayote",
+    "chow chow",
+    "chowchow",
+    "bangalore brinjal",
+    "seema kathrikai"
+   ],
+   "allergens": [],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-170402",
+   "fact_records": {
+    "development": [
+     "LEGACY-170402"
+    ],
+    "production": [
+     "LEGACY-170402"
+    ]
+   }
+  },
+  {
+   "id": "FOOD-CELERY",
+   "name": "celery",
+   "category": "vegetable",
+   "aliases": [
+    "celery"
+   ],
+   "allergens": [],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-169988",
+   "fact_records": {
+    "development": [
+     "LEGACY-169988"
+    ],
+    "production": [
+     "LEGACY-169988"
+    ]
+   }
+  },
+  {
+   "id": "FOOD-LETTUCE",
+   "name": "lettuce",
+   "category": "vegetable",
+   "aliases": [
+    "lettuce",
+    "salad patta",
+    "iceberg lettuce"
+   ],
+   "allergens": [],
+   "unit_weights_g": {},
+   "ingredient_record": "SURVEY-2709789",
+   "fact_records": {
+    "development": [
+     "SURVEY-2709789"
+    ],
+    "production": [
+     "SURVEY-2709789"
+    ]
+   }
+  },
+  {
+   "id": "FOOD-RAJMA",
+   "name": "rajma",
+   "category": "pulse",
+   "aliases": [
+    "rajma",
+    "kidney beans",
+    "kidney bean",
+    "red kidney beans"
+   ],
+   "allergens": [],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-175193",
+   "fact_records": {
+    "development": [
+     "LEGACY-175193"
+    ],
+    "production": [
+     "LEGACY-175193"
+    ]
+   },
+   "dry_weight": true
+  },
+  {
+   "id": "FOOD-CHICKPEAS",
+   "name": "chickpeas",
+   "category": "pulse",
+   "aliases": [
+    "chickpeas",
+    "chickpea",
+    "kabuli chana",
+    "safed chana",
+    "garbanzo",
+    "garbanzo beans",
+    "chhole",
+    "chana"
+   ],
+   "allergens": [
+    "chickpea"
+   ],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-173756",
+   "fact_records": {
+    "development": [
+     "LEGACY-173756"
+    ],
+    "production": [
+     "LEGACY-173756"
+    ]
+   },
+   "dry_weight": true
+  },
+  {
+   "id": "FOOD-MASOOR-DAL",
+   "name": "masoor dal",
+   "category": "pulse",
+   "aliases": [
+    "masoor dal",
+    "masoor",
+    "red lentils",
+    "red lentil",
+    "lal masoor"
+   ],
+   "allergens": [],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-174284",
+   "fact_records": {
+    "development": [
+     "LEGACY-174284"
+    ],
+    "production": [
+     "LEGACY-174284"
+    ]
+   },
+   "generic": "FOOD-DAL",
+   "dry_weight": true
+  },
+  {
+   "id": "FOOD-TOOR-DAL",
+   "name": "toor dal",
+   "category": "pulse",
+   "aliases": [
+    "toor dal",
+    "tur dal",
+    "arhar dal",
+    "arhar",
+    "toor",
+    "pigeon peas",
+    "red gram",
+    "tuvar dal"
+   ],
+   "allergens": [],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-172436",
+   "fact_records": {
+    "development": [
+     "LEGACY-172436"
+    ],
+    "production": [
+     "LEGACY-172436"
+    ]
+   },
+   "generic": "FOOD-DAL",
+   "dry_weight": true
+  },
+  {
+   "id": "FOOD-LOBIA",
+   "name": "lobia",
+   "category": "pulse",
+   "aliases": [
+    "lobia",
+    "black eyed peas",
+    "black-eyed peas",
+    "black eyed beans",
+    "chawli",
+    "cowpeas",
+    "rongi"
+   ],
+   "allergens": [],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-173758",
+   "fact_records": {
+    "development": [
+     "LEGACY-173758"
+    ],
+    "production": [
+     "LEGACY-173758"
+    ]
+   },
+   "dry_weight": true
+  },
+  {
+   "id": "FOOD-SOYBEAN",
+   "name": "soybean",
+   "category": "pulse",
+   "aliases": [
+    "soybean",
+    "soybeans",
+    "soya bean",
+    "soya beans",
+    "soya",
+    "soy beans"
+   ],
+   "allergens": [
+    "soy"
+   ],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-174270",
+   "fact_records": {
+    "development": [
+     "LEGACY-174270"
+    ],
+    "production": [
+     "LEGACY-174270"
+    ]
+   },
+   "dry_weight": true
+  },
+  {
+   "id": "FOOD-TOFU",
+   "name": "tofu",
+   "category": "pulse",
+   "aliases": [
+    "tofu",
+    "soya paneer",
+    "soy paneer",
+    "bean curd"
+   ],
+   "allergens": [
+    "soy"
+   ],
+   "unit_weights_g": {},
+   "ingredient_record": "LEGACY-172476",
+   "fact_records": {
+    "development": [
+     "LEGACY-172476"
+    ],
+    "production": [
+     "LEGACY-172476"
     ]
    }
   }

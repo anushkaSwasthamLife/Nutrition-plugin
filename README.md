@@ -7,7 +7,7 @@ Standalone Python package until the Dixit app code is available. **Development b
 ## Run
 
 ```
-.venv\Scripts\python.exe -m pytest -q              # 1438 tests, about 5 minutes (no AI calls; the AI is mocked)
+.venv\Scripts\python.exe -m pytest -q              # 1586 tests, about 5 minutes (no AI calls; the AI is mocked)
 .venv\Scripts\python.exe -m dixit_answer.web       # chat page on http://127.0.0.1:8100
 ```
 
@@ -203,3 +203,11 @@ and the arithmetic; people do the scoring.
   `recipe_ai_drafting` on is a manual step after PASSED.
 - **Today's finding:** for a person with diabetes the AI is never asked to draft, because the added-sugar limit cannot be checked (item E,
   open decision). So a sample cannot yet include diabetes, and `make` reports that shortfall instead of hiding it. Tests: `tests/test_sample_review.py` (98).
+
+## Food list v0.3.0 (16 Oct 2026)
+
+The food list (`food_master.json`, FM-0.3.0) grew from 42 to 77 foods: 35 more vegetables, leafy greens, roots and pulses that people cook
+(capsicum, brinjal, karela, carrot, rajma, tofu and others), each mapped to one USDA record, with Hindi and regional names. Soy and chickpea
+allergies block the new soy and chickpea foods, the Jain list now also excludes carrot, beetroot, mooli, shalgam, arbi, suran, spring onion and
+mushroom, and the AI is never asked to build a recipe around a dry pulse (`dry_weight`). Foods with no USDA record (methi leaves, curry leaves,
+tinda, parwal, gawar, snake gourd) still go to the dietitian queue. Allergens, names and unit weights need dietitian review. Tests: `tests/test_food_coverage.py`.

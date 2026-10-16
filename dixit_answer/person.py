@@ -18,7 +18,9 @@ from .golden import Status
 from .state import ChatState
 from .textnorm import clean, has_phrase
 
-JAIN_EXCLUDED = {"FOOD-ALOO", "FOOD-ONION", "FOOD-SWEET-POTATO", "FOOD-GARLIC", "FOOD-GINGER"}   # root vegetables; to confirm
+JAIN_EXCLUDED = {"FOOD-ALOO", "FOOD-ONION", "FOOD-SWEET-POTATO", "FOOD-GARLIC", "FOOD-GINGER",
+                 "FOOD-CARROT", "FOOD-BEETROOT", "FOOD-MOOLI", "FOOD-SHALGAM", "FOOD-ARBI", "FOOD-SURAN", "FOOD-SPRING-ONION",
+                 "FOOD-MUSHROOM"}   # root vegetables, onion family and fungi; to confirm with the dietitian
 MEDICINE_RISK = {"insulin": "diabetes_medicine", "sugar tablets": "diabetes_medicine", "metformin": "diabetes_medicine",
                  "glimepiride": "diabetes_medicine", "gliclazide": "diabetes_medicine", "glipizide": "diabetes_medicine",
                  "sulfonylurea": "diabetes_medicine", "bp": "bp_medicine", "amlodipine": "bp_medicine", "telmisartan": "bp_medicine",

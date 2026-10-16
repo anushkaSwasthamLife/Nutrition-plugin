@@ -9,8 +9,8 @@
     "tree_nut": {"label": "nuts", "foods": ["FOOD-ALMOND", "FOOD-WALNUT"], "words": ["nut", "nuts", "tree nut", "tree nuts", "almond", "almonds", "cashew", "cashews", "walnut", "walnuts", "kaju", "badam", "pista", "pistachio"]},
     "gluten": {"label": "gluten", "foods": ["FOOD-CHAPATI"], "words": ["gluten", "wheat", "atta", "maida", "suji", "rava", "celiac", "coeliac"]},
     "egg": {"label": "eggs", "foods": ["FOOD-EGG"], "words": ["egg", "eggs"]},
-    "chickpea": {"label": "chickpea", "foods": ["FOOD-CHANA-DAL"], "words": ["chickpea", "chickpeas", "besan", "chana", "chole", "gram flour"]},
-    "soy": {"label": "soy", "foods": [], "words": ["soy", "soya", "soybean"]},
+    "chickpea": {"label": "chickpea", "foods": ["FOOD-CHANA-DAL", "FOOD-CHICKPEAS"], "words": ["chickpea", "chickpeas", "besan", "chana", "chole", "gram flour"]},
+    "soy": {"label": "soy", "foods": ["FOOD-SOYBEAN", "FOOD-TOFU"], "words": ["soy", "soya", "soybean"]},
     "sesame": {"label": "sesame", "foods": [], "words": ["sesame", "til"]}
   },
   "none_words": ["no", "none", "no allergies", "no allergy", "nothing", "nope", "not allergic", "nahi"]
