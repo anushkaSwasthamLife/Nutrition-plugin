@@ -31,6 +31,7 @@ class Draft:
     recipe: object = None                           # CheckedRecipe shown in this answer (N25, N26)
     recipe_trace: list = field(default_factory=list)
     blocked_foods: set = field(default_factory=set)         # foods this person must never be offered (N24)
+    support_sources: list = field(default_factory=list)       # ids of the approved support facts used (audit)
     exclusion_texts: list = field(default_factory=list)     # lines that name a blocked food only to say it was left out
     unknown_items: list = field(default_factory=list)       # [{"word", "kind": ingredient|dish, "suggested_food_id"}] for the dietitian queue
     backlog_request: bool = False                           # no checked recipe: goes to the dietitian's recipe backlog
@@ -113,6 +114,21 @@ class Composer:
             elif block == "greeting":
                 free("You're welcome! Ask me anything about food, meals or the Dixit programme." if "thank" in u.cleaned
                      else "Hello! Ask me anything about food, meals or the Dixit programme.")
+            elif block == "support_opening":
+                topic = self.s.data.support_content["topics"]["wellbeing"]
+                d.lines.append(lock("T", topic["opening"]))
+                d.lines.append(lock("T", topic["help"]))
+            elif block == "support":
+                topic = self.s.data.support_content["topics"]["wellbeing"]
+                d.lines.append(lock("T", topic["opening"]))
+                d.lines.append(lock("T", "Everyday habits that are recommended:"))
+                for fact in topic["facts"]:
+                    d.lines.append("- " + lock("T", fact["text"]))
+                d.lines.append(lock("T", topic["limits"]))
+                d.lines.append(lock("T", topic["help"]))
+                d.lines.append(lock("T", topic["urgent"]))
+                d.lines.append(lock("T", topic["bridge"]))
+                d.support_sources = [f["id"] for f in topic["facts"]]
             elif block == "out_of_scope":
                 free("I can only help with food, meals and the Dixit programme. Is there something about your meals I can help with?")
             elif block == "opening":

@@ -52,6 +52,10 @@ STRUGGLE = re.compile(r"\b(hungry|hunger|craving|cravings|not losing|no weight l
                       r"plateau|stuck|tired|weak|weakness|dizzy|headache|difficult to follow|can't follow|cannot follow)\b")
 DIET_WORDS = re.compile(r"\b(eat|eating|food|foods|meal|meals|diet|weight|sabji|vegetable|cook|cooking|drink|nutrition|program|"
                         r"dixit|sugar|calorie|carb|protein|hungry|recipe|breakfast|lunch|dinner|fast|fasting)\b")
+# A person saying how they feel (anxious, stressed, low): answered with care and approved wording, never with food claims.
+WELLBEING = re.compile(r"\b(anxious|anxiety|panic|panicking|stressed|stress|stressful|nervous|overwhelmed|worried|worrying|tension|"
+                       r"depressed|depression|hopeless|feeling low|feel low|feel sad|feeling sad|am sad|so sad|very sad|low mood|"
+                       r"ghabrahat|ghabra|ghabrata|ghabrati|chinta|pareshan|tanav)\b")
 TOPIC_SABJI = re.compile(r"\b(sabji|vegetable|curry)\b")
 
 
@@ -61,6 +65,7 @@ class Understanding:
     type: str
     foods: list = field(default_factory=list)            # food master IDs mentioned
     ingredients: list = field(default_factory=list)      # food IDs the person has on hand
+    wellbeing: bool = False                              # the message says how the person feels (anxious, stressed, low)
     conditions: list = field(default_factory=list)
     topic: str = "home_meal"                             # "sabji" or "home_meal"
     pairs_with: list = field(default_factory=list)       # e.g. chapati in "what sabji with chapati"
@@ -101,6 +106,8 @@ def _preference(cleaned: str, word_lists: dict) -> str:
 def classify(cleaned: str, foods: list[str], index: FoodIndex) -> str:
     if GREETING.match(cleaned):
         return "greeting_thanks"
+    if WELLBEING.search(cleaned) and not RECIPE.search(cleaned) and not LOOKUP.search(cleaned) and not TOPIC_SABJI.search(cleaned) and not any(index.foods[f]["category"] not in {"staple", "pantry", "sweet"} for f in foods) and not (INGREDIENTS.search(cleaned) and (MAKE.search(cleaned) or HINDI_MAKE.search(cleaned))):
+        return "support_wellbeing"        # how someone feels comes first; a recipe request in the same message is answered with a kind line in front
     if INGREDIENTS.search(cleaned) and (MAKE.search(cleaned) or HINDI_MAKE.search(cleaned)):
         return "meal_from_ingredients"
     if HINDI_MAKE.search(cleaned) and any(index.foods[f]["category"] not in {"staple", "pantry", "sweet"} for f in foods):
@@ -236,6 +243,7 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
     foods = [m.food_id for m in mentions]
     u = Understanding(cleaned=cleaned, type="", foods=foods, conditions=_conditions(cleaned, word_lists),
                       preference=_preference(cleaned, word_lists))
+    u.wellbeing = bool(WELLBEING.search(cleaned))
     u.fruit_foods = [f for f in foods if index.foods[f]["category"] == "fruit" and f != "FOOD-LEMON"]
     if recipe_finder:
         u.recipe_ids = recipe_finder(cleaned)

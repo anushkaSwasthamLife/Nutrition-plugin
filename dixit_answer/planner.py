@@ -129,6 +129,9 @@ def make_plan(u: Understanding, state: ChatState, emergency: bool = False, aller
     if u.type == "out_of_scope":
         plan.blocks = ["out_of_scope"]
         return plan
+    if u.type == "support_wellbeing":
+        plan.blocks, plan.rules, plan.max_words = ["support"], ["R13"], 140
+        return plan
 
     # ---- replies to our last question (R6) ----
     if u.type == "followup_reply":
@@ -255,6 +258,8 @@ def make_plan(u: Understanding, state: ChatState, emergency: bool = False, aller
         blocks = [b for b in blocks if b != "safety_caution"]
     if plan.protocol_level == "reminder" and "protocol_full" in blocks:
         blocks[blocks.index("protocol_full")] = "protocol_reminder"
+    if u.wellbeing:
+        blocks.insert(0, "support_opening")       # a kind line and where to get help, before the food answer
     if plan.type in RECIPE_TYPES or plan.type in {"food_choice_guidance", "food_allowed", "protocol_permission", "personal_suitability"}:
         blocks.append("profile_note")        # says which allergies, conditions and diet the answer was checked against
     blocks.append("followup")

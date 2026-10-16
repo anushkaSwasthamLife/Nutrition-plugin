@@ -91,6 +91,9 @@
   .alert { border: 2px solid var(--red); background: var(--red-soft); border-radius: 18px; padding: 12px 15px; }
   .alert .head { font-family: var(--serif); font-weight: 800; color: var(--red); display: flex; gap: 8px; align-items: center; font-size: 1.05rem; }
   .alert.care { border-color: var(--amber); background: var(--amber-soft); }
+  .alert.soft { border: 1.5px solid var(--green); background: var(--green-soft); }
+  .alert.soft .head { color: var(--green-dark); }
+  .alert.soft .call { background: var(--green); }
   .alert.care .head { color: var(--amber); }
   .call { display: inline-flex; gap: 8px; align-items: center; margin: 8px 8px 2px 0; padding: 9px 16px; border-radius: 999px; background: var(--red); color: #fff;
     font-weight: 700; text-decoration: none; }
@@ -326,11 +329,12 @@
   }
 
   function alertHtml(text, kind) {
-    var care = kind === 'care', head = care ? '💛 You are not alone' : (kind === 'sugar' ? '⚠️ Blood sugar alert' : '🚨 This could be an emergency');
+    var care = kind === 'care', soft = kind === 'support',
+        head = soft ? '💚 You are not alone in this' : care ? '💛 You are not alone' : (kind === 'sugar' ? '⚠️ Blood sugar alert' : '🚨 This could be an emergency');
     var calls = [];
     if (/tele-manas|14416/i.test(text)) calls.push(['tel:14416', '💛 Call Tele-MANAS 14416']);
     if (/\b112\b/.test(text)) calls.push(['tel:112', '📞 Call 112']);
-    return '<div class="alert' + (care ? ' care' : '') + '" role="alert"><div class="head">' + head + '</div>' + render(text) +
+    return '<div class="alert' + (care ? ' care' : '') + (soft ? ' soft' : '') + '" role="' + (soft ? 'note' : 'alert') + '"><div class="head">' + head + '</div>' + render(text) +
       calls.map(function (c) { return '<a class="call" href="' + c[0] + '">' + c[1] + '</a>'; }).join('') + '</div>';
   }
 
@@ -376,6 +380,7 @@
   function suggestions(r) {
     var t = r.type || '', a = r.answer || '', asksAllergy = /do you have any food allergies/i.test(a);
     if (t === 'emergency') return [];
+    if (t === 'support_wellbeing') return [['🍽️ Meals that fit the programme', 'what should I eat?'], ['🙏 Thank you', 'thanks']];
     if (asksAllergy) return [['🚫 No allergies', 'No allergies'], ['🥛 Milk', 'I am allergic to milk'], ['🥜 Peanuts', 'I am allergic to peanuts'], ['🌾 Gluten', 'I am allergic to gluten']];
     if (/sprouts step/i.test(a)) return [['🌱 I have moong', 'I have moong'], ['🥚 Eggs instead', 'I would prefer eggs']];
     if (t === 'meal_from_ingredients' || t === 'recipe_request') return [['🔁 Another recipe', 'give me recipes'], ['🥦 Use different vegetables', 'bhindi, aloo, cauliflower']];
@@ -419,6 +424,8 @@
     if (r.type === 'emergency') {
       var kind = /tele-manas|14416|really sorry/i.test(text) ? 'care' : (/blood sugar/i.test(text) ? 'sugar' : 'urgent');
       bubble.innerHTML = alertHtml(text, kind); bubble.classList.add('plain');
+    } else if (r.type === 'support_wellbeing') {
+      bubble.innerHTML = alertHtml(text, 'support'); bubble.classList.add('plain');
     } else if (r.type === 'out_of_scope') {
       bubble.innerHTML = '<p>🙂 ' + inline(text) + '</p>';
     } else {
@@ -556,8 +563,8 @@
       if (m.role === 'me') { var row = document.createElement('div'); row.className = 'row me'; row.innerHTML = '<div><div class="bubble"></div><div class="time"></div></div>';
         row.querySelector('.bubble').textContent = m.text; row.querySelector('.time').textContent = m.time || ''; stream.appendChild(row); }
       else { var r = addRow('bot', '', m.time); var bub = r.querySelector('.bubble');
-        if (m.type === 'emergency') bub.classList.add('plain');
-        bub.innerHTML = m.type === 'emergency' ? alertHtml(m.text, /tele-manas|14416|really sorry/i.test(m.text) ? 'care' : (/blood sugar/i.test(m.text) ? 'sugar' : 'urgent')) : render(m.text); }
+        if (m.type === 'emergency' || m.type === 'support_wellbeing') bub.classList.add('plain');
+        bub.innerHTML = m.type === 'support_wellbeing' ? alertHtml(m.text, 'support') : m.type === 'emergency' ? alertHtml(m.text, /tele-manas|14416|really sorry/i.test(m.text) ? 'care' : (/blood sugar/i.test(m.text) ? 'sugar' : 'urgent')) : render(m.text); }
     });
     scrollDown(true);
   }

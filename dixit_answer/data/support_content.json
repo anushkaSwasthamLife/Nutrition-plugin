@@ -1,0 +1,40 @@
+{
+  "version": "SC-0.1.0",
+  "status": "PROPOSED",
+  "note": "Plan: answers for a person who says they feel anxious, stressed or low. Only what a public-domain source says is used, each with its quote, source and licence. Food is never said to treat or calm anxiety, and no supplement is suggested. A doctor must sign this file before production (production refuses it). Sources are US public-domain pages from the National Institute of Mental Health; an Indian source (for example the Tele-MANAS programme page) can be added by the reviewer.",
+  "topics": {
+    "wellbeing": {
+      "opening": "I'm sorry you're feeling this way. Many people feel anxious, stressed or low at times, and it's good that you said so.",
+      "facts": [
+        {
+          "id": "SC-1",
+          "text": "Eating healthy, regular meals is one of the everyday habits recommended when you feel stressed or anxious.",
+          "quote": "Exercise, and make sure you are eating healthy, regular meals.",
+          "source": "National Institute of Mental Health (NIMH), 'I'm So Stressed Out! Fact Sheet'",
+          "url": "https://www.nimh.nih.gov/health/publications/so-stressed-out-fact-sheet",
+          "licence": "Public domain: NIMH states the publication may be reused or copied without permission, with NIMH cited as the source."
+        },
+        {
+          "id": "SC-2",
+          "text": "It is best to avoid drinking too much caffeine, such as coffee or soft drinks.",
+          "quote": "Avoid drinking excess caffeine such as soft drinks or coffee.",
+          "source": "National Institute of Mental Health (NIMH), 'I'm So Stressed Out! Fact Sheet'",
+          "url": "https://www.nimh.nih.gov/health/publications/so-stressed-out-fact-sheet",
+          "licence": "Public domain: NIMH states the publication may be reused or copied without permission, with NIMH cited as the source."
+        },
+        {
+          "id": "SC-3",
+          "text": "A regular sleep routine and enough sleep also matter.",
+          "quote": "Stick to a sleep routine, and make sure you are getting enough sleep.",
+          "source": "National Institute of Mental Health (NIMH), 'I'm So Stressed Out! Fact Sheet'",
+          "url": "https://www.nimh.nih.gov/health/publications/so-stressed-out-fact-sheet",
+          "licence": "Public domain: NIMH states the publication may be reused or copied without permission, with NIMH cited as the source."
+        }
+      ],
+      "limits": "Food can't treat anxiety, so I won't suggest a special food or a supplement for it.",
+      "help": "If you are struggling to cope, or the feelings won't go away, please talk to a doctor or a counsellor. You can also call Tele-MANAS on 14416 (free, any time, in many Indian languages).",
+      "urgent": "If you have chest pain or trouble breathing, or you feel you might harm yourself, call 112 now.",
+      "bridge": "If you'd like, I can help with meals that fit the programme."
+    }
+  }
+}

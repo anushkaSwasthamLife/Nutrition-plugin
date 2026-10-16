@@ -157,7 +157,7 @@ class Engine:
         # 8 check: AI reword (if any), retried once with the failed checks, then the template answer
         ai_used, fallback, ai_results = False, False, []
         final = draft.fill(template)
-        if not isinstance(self.llm, type(None)) and getattr(self.llm, "name", "mock") != "mock" and plan.type != "emergency":
+        if not isinstance(self.llm, type(None)) and getattr(self.llm, "name", "mock") != "mock" and plan.type not in {"emergency", "support_wellbeing"}:
             failed_ids: list = []
             for attempt in range(2):
                 try:

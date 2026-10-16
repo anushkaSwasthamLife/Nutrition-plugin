@@ -54,6 +54,7 @@
     "swap_table": "swap_table_test.json",
     "cooking_factors": "cooking_factors.json",
     "rules_registry": "rules_registry.json",
-    "emergency_rules": "emergency_rules.json"
+    "emergency_rules": "emergency_rules.json",
+    "support_content": "support_content.json"
   }
 }

@@ -7,7 +7,7 @@ Standalone Python package until the Dixit app code is available. **Development b
 ## Run
 
 ```
-.venv\Scripts\python.exe -m pytest -q              # 1645 tests, about 6 minutes (no AI calls; the AI is mocked)
+.venv\Scripts\python.exe -m pytest -q              # 1717 tests, about 5 minutes (no AI calls; the AI is mocked)
 .venv\Scripts\python.exe -m dixit_answer.web       # chat page on http://127.0.0.1:8100
 ```
 
@@ -211,3 +211,12 @@ The food list (`food_master.json`, FM-0.3.0) grew from 42 to 77 foods: 35 more v
 allergies block the new soy and chickpea foods, the Jain list now also excludes carrot, beetroot, mooli, shalgam, arbi, suran, spring onion and
 mushroom, and the AI is never asked to build a recipe around a dry pulse (`dry_weight`). Foods with no USDA record (methi leaves, curry leaves,
 tinda, parwal, gawar, snake gourd) still go to the dietitian queue. Allergens, names and unit weights need dietitian review. Tests: `tests/test_food_coverage.py`.
+
+## Feeling anxious, stressed or low (16 Oct 2026)
+
+A message that says how the person feels (anxious, stressed, panic, nervous, overwhelmed, low, ghabrahat and similar) gets a fixed, approved
+answer from `data/support_content.json` (SC-0.1.0, PROPOSED: a doctor signs it before production): a kind line, three everyday habits taken
+from the US National Institute of Mental Health fact sheet (public domain; regular healthy meals, not too much caffeine, a sleep routine), a
+plain statement that food can't treat anxiety and no supplement is suggested, where to get help (a doctor or counsellor, Tele-MANAS 14416) and
+112 for chest pain, trouble breathing or thoughts of self-harm. The AI is never used for it. An emergency phrase in the same message still wins.
+A feeling together with a food question gets the kind line and the help line, then the normal food answer. Tests: `tests/test_wellbeing_support.py`.

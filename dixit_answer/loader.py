@@ -63,6 +63,7 @@ class SwasthamData:
     cooking_factors: dict
     rules_registry: dict
     emergency_rules: dict
+    support_content: dict
     manifest: dict
 
 
