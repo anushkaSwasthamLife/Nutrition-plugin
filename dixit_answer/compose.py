@@ -57,6 +57,13 @@ def _join(names: list[str]) -> str:
     return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
 
 
+def _without_blocked_staple(text: str, blocked: set) -> str:
+    """Approved labels say "closer to the chapati (or rice) part of the meal"; never name chapati to someone who can't have it."""
+    if "FOOD-CHAPATI" in blocked:
+        text = text.replace("the chapati or rice part", "the starchy part").replace("the chapati part", "the starchy part")
+    return text
+
+
 def _cap(text: str) -> str:
     return text[:1].upper() + text[1:]
 
@@ -113,6 +120,11 @@ class Composer:
             elif block == "ack":
                 free("Thanks, noted.")
             elif block == "direct":
+                for fid in [f for f in plan.pairs_with if f in d.blocked_foods]:      # "what sabji goes with chapati" for a gluten allergy
+                    text = f"I left out {self.index.name(fid)} because of {self.recipes._block_reason(fid, person)}."
+                    d.exclusion_texts.append(text)
+                    d.lines.append(lock("T", text))
+                plan.pairs_with = [f for f in plan.pairs_with if f not in d.blocked_foods]
                 intro, committed = self._direct(plan, u, name)
                 if intro:
                     free(intro)
@@ -143,7 +155,7 @@ class Composer:
             elif block == "choices":
                 for group in self.s.choices(plan.topic, blocked):
                     foods = _join([name(f) for f in group.foods])
-                    d.lines.append(lock("G", f"**{group.label}:** {foods}"))   # approved wording: locked as a whole
+                    d.lines.append(lock("G", f"**{_without_blocked_staple(group.label, blocked)}:** {foods}"))   # approved wording: locked as a whole
             elif block == "focus_compare":
                 for fid in plan.focus_foods:
                     if fid in blocked:
@@ -157,7 +169,7 @@ class Composer:
                     fact = self.s.pick_fact(fid, set(), fields=("energy_kcal",)) or self.s.pick_fact(fid, set())
                     parts = [f"- **{_cap(name(fid))}**"]
                     if label:
-                        parts.append(": " + lock("G", label))
+                        parts.append(": " + lock("G", _without_blocked_staple(label, blocked)))
                     if fact:
                         parts.append(" · " + fact_ph(fact))
                     d.lines.append("".join(parts))
@@ -218,6 +230,11 @@ class Composer:
                 self._struggle_lines(u, d, lock)
             elif block == "boundary":
                 d.lines.append(lock("T", "Your doctor or dietitian decides what's right for you personally, including any medicines."))
+            elif block == "profile_note":
+                note = self._profile_note(person, state)
+                if note:
+                    d.exclusion_texts.append(note)          # names an allergen only to say it was kept in mind
+                    d.lines.append(lock("T", note))
             elif block == "followup" and plan.followup:
                 if plan.followup["id"] == "FU-SPROUTS" and "FOOD-EGG" in d.blocked_foods:
                     plan.followup["text"] = "For the sprouts step, do you have moong or matki?"   # never offer a blocked food
@@ -227,6 +244,24 @@ class Composer:
         for fid in plan.focus_foods + plan.ingredients + list(u.foods):
             d.foods_named.add(fid)
         return d
+
+    # ---------- what was kept in mind ----------
+    CONDITION_LABELS = {"obesity": "your weight goal", "hypertension": "high blood pressure", "diabetes": "diabetes",
+                        "thyroid": "thyroid", "pcos": "PCOS"}
+
+    def _profile_note(self, person, state) -> str:  # noqa: D401
+        """One line saying what the answer was checked against, so the person can see the profile was used."""
+        if person is None:
+            return ""
+        allergies = [self.allergy.label(a) for a in (person.allergies or []) if isinstance(a, str)]
+        parts = [f"allergy to {_join(allergies)}"] if allergies else []
+        parts += [self.CONDITION_LABELS.get(c, c) for c in person.conditions if isinstance(c, str)]
+        if person.diet_type in {"vegetarian", "jain", "egg", "non_vegetarian"} and person.diet_type != "non_vegetarian":
+            parts.append({"vegetarian": "vegetarian diet", "jain": "Jain diet", "egg": "eggs-ok diet"}[person.diet_type])
+        parts = list(dict.fromkeys(parts))
+        if not parts:
+            return ""
+        return "Kept in mind for you: " + _join(parts) + "."
 
     # ---------- allergy / avoid notes ----------
     def _blocked_line(self, fid: str, person, d: Draft, lock, prefix: str = "") -> None:

@@ -3,7 +3,7 @@ import re
 
 BAD_TOKENS = re.compile(r"\b(None|nan|inf|undefined|Traceback)\b|<\s*/?\s*[a-zA-Z]|javascript:|https?://|www\.|\{\{|\}\}")
 EXCLUSION_MARKERS = ("left out", "won't suit", "can't show", "instead of", "Adjusted for you", "isn't suitable", "isn't in our food list",
-                     "because of")
+                     "because of", "Kept in mind for you")
 
 
 def assert_valid(result, label=""):

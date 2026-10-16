@@ -74,6 +74,7 @@
   .bubble.plain { background: transparent; border: 0; box-shadow: none; padding: 0; }
   .bubble.plain .tools, .bubble.plain details.tech { padding-left: 4px; }
   .bubble p { margin: 5px 0; }
+  .bubble p.kept { font-size: .86rem; color: var(--green-dark); background: var(--green-soft); border-radius: 10px; padding: 5px 10px; margin: 8px 0 4px; }
   .bubble ul { margin: 5px 0; padding-left: 20px; }
   .bubble li { margin: 2px 0; }
 
@@ -133,6 +134,9 @@
   .send { width: 42px; height: 42px; border-radius: 50%; border: 0; background: var(--green); color: #fff; font-size: 18px; display: grid; place-items: center; flex: none; }
   .send:disabled { background: var(--line); cursor: not-allowed; }
   .send:not(:disabled):hover { background: var(--green-dark); }
+  .using { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; border: 0; background: transparent; padding: 0 4px 6px; font-size: .78rem; color: var(--muted); text-align: left; }
+  .using .u { background: var(--green-soft); color: var(--green-dark); border-radius: 999px; padding: 2px 9px; font-weight: 700; }
+  .using.empty .u { background: var(--amber-soft); color: var(--amber); }
   .hint { display: flex; justify-content: space-between; gap: 10px; font-size: .74rem; color: var(--muted); padding: 5px 8px 0; }
   .hint .count.warn { color: var(--red); font-weight: 700; }
 
@@ -193,6 +197,7 @@
     <button class="jump" id="jump" type="button" aria-label="Scroll to the latest message">⬇️</button>
     <div class="composer">
       <div class="composer-in">
+        <button class="using" id="using" type="button" aria-label="Your profile in use. Open to change"></button>
         <form id="form" autocomplete="off">
           <textarea id="input" rows="1" maxlength="2000" placeholder="Ask about food or meals… 🍛" aria-label="Your message"></textarea>
           <button class="send" id="send" type="submit" aria-label="Send message">➤</button>
@@ -221,6 +226,9 @@
         <label class="opt"><input type="checkbox" class="al" value="tree_nut"><span>🌰 Nuts</span></label>
         <label class="opt"><input type="checkbox" class="al" value="gluten"><span>🌾 Gluten</span></label>
         <label class="opt"><input type="checkbox" class="al" value="egg"><span>🥚 Eggs</span></label>
+        <label class="opt"><input type="checkbox" class="al" value="soy"><span>🫘 Soy</span></label>
+        <label class="opt"><input type="checkbox" class="al" value="sesame"><span>🌱 Sesame</span></label>
+        <label class="opt"><input type="checkbox" class="al" value="chickpea"><span>🟤 Chickpea</span></label>
       </div>
     </div>
 
@@ -233,9 +241,11 @@
 
     <div class="grp"><b>🩺 Health</b>
       <div class="opts">
+        <label class="opt"><input type="checkbox" id="diabetes"><span>🩸 Diabetes</span></label>
         <label class="opt"><input type="checkbox" id="insulin"><span>💉 Insulin or diabetes medicine</span></label>
         <label class="opt"><input type="checkbox" id="obesity"><span>⚖️ Obesity</span></label>
         <label class="opt"><input type="checkbox" id="hbp"><span>❤️ High blood pressure</span></label>
+        <label class="opt"><input type="checkbox" id="pregnant"><span>🤰 Pregnant</span></label>
       </div>
     </div>
     <p class="fine">Your choices stay in this browser tab only. The assistant never gives a diet plan or changes medicines. Ask your doctor or dietitian about those.</p>
@@ -308,6 +318,7 @@
       }
       if (/^\s*- /.test(line)) { if (!list) { out.push('<ul>'); list = true; } out.push('<li>' + inline(line.replace(/^\s*- /, '')) + '</li>'); continue; }
       closeList();
+      if (/^Kept in mind for you/.test(line)) { out.push('<p class="kept">✅ ' + inline(line) + '</p>'); continue; }
       out.push('<p>' + inline(line) + '</p>');
     }
     closeList();
@@ -363,7 +374,7 @@
   }
 
   function suggestions(r) {
-    var t = r.type || '', a = r.answer || '', asksAllergy = /allerg/i.test(a) && (/\?\s*$/.test(a.trim()) || /say "none"/i.test(a));
+    var t = r.type || '', a = r.answer || '', asksAllergy = /do you have any food allergies/i.test(a);
     if (t === 'emergency') return [];
     if (asksAllergy) return [['🚫 No allergies', 'No allergies'], ['🥛 Milk', 'I am allergic to milk'], ['🥜 Peanuts', 'I am allergic to peanuts'], ['🌾 Gluten', 'I am allergic to gluten']];
     if (/sprouts step/i.test(a)) return [['🌱 I have moong', 'I have moong'], ['🥚 Eggs instead', 'I would prefer eggs']];
@@ -432,7 +443,9 @@
     var diet = $('diet').value; if (diet) p.diet_type = diet;
     if ($('insulin').checked) p.medicines = ['insulin'];
     var cond = []; if ($('obesity').checked) cond.push('obesity'); if ($('hbp').checked) cond.push('hypertension');
+    if ($('diabetes').checked) cond.push('diabetes');
     if (cond.length) p.conditions = cond;
+    if ($('pregnant').checked) p.pregnant = true;
     return p;
   }
   function syncAllergyUi() {
@@ -441,7 +454,8 @@
   }
   function saveProfile() {
     store.set('dixit_profile', JSON.stringify({am: (document.querySelector('input[name="am"]:checked') || {}).value, al: Array.prototype.map.call(document.querySelectorAll('.al:checked'), function (c) { return c.value; }),
-      diet: $('diet').value, insulin: $('insulin').checked, obesity: $('obesity').checked, hbp: $('hbp').checked}));
+      diet: $('diet').value, insulin: $('insulin').checked, obesity: $('obesity').checked, hbp: $('hbp').checked,
+      diabetes: $('diabetes').checked, pregnant: $('pregnant').checked}));
   }
   function loadProfile() {
     var raw = store.get('dixit_profile'); if (!raw) return;
@@ -449,11 +463,27 @@
       var p = JSON.parse(raw), r = document.querySelector('input[name="am"][value="' + p.am + '"]'); if (r) r.checked = true;
       (p.al || []).forEach(function (v) { var c = document.querySelector('.al[value="' + v + '"]'); if (c) c.checked = true; });
       $('diet').value = p.diet || ''; $('insulin').checked = !!p.insulin; $('obesity').checked = !!p.obesity; $('hbp').checked = !!p.hbp;
+      $('diabetes').checked = !!p.diabetes; $('pregnant').checked = !!p.pregnant;
     } catch (e) {}
   }
   Array.prototype.forEach.call(document.querySelectorAll('#profile input, #profile select'), function (el) {
-    el.addEventListener('change', function () { syncAllergyUi(); saveProfile(); });
+    el.addEventListener('change', function () { syncAllergyUi(); saveProfile(); renderUsing(); });
   });
+  var USING_NAMES = {milk: '🥛 milk', peanut: '🥜 peanuts', tree_nut: '🌰 nuts', gluten: '🌾 gluten', egg: '🥚 eggs', soy: '🫘 soy', sesame: '🌱 sesame', chickpea: '🟤 chickpea'};
+  var DIET_NAMES = {vegetarian: '🥦 vegetarian', egg: '🥚 eats eggs', non_vegetarian: '🍗 non-vegetarian', jain: '🪷 Jain'};
+  function renderUsing() {
+    var p = profile(), box = $('using'), chips = [];
+    if (p.allergies && p.allergies.length) p.allergies.forEach(function (a) { chips.push('no ' + (USING_NAMES[a] || a)); });
+    else if (p.allergies) chips.push('🚫 no allergies');
+    (p.conditions || []).forEach(function (c) { chips.push({obesity: '⚖️ weight goal', hypertension: '❤️ high blood pressure', diabetes: '🩸 diabetes'}[c] || c); });
+    if (p.medicines) chips.push('💉 diabetes medicine');
+    if (p.pregnant) chips.push('🤰 pregnant');
+    if (p.diet_type) chips.push(DIET_NAMES[p.diet_type] || p.diet_type);
+    box.classList.toggle('empty', !chips.length);
+    box.innerHTML = '<span>Answers are checked for:</span>' + (chips.length ? chips.map(function (c) { return '<span class="u">' + esc(c) + '</span>'; }).join('')
+      : '<span class="u">nothing yet — tell me your allergies and health in Profile</span>');
+  }
+  $('using').addEventListener('click', function () { openProfile(true); });
   function openProfile(open) { $('profile').classList.toggle('sheet', open); $('scrim').classList.toggle('show', open); }
   $('openProfile').addEventListener('click', function () { openProfile(true); });
   $('closeProfile').addEventListener('click', function () { openProfile(false); });
@@ -550,7 +580,7 @@
     $('devBanner').hidden = !dev;
   }).catch(function () { $('dot').classList.add('off'); $('meta').textContent = 'offline: start the server'; });
 
-  loadProfile(); syncAllergyUi(); restore(); updateCount(); input.focus();
+  loadProfile(); syncAllergyUi(); renderUsing(); restore(); updateCount(); input.focus();
 })();
 </script>
 </body>

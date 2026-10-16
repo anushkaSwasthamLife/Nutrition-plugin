@@ -81,13 +81,13 @@ def test_a_condition_said_earlier_in_the_chat_is_remembered(engine):
 @pytest.mark.parametrize("allergy,banned", [("milk", ["paneer", "ghee", "curd"]), ("peanut", ["peanut"]), ("egg", ["egg"])])
 def test_dishes_for_a_condition_respect_allergies(engine, allergy, banned):
     r = engine.answer(ASK, None, {"allergies": [allergy]})
-    listed = r.answer.lower().split("here are")[-1]
+    listed = r.answer.lower().split("here are")[-1].split("kept in mind")[0]
     assert not any(b in listed for b in banned), listed
 
 
 def test_dishes_offered_when_allergies_are_unknown_avoid_the_common_allergens(engine):
     r = engine.answer(ASK, None, {})
-    listed = r.answer.lower().split("here are")[-1]
+    listed = r.answer.lower().split("here are")[-1].split("kept in mind")[0]
     assert "paneer" not in listed and "egg" not in listed
 
 
