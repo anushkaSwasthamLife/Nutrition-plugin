@@ -1,0 +1,45 @@
+{
+  "version": "AR-0.1.0",
+  "status": "PROPOSED",
+  "note": "Thresholds for the daily audit report (audit_report.py). These are proposals for Swastham to confirm after a few weeks of real traffic; none of them changes what a person is shown. Each rule compares today with the average of the earlier days that have data.",
+  "baseline_days": 7,
+  "rules": {
+    "rejections_fell": {
+      "what": "The gate rejects far fewer recipes than usual. It may have stopped checking.",
+      "severity": "critical",
+      "min_baseline_checks": 20,
+      "min_today_checks": 10,
+      "min_baseline_rate": 0.05,
+      "today_below_fraction_of_baseline": 0.25
+    },
+    "emergency_spike": {
+      "what": "Many more emergency replies than usual.",
+      "severity": "warning",
+      "min_count": 5,
+      "times_baseline": 2
+    },
+    "self_harm_seen": {
+      "what": "At least one self-harm reply (E5) was sent. A person should review it.",
+      "severity": "notice",
+      "min_count": 1
+    },
+    "fallbacks_rose": {
+      "what": "More recipe requests than usual ended with no checked recipe.",
+      "severity": "warning",
+      "min_recipe_turns": 5,
+      "min_rate": 0.4,
+      "times_baseline": 1.5
+    },
+    "wording_fallbacks_rose": {
+      "what": "The AI's reworded answers keep failing the checks, so the plain template is sent.",
+      "severity": "warning",
+      "min_ai_turns": 10,
+      "min_rate": 0.3
+    },
+    "critical_check_failed": {
+      "what": "A critical answer check failed on a turn. The safe fallback text was sent.",
+      "severity": "critical",
+      "min_count": 1
+    }
+  }
+}

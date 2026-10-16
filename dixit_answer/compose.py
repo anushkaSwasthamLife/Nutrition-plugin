@@ -32,6 +32,7 @@ class Draft:
     recipe_trace: list = field(default_factory=list)
     blocked_foods: set = field(default_factory=set)         # foods this person must never be offered (N24)
     exclusion_texts: list = field(default_factory=list)     # lines that name a blocked food only to say it was left out
+    unknown_items: list = field(default_factory=list)       # [{"word", "kind": ingredient|dish, "suggested_food_id"}] for the dietitian queue
     backlog_request: bool = False                           # no checked recipe: goes to the dietitian's recipe backlog
     suppress: set = field(default_factory=set)              # blocks the recipe flow drops (this request only: Composer is shared)
 
@@ -254,14 +255,18 @@ class Composer:
                                home_foods=list(state.home_foods))
         d.recipe_trace = out.trace
         if plan.unknown_dish and not plan.reply_slot:
+            d.unknown_items.append({"word": plan.unknown_dish, "kind": "dish", "suggested_food_id": ""})
             d.lines.append(lock("T", f"I don't have a checked recipe for \"{plan.unknown_dish}\" yet; I've passed it to our dietitian."))
             d.backlog_request = True
         for fid, why in out.left_out:
             text = f"I left out {self.index.name(fid)} because of {why}."
             d.exclusion_texts.append(text)
             d.lines.append(lock("T", text))
+        for word in out.unknown_words:
+            d.unknown_items.append({"word": word, "kind": "ingredient", "suggested_food_id": ""})
         if out.status == "confirm_food":
             food = out.suggestion["food_id"]
+            d.unknown_items.append({"word": out.suggestion["word"], "kind": "ingredient", "suggested_food_id": food})
             d.lines.append(lock("T", f"I don't know \"{out.suggestion['word']}\" yet."))
             if food in d.blocked_foods:                      # never suggest a food this person must not have, even as a question
                 plan.followup = None

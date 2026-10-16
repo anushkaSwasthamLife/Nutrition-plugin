@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dietitian review: unknown foods</title>
+<style>
+/* Development page for the dietitian. Light theme, same palette as the Swastham workflow page. All text from people is shown as plain text only. */
+:root{color-scheme:light;--bg:#F5F8F4;--surface:#fff;--ink:#15261E;--muted:#52645A;--line:#D9E4DB;--green:#1D7A57;--green-soft:#DCF0E5;--amber:#B96F00;--amber-soft:#FCEBC6;--red:#B63A25;--red-soft:#F8DDD5}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Segoe UI",system-ui,sans-serif;padding:0 max(16px,env(safe-area-inset-right,0px)) 64px max(16px,env(safe-area-inset-left,0px))}
+.wrap{max-width:1000px;margin:0 auto;padding-top:28px}
+h1{font-size:1.7rem;margin:0 0 4px}
+p{margin:0 0 10px;max-width:70ch}
+.muted{color:var(--muted)}
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin:18px 0;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+label{display:block;font-size:.8rem;font-weight:700;color:var(--muted);margin-bottom:3px}
+input[type=text],select{font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);min-width:0;max-width:100%}
+button{font:inherit;font-weight:700;border:0;border-radius:999px;padding:8px 16px;cursor:pointer;background:var(--ink);color:#fff}
+button:hover{background:var(--green)}
+button.quiet{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+button.quiet:hover{background:var(--bg)}
+button:disabled{opacity:.5;cursor:default}
+.tabs{display:flex;gap:6px;margin:6px 0 12px;flex-wrap:wrap}
+.tabs button{background:var(--surface);color:var(--muted);border:1px solid var(--line)}
+.tabs button[aria-pressed=true]{background:var(--green-soft);color:var(--green);border-color:var(--green)}
+.item{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-bottom:8px}
+.item>summary{list-style:none;cursor:pointer;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:12px 16px}
+.item>summary::-webkit-details-marker{display:none}
+.word{font-weight:700;font-size:1.05rem;overflow-wrap:anywhere}
+.pill{font-size:.75rem;font-weight:700;padding:2px 10px;border-radius:999px}
+.p-open{background:var(--amber-soft);color:var(--amber)}.p-done{background:var(--green-soft);color:var(--green)}.p-no{background:var(--red-soft);color:var(--red)}
+.meta{font-size:.85rem;color:var(--muted)}
+.panel{padding:4px 16px 16px;border-top:1px solid var(--line)}
+fieldset{border:1px solid var(--line);border-radius:12px;margin:12px 0 0;padding:10px 14px 12px}
+legend{font-weight:700;font-size:.9rem;padding:0 6px}
+.row{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:end;margin-top:8px}
+.checks{display:flex;flex-wrap:wrap;gap:6px 14px}
+.checks label{font-size:.9rem;font-weight:400;color:var(--ink);display:flex;gap:6px;align-items:center;margin:0}
+.results label{display:block;font-weight:400;color:var(--ink);padding:6px 8px;border:1px solid var(--line);border-radius:8px;margin-top:6px;font-size:.88rem}
+.msg{margin-top:10px;font-size:.9rem;min-height:1.2em}
+.err{color:var(--red);font-weight:600}.ok{color:var(--green);font-weight:600}
+.empty{padding:24px;text-align:center;color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:14px}
+ul.problems{margin:6px 0 0;padding-left:20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Unknown foods and dishes</h1>
+  <p class="muted">Words people typed that are not in the food list yet, and dishes asked for that have no approved recipe. The most asked come first. Your decisions wait here until you press <b>Apply to the food list</b>. The chat does not change before that.</p>
+
+  <div class="bar">
+    <div><label for="by">Your name (saved with every decision)</label><input type="text" id="by" autocomplete="name" maxlength="80"></div>
+    <div id="summary" class="meta" aria-live="polite"></div>
+    <button type="button" id="apply" disabled>Apply to the food list</button>
+    <button type="button" id="refresh" class="quiet">Refresh</button>
+    <div id="applymsg" class="msg" style="flex-basis:100%" aria-live="polite"></div>
+  </div>
+
+  <div class="tabs" role="group" aria-label="Show">
+    <button type="button" data-tab="ingredient" aria-pressed="true">Food words</button>
+    <button type="button" data-tab="dish" aria-pressed="false">Dishes without a recipe</button>
+    <button type="button" data-tab="done" aria-pressed="false">Decided</button>
+  </div>
+  <div id="list"></div>
+</div>
+
+<script>
+(function () {
+  var state = { items: [], foods: [], categories: [], allergens: [], tab: 'ingredient', open: {} };
+  var $ = function (id) { return document.getElementById(id); };
+  function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; }
+  function who() { return $('by').value.trim(); }
+  try { $('by').value = localStorage.getItem('reviewer') || ''; } catch (e) {}
+  $('by').addEventListener('change', function () { try { localStorage.setItem('reviewer', who()); } catch (e) {} });
+
+  function api(path, body) {
+    return fetch(path, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : undefined)
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) { var d = j.detail; throw (typeof d === 'string' ? { message: d } : (d || { message: 'Something went wrong.' })); } return j; }); });
+  }
+  function say(node, text, ok) { node.textContent = text; node.className = 'msg ' + (ok ? 'ok' : 'err'); }
+
+  function load() {
+    return api('/api/review/items').then(function (d) {
+      state.items = d.items; state.foods = d.foods; state.categories = d.categories; state.allergens = d.allergens;
+      var waiting = d.items.filter(function (i) { return i.status === 'decided' && i.kind === 'ingredient'; }).length;
+      var open = d.items.filter(function (i) { return i.status === 'open'; }).length;
+      $('summary').textContent = open + ' to decide · ' + waiting + ' waiting to apply · food list ' + d.food_master_version;
+      $('apply').disabled = waiting === 0;
+      render();
+    }).catch(function (e) { $('list').textContent = ''; $('list').appendChild(el('div', 'empty err', e.message || 'Could not load the queue.')); });
+  }
+
+  function shown() {
+    return state.items.filter(function (i) {
+      if (state.tab === 'done') return i.status !== 'open';
+      return i.kind === state.tab && i.status === 'open';
+    });
+  }
+  function render() {
+    var host = $('list'); host.textContent = '';
+    var list = shown();
+    if (!list.length) {
+      host.appendChild(el('div', 'empty', state.tab === 'done' ? 'No decisions yet.' : 'Nothing waiting here. New words appear after people use the chat.'));
+      return;
+    }
+    list.forEach(function (item) { host.appendChild(card(item)); });
+  }
+  function key(item) { return item.kind + ':' + item.word; }
+
+  function card(item) {
+    var d = el('details', 'item'); d.open = !!state.open[key(item)];
+    d.addEventListener('toggle', function () { state.open[key(item)] = d.open; });
+    var s = el('summary');
+    s.appendChild(el('span', 'word', item.word));
+    s.appendChild(el('span', 'meta', 'asked ' + item.count + (item.count === 1 ? ' time' : ' times') + ' · last ' + (item.last_seen || '').replace('T', ' ')));
+    var label = { open: ['p-open', 'To decide'], decided: ['p-done', 'Decided, not applied'], applied: ['p-done', 'Applied in ' + item.applied_in], rejected: ['p-no', 'Rejected'], planned: ['p-done', 'Recipe planned'] }[item.status];
+    s.appendChild(el('span', 'pill ' + label[0], label[1]));
+    d.appendChild(s);
+    var panel = el('div', 'panel');
+    if (item.status === 'open') { panel.appendChild(item.kind === 'ingredient' ? ingredientForms(item) : dishForms(item)); }
+    else { panel.appendChild(decisionView(item)); }
+    d.appendChild(panel);
+    return d;
+  }
+
+  function decisionView(item) {
+    var box = el('div'); var dec = item.decision || {};
+    var text = dec.action === 'alias' ? 'Another name for ' + foodName(dec.food_id) :
+      dec.action === 'new_food' ? 'New food “' + dec.name + '” (' + dec.category + '), allergens: ' + (dec.allergens.length ? dec.allergens.join(', ') : 'none') + ', nutrition from ' + dec.record_id :
+      dec.action === 'reject' ? 'Rejected: ' + dec.reason : dec.action === 'plan' ? 'A recipe should be written. ' + (dec.note || '') : '';
+    box.appendChild(el('p', null, text));
+    box.appendChild(el('p', 'meta', 'By ' + item.decided_by + ' · ' + (item.decided_at || '').replace('T', ' ')));
+    if (item.status !== 'applied') {
+      var b = el('button', 'quiet', 'Reopen'); b.type = 'button';
+      b.addEventListener('click', function () { api('/api/review/reopen', { word: item.word, kind: item.kind }).then(load).catch(function (e) { alert(e.message); }); });
+      box.appendChild(b);
+    }
+    return box;
+  }
+  function foodName(id) { var f = state.foods.filter(function (x) { return x.id === id; })[0]; return f ? f.name + ' (' + f.id + ')' : id; }
+
+  function send(item, body, msgNode) {
+    if (!who()) { say(msgNode, 'Type your name at the top first.', false); return; }
+    body.word = item.word; body.kind = item.kind; body.by = who();
+    api('/api/review/decide', body).then(function () { state.open[key(item)] = false; return load(); }).catch(function (e) { say(msgNode, e.message || 'Not saved.', false); });
+  }
+
+  function ingredientForms(item) {
+    var box = el('div');
+    // 1. another name for a food we already have
+    var f1 = el('fieldset'); f1.appendChild(el('legend', null, 'It is another name for a food we have'));
+    var row = el('div', 'row'); var sel = el('select'); sel.id = 'alias-' + item.word;
+    var blank = el('option', null, 'Choose a food'); blank.value = ''; sel.appendChild(blank);
+    state.foods.forEach(function (f) { var o = el('option', null, f.name + ' (' + f.category + ')'); o.value = f.id; if (f.id === item.suggested_food_id) o.selected = true; sel.appendChild(o); });
+    var m1 = el('div', 'msg'); var b1 = el('button', null, 'Save'); b1.type = 'button';
+    b1.addEventListener('click', function () { send(item, { action: 'alias', food_id: sel.value }, m1); });
+    var w1 = el('div'); var l1 = el('label', null, 'Food'); l1.setAttribute('for', sel.id); w1.appendChild(l1); w1.appendChild(sel);
+    row.appendChild(w1); row.appendChild(b1); f1.appendChild(row); f1.appendChild(m1); box.appendChild(f1);
+    if (item.suggested_food_id) f1.insertBefore(el('p', 'meta', 'The chat guessed: ' + foodName(item.suggested_food_id)), row);
+
+    // 2. a new food
+    var f2 = el('fieldset'); f2.appendChild(el('legend', null, 'It is a new food to add'));
+    var r1 = el('div', 'row');
+    var nameIn = el('input'); nameIn.type = 'text'; nameIn.value = item.word; nameIn.id = 'nm-' + item.word; nameIn.maxLength = 60;
+    var catSel = el('select'); catSel.id = 'cat-' + item.word; var c0 = el('option', null, 'Choose'); c0.value = ''; catSel.appendChild(c0);
+    state.categories.forEach(function (c) { var o = el('option', null, c); o.value = c; catSel.appendChild(o); });
+    [['Name of the food', nameIn], ['Category', catSel]].forEach(function (p) { var w = el('div'); var l = el('label', null, p[0]); l.setAttribute('for', p[1].id); w.appendChild(l); w.appendChild(p[1]); r1.appendChild(w); });
+    f2.appendChild(r1);
+    var alWrap = el('div'); alWrap.appendChild(el('label', null, 'Allergens this food contains (tick every one that applies)'));
+    var checks = el('div', 'checks'); var boxes = [];
+    state.allergens.forEach(function (a) { var l = el('label'); var c = el('input'); c.type = 'checkbox'; c.value = a; boxes.push(c); l.appendChild(c); l.appendChild(document.createTextNode(a.replace('_', ' '))); checks.appendChild(l); });
+    alWrap.appendChild(checks);
+    var conf = el('label'); conf.style.marginTop = '8px'; var confBox = el('input'); confBox.type = 'checkbox'; conf.style.display = 'flex'; conf.style.gap = '6px'; conf.style.fontWeight = '400'; conf.style.color = 'var(--ink)';
+    conf.appendChild(confBox); conf.appendChild(document.createTextNode('I have checked: the allergens ticked above are exactly right (or this food has none)'));
+    alWrap.appendChild(conf); f2.appendChild(alWrap);
+    var search = el('div'); search.style.marginTop = '10px';
+    var sIn = el('input'); sIn.type = 'text'; sIn.id = 'q-' + item.word; sIn.value = item.word; var sBtn = el('button', 'quiet', 'Search USDA'); sBtn.type = 'button';
+    var sRow = el('div', 'row'); var sw = el('div'); var sl = el('label', null, 'Which USDA record gives its nutrition per 100 g?'); sl.setAttribute('for', sIn.id); sw.appendChild(sl); sw.appendChild(sIn);
+    sRow.appendChild(sw); sRow.appendChild(sBtn); search.appendChild(sRow);
+    var results = el('div', 'results'); search.appendChild(results); f2.appendChild(search);
+    var picked = null;
+    function doSearch() {
+      results.textContent = ''; picked = null;
+      if (sIn.value.trim().length < 2) return;
+      api('/api/review/search?q=' + encodeURIComponent(sIn.value.trim())).then(function (d) {
+        if (!d.results.length) { results.appendChild(el('p', 'meta', 'No USDA record found. Try another word.')); return; }
+        d.results.forEach(function (r) {
+          var l = el('label'); var rb = el('input'); rb.type = 'radio'; rb.name = 'rec-' + item.word; rb.value = r.record_id;
+          rb.addEventListener('change', function () { picked = r.record_id; });
+          l.appendChild(rb);
+          var n = r.per_100g || {};
+          l.appendChild(document.createTextNode(' ' + r.food_name + ' · ' + (n.energy_kcal !== undefined ? n.energy_kcal + ' kcal, ' : '') + (n.carbohydrate_g !== undefined ? n.carbohydrate_g + ' g carbs, ' : '') + (n.protein_g !== undefined ? n.protein_g + ' g protein, ' : '') + (n.fat_g !== undefined ? n.fat_g + ' g fat' : '') + ' per 100 g · ' + r.source + ' · ' + r.record_id));
+          results.appendChild(l);
+        });
+      }).catch(function (e) { results.appendChild(el('p', 'err', e.message)); });
+    }
+    sBtn.addEventListener('click', doSearch);
+    var m2 = el('div', 'msg'); var b2 = el('button', null, 'Save as a new food'); b2.type = 'button'; b2.style.marginTop = '10px';
+    b2.addEventListener('click', function () {
+      send(item, { action: 'new_food', name: nameIn.value.trim(), category: catSel.value, allergens: boxes.filter(function (c) { return c.checked; }).map(function (c) { return c.value; }),
+        allergens_confirmed: confBox.checked, record_id: picked }, m2);
+    });
+    f2.appendChild(b2); f2.appendChild(m2); box.appendChild(f2);
+
+    // 3. reject
+    var f3 = el('fieldset'); f3.appendChild(el('legend', null, 'Not a food, a typo, or not something we should add'));
+    var r3 = el('div', 'row'); var why = el('input'); why.type = 'text'; why.id = 'why-' + item.word; why.maxLength = 200; why.style.minWidth = '260px';
+    var wr = el('div'); var wl = el('label', null, 'Reason'); wl.setAttribute('for', why.id); wr.appendChild(wl); wr.appendChild(why);
+    var b3 = el('button', 'quiet', 'Reject'); b3.type = 'button'; var m3 = el('div', 'msg');
+    b3.addEventListener('click', function () { send(item, { action: 'reject', reason: why.value }, m3); });
+    r3.appendChild(wr); r3.appendChild(b3); f3.appendChild(r3); f3.appendChild(m3); box.appendChild(f3);
+    return box;
+  }
+
+  function dishForms(item) {
+    var box = el('div');
+    var f = el('fieldset'); f.appendChild(el('legend', null, 'People asked for this dish and we have no approved recipe'));
+    var r = el('div', 'row'); var note = el('input'); note.type = 'text'; note.id = 'note-' + item.word; note.maxLength = 200; note.style.minWidth = '260px';
+    var w = el('div'); var l = el('label', null, 'Note for whoever writes the recipe (optional)'); l.setAttribute('for', note.id); w.appendChild(l); w.appendChild(note);
+    var m = el('div', 'msg'); var b = el('button', null, 'Add to the recipe list'); b.type = 'button';
+    b.addEventListener('click', function () { send(item, { action: 'plan', note: note.value }, m); });
+    r.appendChild(w); r.appendChild(b); f.appendChild(r); f.appendChild(m); box.appendChild(f);
+    var f2 = el('fieldset'); f2.appendChild(el('legend', null, 'Not something we should offer'));
+    var r2 = el('div', 'row'); var why = el('input'); why.type = 'text'; why.id = 'dwhy-' + item.word; why.maxLength = 200; why.style.minWidth = '260px';
+    var w2 = el('div'); var l2 = el('label', null, 'Reason'); l2.setAttribute('for', why.id); w2.appendChild(l2); w2.appendChild(why);
+    var m2 = el('div', 'msg'); var b2 = el('button', 'quiet', 'Reject'); b2.type = 'button';
+    b2.addEventListener('click', function () { send(item, { action: 'reject', reason: why.value }, m2); });
+    r2.appendChild(w2); r2.appendChild(b2); f2.appendChild(r2); f2.appendChild(m2); box.appendChild(f2);
+    return box;
+  }
+
+  [].forEach.call(document.querySelectorAll('.tabs button'), function (b) {
+    b.addEventListener('click', function () {
+      state.tab = b.getAttribute('data-tab');
+      [].forEach.call(document.querySelectorAll('.tabs button'), function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      render();
+    });
+  });
+  $('refresh').addEventListener('click', load);
+  $('apply').addEventListener('click', function () {
+    var msg = $('applymsg');
+    if (!who()) { say(msg, 'Type your name at the top first.', false); return; }
+    $('apply').disabled = true; say(msg, 'Checking the new food list…', true);
+    api('/api/review/apply', { by: who() }).then(function (r) {
+      var text = r.applied + ' change(s) applied. The food list is now ' + r.version + ' and the chat uses it from the next message.';
+      if (r.skipped && r.skipped.length) text += ' Skipped: ' + r.skipped.map(function (s) { return s.word + ' (' + s.why + ')'; }).join('; ') + '.';
+      say(msg, text, true); load();
+    }).catch(function (e) {
+      msg.textContent = ''; msg.className = 'msg err'; msg.appendChild(document.createTextNode(e.message || 'Not applied.'));
+      if (e.problems) { var ul = el('ul', 'problems'); e.problems.forEach(function (p) { ul.appendChild(el('li', null, p)); }); msg.appendChild(ul); }
+      load();
+    });
+  });
+  load();
+})();
+</script>
+</body>
+</html>

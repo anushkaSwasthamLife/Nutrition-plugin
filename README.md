@@ -7,7 +7,7 @@ Standalone Python package until the Dixit app code is available. **Development b
 ## Run
 
 ```
-.venv\Scripts\python.exe -m pytest -q              # 557 tests, about 3 minutes (no AI calls; the AI is mocked)
+.venv\Scripts\python.exe -m pytest -q              # 579 tests, about 4 minutes (no AI calls; the AI is mocked)
 .venv\Scripts\python.exe -m dixit_answer.web       # chat page on http://127.0.0.1:8100
 ```
 
@@ -102,3 +102,31 @@ mmol is converted, and food amounts such as "50 g sugar" are ignored). A match s
 turn, with no AI call and no question; check N28 confirms the text. A negated symptom ("no chest pain") adds one 112 line. The
 next normal answer within 3 turns starts with one check-in line. The audit log records the matches and the rules version.
 Tests: `tests/test_emergency.py`.
+
+## Audit report and alerts (item C, 16 Oct 2026)
+
+`audit_report.py` reads `var/audit.jsonl` and prints one day's counts (turns, gate rejections, repairs, AI retries, fallbacks,
+emergency replies, unknown words, feedback), compared with the average of the earlier days that have data. Six alerts, set in
+`data/alert_rules.json` (AR-0.1.0, **PROPOSED**: Swastham confirms the limits after a few weeks of real traffic):
+
+```
+.venv\Scripts\python.exe -m dixit_answer.audit_report --date latest          (or today, or 2026-10-16)
+.venv\Scripts\python.exe -m dixit_answer.audit_report --json --fail-on-alert   (exit code 2 on a critical or warning alert)
+```
+
+It only reads the log; nothing it finds changes an answer. Tests: `tests/test_audit_report.py`.
+
+## Unknown-item queue and dietitian review (item D, 16 Oct 2026)
+
+Every food word we did not recognise, and every dish asked for that has no approved recipe, is written to the audit log as an
+`unknown_item` record. `review_queue.py` reads them into `var/review_queue.sqlite3` (older log lines too) and the dietitian works
+through them at **http://127.0.0.1:8100/review** while `python -m dixit_answer.web` runs:
+
+- *another name for a food we have* adds an alias to that food
+- *a new food* needs a name, a category, the allergens (confirmed on purpose) and a USDA record (Indian records are refused)
+- *reject* needs a reason; for dishes, *add to the recipe list* keeps a wish-list for recipe writing
+
+Every decision stores who made it. Nothing changes until **Apply**: it builds the new food list, runs the engine's start-up
+consistency check, and writes `food_master.json` (version bumped, a `review_log` entry per change) and, for allergens,
+`allergen_map.json`, only if the check finds no problem. The chat uses the new list from the next message. Development tool only:
+production keeps the queue in the app database. Tests: `tests/test_review_queue.py`, `tests/test_review_web.py`.

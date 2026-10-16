@@ -240,6 +240,10 @@ class Engine:
                        if draft.recipe else None),
             "recipe_trace": draft.recipe_trace,
         })
+        for item in draft.unknown_items:
+            self.audit.append({"kind": "unknown_item", "at": time.strftime("%Y-%m-%dT%H:%M:%S"), "conversation_id": conversation_id,
+                               "turn": state.turn, "word": str(item["word"])[:80], "item_kind": item["kind"],
+                               "suggested_food_id": item["suggested_food_id"]})
         if draft.backlog_request:
             self.audit.append({"kind": "recipe_backlog", "at": time.strftime("%Y-%m-%dT%H:%M:%S"),
                                "conversation_id": conversation_id, "turn": state.turn, "message": text[:200],
