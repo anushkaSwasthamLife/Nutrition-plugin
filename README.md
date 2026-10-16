@@ -7,7 +7,7 @@ Standalone Python package until the Dixit app code is available. **Development b
 ## Run
 
 ```
-.venv\Scripts\python.exe -m pytest -q              # 88 tests, about 15 seconds (no AI calls; the AI is mocked)
+.venv\Scripts\python.exe -m pytest -q              # 557 tests, about 3 minutes (no AI calls; the AI is mocked)
 .venv\Scripts\python.exe -m dixit_answer.web       # chat page on http://127.0.0.1:8100
 ```
 
@@ -30,7 +30,7 @@ is sent.
 |---|---|---|
 | 1 Receive | `pipeline.py` | Message + conversation ID; message used as data only |
 | 2 Remember | `state.py` | Chat state per conversation (SQLite in `var/`) |
-| 3 Safety gate | `safety.py` | Emergency phrases; risk words (insulin, pregnancy, kidney…) with negation |
+| 3 Safety gate | `safety.py`, `emergency.py` | Step 0 emergency check (E1–E7, `emergency_rules.json`, no AI); risk words (insulin, pregnancy, kidney…) with negation |
 | 4 Understand | `understand.py`, `foods.py`, `textnorm.py` | Spelling variants, whole-word food matching, replies to our last question, 17 question types |
 | 5 Plan | `planner.py` | Rules R1–R12 → answer plan (blocks, protocol level, follow-up) |
 | 6 Fetch | `services.py`, `facts.py`, `recipes.py`, `person.py` | Golden Rules stub, approved food list, cooking tips, nutrition facts, **allergy / avoid / diet filter**, **hybrid recipe flow R1–R9** |
@@ -91,3 +91,14 @@ corrupt or old chat state, bad profiles, every allergen × diet combination, tam
 
 - `Desktop\Nutrition\workflow.html`: the recipe-guardrail diagram, used for reviewers.
 - `Documents\Dixit_Chat_Answer_Architecture.html`: the full chat design (the source for this package).
+
+## Emergency check (step 0, 16 Oct 2026)
+
+`emergency.py` + `data/emergency_rules.json` (EM-0.1.0, **PROPOSED**: a doctor must sign it, and production refuses it until then).
+Seven categories, highest priority first: E5 self-harm (Tele-MANAS 14416), E3 breathing or severe allergy, E2 heart or stroke,
+E6 collapse, fits, bleeding or poison, E1 low sugar, E7 pregnancy warning signs, E4 very high sugar. They are caught by English,
+Hinglish and Hindi phrases, by two-symptom combinations, and by sugar readings below 70 or at 300 mg/dL and above (placeholders;
+mmol is converted, and food amounts such as "50 g sugar" are ignored). A match sends that category's fixed reply and stops the
+turn, with no AI call and no question; check N28 confirms the text. A negated symptom ("no chest pain") adds one 112 line. The
+next normal answer within 3 turns starts with one check-in line. The audit log records the matches and the rules version.
+Tests: `tests/test_emergency.py`.

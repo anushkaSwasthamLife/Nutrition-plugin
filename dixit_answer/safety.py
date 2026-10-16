@@ -1,7 +1,7 @@
 """Safety gate (stage 3).
 
-1. Emergency phrases end the turn with the emergency answer (stand-in for Dixit's own emergency rules, which run first in the
-   real app).
+1. Emergency check (`emergency.py`, rules in `data/emergency_rules.json`): a match ends the turn with that category's fixed
+   reply, before anything else and without the AI. Dixit's own emergency rules will run before ours once the base package is here.
 2. Risk words update the safety status used by the pre-check (NUT-SAFE-PRE-001): insulin or sugar tablets, pregnancy,
    kidney disease, eating disorder, under 18. A risk word after a negation ("no insulin", "not pregnant") sets "no".
 """
@@ -10,9 +10,23 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
+from .emergency import EmergencyResult, EmergencyRules
 from .state import SAFETY_FIELDS, ChatState
 from .textnorm import clean, has_phrase
 
+_DEFAULT_RULES: EmergencyRules | None = None
+
+
+def default_emergency_rules() -> EmergencyRules:
+    global _DEFAULT_RULES
+    if _DEFAULT_RULES is None:
+        import json
+        from .config import DATA_DIR
+        _DEFAULT_RULES = EmergencyRules(json.loads((DATA_DIR / "emergency_rules.json").read_text(encoding="utf-8")))
+    return _DEFAULT_RULES
+
+
+# Used only if a category has no reply of its own.
 EMERGENCY_ANSWER = ("This sounds like it could be an emergency. If you feel shaky, sweaty, confused or faint, or have chest pain "
                     "or trouble breathing, please get medical help now: call your doctor or emergency services (112 in India). "
                     "If you take insulin or sugar tablets and feel shaky, follow the low-sugar steps your doctor gave you.")
@@ -24,6 +38,7 @@ _AGE_RE = re.compile(r"\b(?:i am|i'm|im|age|aged)\s+(\d{1,2})\b|\b(\d{1,2})\s*(?
 class SafetyResult:
     emergency: bool = False
     emergency_phrase: str = ""
+    em: EmergencyResult = field(default_factory=EmergencyResult)
     updates: dict = field(default_factory=dict)      # safety field -> "yes" / "no"
 
 
@@ -36,15 +51,15 @@ def _negated(cleaned: str, phrase: str, negations) -> bool:
         has_phrase(" ".join(before), n) for n in negations if " " in n)
 
 
-def check(text: str, state: ChatState, word_lists: dict) -> SafetyResult:
+def check(text: str, state: ChatState, word_lists: dict, emergency_rules: EmergencyRules | None = None) -> SafetyResult:
     cleaned = clean(text)
     result = SafetyResult()
-    for phrase in word_lists["emergency_phrases"]:
-        if has_phrase(cleaned, clean(phrase)):
-            result.emergency, result.emergency_phrase = True, phrase
-            return result
-
     negations = word_lists["negation_words"]
+    result.em = (emergency_rules or default_emergency_rules()).check(text, negations)
+    if result.em.is_emergency:
+        result.emergency, result.emergency_phrase = True, result.em.matched[0]["what"]
+        return result
+
     for field_name, terms in word_lists["risk_terms"].items():
         for term in terms:
             term_c = clean(term)
@@ -95,4 +110,4 @@ def safety_caution(state: ChatState) -> str | None:
             "before changing when you eat.")
 
 
-__all__ = ["SafetyResult", "check", "apply_safety_reply", "safety_caution", "EMERGENCY_ANSWER", "SAFETY_FIELDS"]
+__all__ = ["SafetyResult", "check", "apply_safety_reply", "safety_caution", "EMERGENCY_ANSWER", "SAFETY_FIELDS", "default_emergency_rules"]

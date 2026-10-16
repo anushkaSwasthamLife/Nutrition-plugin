@@ -62,6 +62,7 @@ class SwasthamData:
     swap_table: dict
     cooking_factors: dict
     rules_registry: dict
+    emergency_rules: dict
     manifest: dict
 
 

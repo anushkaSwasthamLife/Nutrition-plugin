@@ -8,7 +8,7 @@
     "universal constraints may narrow but never relax or widen an applicable Golden Rule"
   ],
   "order": [
-    {"step": 1, "id": "DIXIT-EMERGENCY", "owner": "Dixit", "summary": "Emergency and medicine rules run first (stand-in: safety.py emergency phrases)"},
+    {"step": 1, "id": "DIXIT-EMERGENCY", "owner": "Dixit", "summary": "Emergency and medicine rules run first (stand-in until the Dixit base package: emergency.py + emergency_rules.json, categories E1-E7, no AI)"},
     {"step": 2, "id": "NUT-ALLERGEN-001", "owner": "Swastham", "summary": "Never a food the person can't have (allergen, derivative, avoid list, diet)", "may_relax_golden_rules": false},
     {"step": 3, "id": "NUT-GOLDEN-001", "owner": "Dixit (amendment 1006)", "summary": "Golden Rules control protocol interpretation; facts stay visible", "may_relax_golden_rules": false},
     {"step": 4, "id": "NUT-SAFE-PRE-001", "owner": "Swastham", "summary": "Safety caution before meal-timing advice", "may_relax_golden_rules": false},

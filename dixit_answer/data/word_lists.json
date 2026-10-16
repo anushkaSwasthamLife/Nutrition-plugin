@@ -1,5 +1,5 @@
 {
- "version": "WL-0.3.0",
+ "version": "WL-0.4.0",
  "status": "TEST ONLY",
  "note": "Draft word lists for development; need review. Matching is on cleaned, lower-case text with whole words.",
  "spelling_map": {
@@ -36,29 +36,6 @@
   "hai": "have",
   "mere": "my"
  },
- "emergency_phrases": [
-  "chest pain",
-  "can't breathe",
-  "cannot breathe",
-  "difficulty breathing",
-  "fainted",
-  "fainting",
-  "passed out",
-  "unconscious",
-  "shaking and sweating",
-  "shaky and sweating",
-  "sweating and shaking",
-  "very low sugar",
-  "sugar is very low",
-  "sugar dropped",
-  "hypo",
-  "seizure",
-  "suicide",
-  "kill myself",
-  "want to die",
-  "vomiting blood",
-  "blood in vomit"
- ],
  "risk_terms": {
   "diabetes_medicine": [
    "insulin",

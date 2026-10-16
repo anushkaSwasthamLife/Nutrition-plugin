@@ -109,6 +109,14 @@ def check_final(final_text: str, draft: Draft, plan: AnswerPlan, state: ChatStat
     results += _word_checks(clean(PLACEHOLDER_RE.sub(" ", draft.template())), words)   # our own template must pass too
     if golden is not None and golden.relaxing_claims(final_text):
         results.append(_fail("N4", "critical", f"relaxes a Golden Rule: {golden.relaxing_claims(final_text)}"))
+    if plan.type == "emergency":
+        reply = plan.emergency_lines.get("emergency")
+        if (reply and final_text.strip() != reply.strip()) or plan.followup or "112" not in final_text:
+            results.append(_fail("N28", "critical", "an emergency answer must be the fixed reply only, with 112, no food and no question"))
+    for block in ("emergency_checkin", "emergency_note"):
+        line = plan.emergency_lines.get(block)
+        if block in plan.blocks and (not line or line not in final_text):
+            results.append(_fail("N28", "critical", f"{block} line missing or changed"))
     if index is not None:
         results += _phase5_checks(final_text, draft, plan, index, words)
     return results

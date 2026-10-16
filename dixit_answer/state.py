@@ -41,6 +41,9 @@ class ChatState:
     consultant_validated: bool | None = None
     status_asked_turn: int | None = None
     consultant_asked_turn: int | None = None
+    emergency_turn: int | None = None                        # turn of the last emergency reply
+    emergency_category: str = ""
+    emergency_checkin_done: bool = True                      # the one check-in line after an emergency was given
 
     def to_json(self) -> str:
         return json.dumps(asdict(self), ensure_ascii=False)

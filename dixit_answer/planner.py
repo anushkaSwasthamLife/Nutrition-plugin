@@ -53,6 +53,8 @@ class AnswerPlan:
     unknown_dish: str = ""
     rules: list = field(default_factory=list)
     max_words: int = 120
+    emergency_category: str = ""          # E1-E7 when this turn is an emergency reply
+    emergency_lines: dict = field(default_factory=dict)   # block -> fixed text (emergency, emergency_checkin, emergency_note)
 
     def as_dict(self) -> dict:
         return asdict(self)
@@ -112,10 +114,14 @@ def _protocol_level(plan: AnswerPlan, u: Understanding, state: ChatState) -> Non
     plan.timing_advice = plan.protocol_level == "full"
 
 
-def make_plan(u: Understanding, state: ChatState, emergency: bool = False, allergies_known: bool = True, status=None) -> AnswerPlan:
+def make_plan(u: Understanding, state: ChatState, emergency: bool = False, allergies_known: bool = True, status=None,
+              em=None) -> AnswerPlan:
     plan = AnswerPlan(type=u.type, topic=u.topic, pairs_with=list(u.pairs_with))
     if emergency:
         plan.type, plan.blocks, plan.rules = "emergency", ["emergency"], ["R1"]
+        if em is not None and em.is_emergency:
+            plan.emergency_category = em.category
+            plan.emergency_lines = {"emergency": em.reply}
         return plan
     if u.type == "greeting_thanks":
         plan.blocks = ["greeting"]

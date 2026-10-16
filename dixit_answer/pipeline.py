@@ -19,6 +19,7 @@ from .config import Settings, load_settings
 from .consistency import find_problems
 from .foods import FoodIndex
 from .llm import LLMError, make_llm
+from .emergency import EmergencyRules
 from .loader import LoadError, load_library, load_manifest, load_swastham_data
 from .person import AllergyFilter, apply_profile_safety, build_person, sanitize_profile
 from .planner import make_plan
@@ -67,6 +68,7 @@ class Engine:
         self.library = load_library(self.settings, manifest)
         self.data = load_swastham_data(self.settings, manifest)
         self.words = self.data.word_lists
+        self.emergency = EmergencyRules(self.data.emergency_rules)
         self.index = FoodIndex(self.data.food_master, self.words["spelling_map"])
         problems = find_problems(self.data, self.library, self.index, self.settings.environment)
         if problems:
@@ -94,6 +96,7 @@ class Engine:
             "swap_table": self.data.swap_table["version"],
             "rules_registry": self.data.rules_registry["version"],
             "cooking_factors": self.data.cooking_factors["version"],
+            "emergency_rules": self.data.emergency_rules["version"],
         }
 
     # ------------------------------------------------------------------
@@ -112,7 +115,7 @@ class Engine:
         apply_profile_safety(profile, state)
         if profile.get("diet_type") and state.food_preference == "unknown":
             state.food_preference = profile["diet_type"]       # the app already knows: never ask it in the chat
-        gate = safety_gate.check(text, state, self.words)
+        gate = safety_gate.check(text, state, self.words, self.emergency)
         state.safety_status.update(gate.updates)
 
         # 4 understand (+ apply what a reply tells us)
@@ -141,7 +144,9 @@ class Engine:
         person = build_person(profile, state, self.index, self.allergy)
 
         # 5 plan
-        plan = make_plan(u, state, emergency=gate.emergency, allergies_known=person.allergies_known, status=person.status)
+        plan = make_plan(u, state, emergency=gate.emergency, allergies_known=person.allergies_known, status=person.status,
+                         em=gate.em)
+        self._emergency_lines(plan, state, gate)
 
         # 6-7 fetch + compose (allergy / avoid / diet filter runs inside every service that names a food)
         draft = self.composer.build(plan, state, u, person)
@@ -178,6 +183,11 @@ class Engine:
 
         # 9 deliver + log + save state
         state.turn += 1
+        if plan.type == "emergency":
+            state.emergency_turn, state.emergency_category = state.turn, plan.emergency_category
+            state.emergency_checkin_done = False
+        elif "emergency_checkin" in plan.blocks:
+            state.emergency_checkin_done = True
         if plan.protocol_level == "full":
             state.protocol_explained_turn = state.turn
         elif plan.protocol_level in {"reminder", "meal_place"}:
@@ -221,6 +231,9 @@ class Engine:
             "checks": all_checks, "ai": {"provider": getattr(self.llm, "name", "mock"), "model": getattr(self.llm, "model", ""),
                                          "used": ai_used, "fallback": fallback},
             "final_text": final, "ms": elapsed,
+            "emergency": ({"category": gate.em.category, "matched": gate.em.matched, "negated": gate.em.negated,
+                           "glucose_mg_dl": gate.em.glucose_mg_dl, "checkin": "emergency_checkin" in plan.blocks}
+                          if (gate.em.matched or gate.em.negated or "emergency_checkin" in plan.blocks) else None),
             "recipe": ({"id": draft.recipe.recipe_id, "origin": draft.recipe.origin, "name": draft.recipe.name,
                         "ingredients": draft.recipe.ingredients, "totals": {k: str(v) for k, v in draft.recipe.totals.items()},
                         "gate_passed": bool(draft.recipe.gate and draft.recipe.gate.passed), "repairs": draft.recipe.repairs}
@@ -244,6 +257,23 @@ class Engine:
         self.store.delete(conversation_id)
 
     # ------------------------------------------------------------------
+    def _emergency_lines(self, plan, state, gate) -> None:
+        """After an emergency reply, the next normal answer starts with one check-in line (once, within 3 turns). A symptom
+        mentioned with a negation ("no chest pain") gets one short line instead of an emergency stop."""
+        if plan.type == "emergency":
+            return
+        if not state.emergency_checkin_done and state.emergency_turn is not None and state.turn + 1 - state.emergency_turn <= 3:
+            cat = self.emergency.by_id.get(state.emergency_category)
+            if cat:
+                plan.blocks.insert(0, "emergency_checkin")
+                plan.emergency_lines["emergency_checkin"] = cat["checkin"]
+                plan.rules.append("R1-CHECKIN")
+                return
+        if gate.em.negated:
+            plan.blocks.append("emergency_note")
+            plan.emergency_lines["emergency_note"] = self.emergency.negated_note
+            plan.rules.append("R1-NOTE")
+
     def _apply_slot_fill(self, u, state, text: str) -> None:
         if not u.slot_fill:
             return

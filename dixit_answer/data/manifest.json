@@ -53,6 +53,7 @@
     "condition_limits": "condition_limits_test.json",
     "swap_table": "swap_table_test.json",
     "cooking_factors": "cooking_factors.json",
-    "rules_registry": "rules_registry.json"
+    "rules_registry": "rules_registry.json",
+    "emergency_rules": "emergency_rules.json"
   }
 }

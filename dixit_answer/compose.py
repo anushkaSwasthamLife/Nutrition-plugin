@@ -99,7 +99,9 @@ class Composer:
             if block in d.suppress:
                 continue
             if block == "emergency":
-                d.lines.append(lock("T", EMERGENCY_ANSWER))
+                d.lines.append(lock("T", plan.emergency_lines.get("emergency") or EMERGENCY_ANSWER))
+            elif block in {"emergency_checkin", "emergency_note"}:
+                d.lines.append(lock("S", plan.emergency_lines[block]))
             elif block == "greeting":
                 free("You're welcome! Ask me anything about food, meals or the Dixit programme." if "thank" in u.cleaned
                      else "Hello! Ask me anything about food, meals or the Dixit programme.")
