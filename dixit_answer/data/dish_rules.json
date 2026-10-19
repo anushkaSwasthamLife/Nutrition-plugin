@@ -23,5 +23,10 @@
                      "jar", "box", "cake", "portion", "serving", "tablespoon", "teaspoon"],
     "note": "A value above a limit is never shown. 900 kcal per 100 g is pure fat; 1,500 kcal is more than most people eat in a whole meal. Dishes calculated from ingredients (path B) use 1,000 because INDB's own serving data is least reliable there, and a serving counted in pieces (a piece of mathri, a slice of cake) is limited to 400 kcal per piece: INDB has 'one piece' of mathri at 1,182 kcal and 'two uttapam' at 1,295 kcal, which are data errors. INDB has 108 recipes above 1,000 kcal per serving."
   },
-  "max_candidates_asked": 4
+  "generic_words": ["vegetarian", "veg", "non", "dry", "wet", "curry", "gravy", "fried", "baked", "steamed", "boiled", "plain", "sweet", "spicy",
+                    "mixed", "special", "fresh", "hot", "cold", "with", "without", "style", "homemade", "quick", "easy", "healthy", "light",
+                    "small", "big", "large", "medium", "ka", "ki", "ke"],
+  "generic_words_note": "A word that only describes a dish, never names one. INDB writes '(vegetarian)' or '(dry)' after dish names, so the alias table has 'vegetarian' as an alias of two different dishes; 'calories in vegetarian biryani' was answered with 'Shepherd's pie or Dhansak'. A run of words made only of these is never taken as a dish name.",
+  "max_candidates_asked": 4,
+  "max_dishes_answered": 3
 }

@@ -354,20 +354,73 @@ SCAFFOLD = {"how", "many", "much", "what", "whats", "is", "are", "the", "in", "o
 MAX_SPAN_WORDS = 8
 
 
+# Words that join or separate things in a question ("poha and upma", "compare poha with dal"); a dish name never runs across them.
+CONNECTORS = {"vs", "versus", "with", "than", "compare", "comparison", "between", "aur", "ya", "both", "each", "also", "plus"}
+
+
+def _informative(word: str, generic: set) -> bool:
+    """A word that can name a dish: not part of the question, not a describing word, and not a lone letter."""
+    return word not in SCAFFOLD and word not in generic and len(word) >= 3
+
+
+def _runs(words: list[str]) -> list[tuple[int, int]]:
+    """Stretches of words with no question words or connectors in them: the places a dish name can be."""
+    runs, start = [], None
+    for index, word in enumerate(words + [None]):
+        if word is not None and word not in SCAFFOLD and word not in CONNECTORS:
+            start = index if start is None else start
+        elif start is not None:
+            runs.append((start, index))
+            start = None
+    return runs
+
+
+def find_all_in_text(lookup: "DishLookup", cleaned: str, limit: int = 8) -> list[tuple[str, DishResult]]:
+    """Every dish a sentence names (at most `limit`), in the order they appear.
+
+    An exact dish name can sit anywhere inside a stretch of words. A looser match (a name that only contains the words) must use the
+    whole stretch, so "paneer butter masala" is never answered with "paneer in butter sauce", and a word left over by an exact match
+    is never searched for on its own.
+    """
+    words = [w.strip("'") for w in cleaned.split()[:40]]
+    generic = set(lookup.rules.get("generic_words", []))
+    runs = [(i, j) for i, j in _runs(words) if any(_informative(w, generic) for w in words[i:j])]
+    used: set[int] = set()
+    found: list[tuple[int, str, DishResult]] = []
+    # Exact names first, longest first, anywhere in the sentence: dish names can hold "and" or "with" ("lasagne with vegetables").
+    edge = SCAFFOLD | CONNECTORS
+    pieces = [(a, a + n) for n in range(min(len(words), MAX_SPAN_WORDS), 0, -1) for a in range(0, len(words) - n + 1)]
+    for a, b in pieces:
+        if len(found) >= limit:
+            break
+        span = " ".join(words[a:b])
+        if words[a] not in edge and words[b - 1] not in edge and not used & set(range(a, b)) and span in lookup.exact                 and any(_informative(w, generic) for w in words[a:b]):
+            used |= set(range(a, b))
+            found.append((a, span, lookup.resolve(span)))
+    for i, j in runs:                                                       # then the whole stretch, minus describing words at its ends
+        a, b = i, j
+        while a < b and words[a] in generic:
+            a += 1
+        while b > a and words[b - 1] in generic:
+            b -= 1
+        span = " ".join(words[a:b])
+        if len(found) < limit and a < b and b - a <= MAX_SPAN_WORDS and not used & set(range(i, j)) and lookup.candidates(span)[0]:
+            used |= set(range(i, j))
+            found.append((a, span, lookup.resolve(span)))
+    seen: set = set()
+    out = []
+    for _a, span, result in sorted(found, key=lambda f: f[0]):
+        key = result.code or span
+        if key not in seen:
+            seen.add(key)
+            out.append((span, result))
+    return out
+
+
 def find_in_text(lookup: "DishLookup", cleaned: str) -> tuple[str, DishResult] | None:
-    """The dish a sentence is about: the longest run of words that names one, ignoring the words of the question itself."""
-    words = cleaned.split()[:40]
-    spans = [(i, i + length) for length in range(min(len(words), MAX_SPAN_WORDS), 0, -1) for i in range(0, len(words) - length + 1)]
-    spans = [(i, j) for i, j in spans if any(w not in SCAFFOLD for w in words[i:j])]
-    for exact_only in (True, False):
-        for i, j in spans:
-            span = " ".join(words[i:j])
-            if exact_only:
-                if span in lookup.exact:
-                    return span, lookup.resolve(span)
-            elif words[i] not in SCAFFOLD and words[j - 1] not in SCAFFOLD and lookup.candidates(span)[0]:
-                return span, lookup.resolve(span)
-    return None
+    """The first dish a sentence names (see find_all_in_text), or None."""
+    found = find_all_in_text(lookup, cleaned, 1)
+    return found[0] if found else None
 
 
 def build_dish_lookup(settings, library: Library, rules: dict, spelling_map: dict | None = None) -> "DishLookup | None":

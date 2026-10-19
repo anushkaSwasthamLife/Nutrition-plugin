@@ -17,7 +17,7 @@ from .checks import CheckResult, blocking, check_ai_text, check_final
 from .compose import Composer
 from .config import Settings, load_settings
 from .consistency import find_problems
-from .dish_lookup import build_dish_lookup, find_in_text
+from .dish_lookup import build_dish_lookup, find_all_in_text
 from .lists import apply_blocked_records
 from .foods import FoodIndex
 from .llm import LLMError, make_llm
@@ -106,10 +106,9 @@ class Engine:
             "dish_rules": self.data.dish_rules["version"],
         }
 
-    def _dish_in_text(self, cleaned: str) -> dict | None:
-        """The dish a message names, for understand(): {"span", "exact"} or None. exact = the words are a known dish name."""
-        found = find_in_text(self.dishes, cleaned)
-        return None if found is None else {"span": found[0], "exact": found[0] in self.dishes.exact}
+    def _dish_in_text(self, cleaned: str) -> list[dict]:
+        """The dishes a message names, for understand(): [{"span", "exact"}]. exact = the words are a known dish name."""
+        return [{"span": span, "exact": span in self.dishes.exact} for span, _result in find_all_in_text(self.dishes, cleaned)]
 
     # ------------------------------------------------------------------
     def answer(self, message: str, conversation_id: str | None = None, profile: dict | None = None) -> TurnResult:

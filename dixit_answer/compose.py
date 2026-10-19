@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-from .dish_lookup import AMBIGUOUS, FOUND, fact_text as dish_fact_text, find_in_text, plain_sentence
+from .dish_lookup import AMBIGUOUS, FOUND, fact_text as dish_fact_text, find_all_in_text, plain_sentence
 from .facts import Fact, fact_sentence
 from .foods import FoodIndex
 from .golden import Status
@@ -17,6 +17,7 @@ from .planner import AnswerPlan
 from .safety import EMERGENCY_ANSWER, safety_caution
 from .services import Services
 from .state import ChatState
+from .textnorm import clean
 
 PLACEHOLDER_RE = re.compile(r"\{\{([A-Z]+\d*)\}\}")
 FOLLOWUP_CHOICE = "Which one should I show?"
@@ -461,6 +462,7 @@ class Composer:
         for word, fld in (("carb", "carbohydrate_g"), ("protein", "protein_g"), ("fat", "fat_g"), ("fiber", "fiber_g")):
             if re.search(rf"\b{word}\b", u.cleaned):
                 field = fld
+        hits = self._dish_hits(u, plan) if self.dishes is not None else []
         if plan.focus_foods:
             for fid in plan.focus_foods:
                 if fid in d.blocked_foods:
@@ -473,19 +475,33 @@ class Composer:
                     d.lines.append(f"We don't have a reliable {field.split('_')[0]} value for {name(fid)} yet.")
             if self.index.foods[plan.focus_foods[0]].get("unit_weight_g") is None and re.search(r"\b(one|1|a|per)\b", u.cleaned):
                 d.lines.append("We don't have a reliable weight for one piece yet, so I can't give a per-piece number.")
+            if hits:
+                self._dish_lines(hits, d, lock, given, person, field)   # a dish named next to foods is answered too, never dropped
             return
-        if self.dishes is not None and self._dish_lines(u, d, lock, given, person, field):
+        if hits and self._dish_lines(hits, d, lock, given, person, field):
             return
         d.lines.append("I couldn't find that food in our data yet. Could you tell me its name another way?")
 
     DISH_FIELDS = {"energy_kcal": "energy_kcal", "carbohydrate_g": "carb_g", "protein_g": "protein_g", "fat_g": "fat_g", "fiber_g": "fibre_g"}
 
-    def _dish_lines(self, u, d, lock, given, person, field: str) -> bool:
-        """A nutrient question about a dish from the INDB data. Returns False when the message names no dish."""
-        found = find_in_text(self.dishes, u.cleaned)
-        if found is None:
-            return False
-        span, result = found
+    def _dish_hits(self, u, plan) -> list:
+        """The dishes the message names, leaving out words that are only a food from the food list ("dal" is the food, not a dish)."""
+        hits = find_all_in_text(self.dishes, u.focus or u.cleaned)
+        aliases = [set(clean(a).split()) for fid in plan.focus_foods
+                   for a in [self.index.foods[fid]["name"], *self.index.foods[fid].get("aliases", [])]]
+        return [(span, result) for span, result in hits if not any(set(span.split()) <= words for words in aliases)]
+
+    def _dish_lines(self, hits: list, d, lock, given, person, field: str) -> bool:
+        """Lines for every dish a nutrient question names. Returns False when there is nothing to say about any of them."""
+        said = False
+        most = int(self.dishes.rules.get("max_dishes_answered", 3))
+        for span, result in hits[:most]:
+            said |= self._one_dish(span, result, d, lock, given, person, field)
+        if said and len(hits) > most:
+            d.lines.append(lock("T", f"I can look up {most} dishes at a time. Ask me about the others in a new question."))
+        return said
+
+    def _one_dish(self, span: str, result, d, lock, given, person, field: str) -> bool:
         blocked = d.blocked_foods
 
         def blocked_in(name: str) -> str | None:

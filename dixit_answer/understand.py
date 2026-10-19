@@ -67,6 +67,7 @@ TOPIC_SABJI = re.compile(r"\b(sabji|vegetable|curry)\b")
 class Understanding:
     cleaned: str
     type: str
+    focus: str = ""                                      # the message without the sentences that only state an allergy
     foods: list = field(default_factory=list)            # food master IDs mentioned
     ingredients: list = field(default_factory=list)      # food IDs the person has on hand
     wellbeing: bool = False                              # the message says how the person feels (anxious, stressed, low)
@@ -241,12 +242,24 @@ def read_reply(cleaned: str, slot: str, foods: list[str], index: FoodIndex, word
     return {}
 
 
+ALLERGY_SENTENCE = re.compile(r"\b(allergic|allergy|allergies)\b", re.IGNORECASE)
+
+
+def question_part(text: str) -> str:
+    """The message without sentences that only state an allergy ("I am allergic to peanuts. calories in poha" -> "calories in poha"),
+    so a food named as an allergy is not read as the food being asked about. A message that is only an allergy is left whole."""
+    sentences = [s for s in re.split(r"(?<=[.!?;])\s+|\n+", text or "") if s.strip()]
+    kept = [s for s in sentences if not ALLERGY_SENTENCE.search(s)]
+    return " ".join(kept) if kept else (text or "")
+
+
 def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_finder=None, allergy_reader=None,
                dish_finder=None) -> Understanding:
     cleaned = clean(text, word_lists["spelling_map"])
-    mentions = index.find(scrub_conditions(cleaned, word_lists), already_clean=True)       # "high sugar" is a condition, not the food sugar
+    focus = clean(question_part(text), word_lists["spelling_map"])
+    mentions = index.find(scrub_conditions(focus, word_lists), already_clean=True)         # "high sugar" is a condition, not the food sugar
     foods = [m.food_id for m in mentions]
-    u = Understanding(cleaned=cleaned, type="", foods=foods, conditions=_conditions(cleaned, word_lists),
+    u = Understanding(cleaned=cleaned, type="", focus=focus, foods=foods, conditions=_conditions(cleaned, word_lists),
                       preference=_preference(cleaned, word_lists))
     u.wellbeing = bool(WELLBEING.search(cleaned))
     u.fruit_foods = [f for f in foods if index.foods[f]["category"] == "fruit" and f != "FOOD-LEMON"]
@@ -299,11 +312,11 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
     if question_type == "out_of_scope" and u.conditions and not u.slot_fill:
         question_type = "food_choice_guidance"       # "I have obesity": a health condition on its own is a food question in this programme
     if dish_finder and not u.slot_fill and NUTRIENT_WORDS.search(cleaned):
-        hit = dish_finder(cleaned)
-        if hit and not foods and question_type in {"out_of_scope", "food_choice_guidance", "food_allowed"}:
+        hits = dish_finder(focus)
+        if hits and not foods and question_type in {"out_of_scope", "food_choice_guidance", "food_allowed"}:
             question_type = "neutral_nutrient_lookup"       # "poha calories": a dish from the INDB data, asked in a few words
-        elif hit and hit["exact"] and foods and question_type == "neutral_nutrient_lookup" and \
-                all(has_phrase(hit["span"], m.alias) and hit["span"] != m.alias for m in mentions):
-            u.foods = []                                    # "calories in chilli paneer" is the dish, not the food paneer
+        elif hits and foods and question_type == "neutral_nutrient_lookup":
+            inside = {m.food_id for m in mentions for h in hits if has_phrase(h["span"], m.alias) and h["span"] != m.alias}
+            u.foods = [f for f in u.foods if f not in inside]      # "calories in chilli paneer" is the dish, not the food paneer
     u.type = question_type
     return u
