@@ -4,3 +4,7 @@ var/
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# A data folder kept inside the project (never commit it: its Indian records are NIN-derived, licence unconfirmed)
+/Nutrition/
+/nutrition_data/

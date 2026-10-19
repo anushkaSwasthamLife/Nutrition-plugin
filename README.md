@@ -2,18 +2,26 @@
 
 Swastham's own chat answer system for the Dixit Lifestyle app, built from
 `Documents\Dixit_Chat_Answer_Architecture.html` (design) and `Documents\Dixit_Chat_Answer_Analysis.html` (problems P1–P14, D1–D3).
-Standalone Python package until the Dixit app code is available. **Development build: phases 0–6 (core pipeline + allergy filter + hybrid recipes + Golden Rules engine), with an edge-test suite.**
+Standalone Python package until the Dixit app code is available. **Development build: core pipeline, allergy filter, hybrid recipes, Golden Rules engine, emergency check, INDB dish answers (calories and nutrients for dishes like poha), white and black lists, plain-language wording, with a large edge-test suite.**
 
 ## Run
 
+Full set-up on another machine (data folder, settings, checks, troubleshooting): **[docs/SETUP.md](docs/SETUP.md)**. In short:
+
 ```
-.venv\Scripts\python.exe -m pytest -q              # 1808 tests, about 6 minutes (no AI calls; the AI is mocked)
+python -m venv .venv
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+copy .env.example .env
 .venv\Scripts\python.exe -m dixit_answer.web       # chat page on http://127.0.0.1:8100
+.venv\Scripts\python.exe -m pytest -q              # about 2,100 tests, 6 to 15 minutes (no AI calls; the AI is mocked)
 ```
 
-Port 8100 so it never clashes with the Swastham website servers (8000, 5173).
-Set-up on a new machine: `python -m venv .venv`, then `.venv\Scripts\python.exe -m pip install -r requirements.txt`
-(on this PC, run pip with `CURL_CA_BUNDLE` cleared). Copy `.env.example` to `.env`.
+**The repo does not hold the nutrition data.** The chat will not start without the library folder
+`Nutrition\Swastham_Nutrition_Data_Library_v1_0_4`, kept next to this project folder (or set `DIXIT_LIBRARY_DIR`). The INDB files in
+`Nutrition\indb_source` and `Nutrition\releases` are optional and switch on the dish answers ("calories in poha"). The Indian records
+are NIN-derived with the licence unconfirmed, so share that folder privately and never commit it.
+
+Port 8100 so it never clashes with the Swastham website servers (8000, 5173). Python 3.10 or newer (tested on 3.13).
 
 ## AI wording
 
@@ -44,8 +52,8 @@ is sent.
 
 `food_master.json`, `approved_list_test.json`, `cooking_tips_test.json`, `word_lists.json` are drafts; `golden_rules_stub.json`
 only repeats what the live Dixit app said on 13 Oct 2026. Production refuses all of them until a dietitian / Dixit sign them.
-The nutrition library is read in place from `Desktop\Nutrition\Swastham_Nutrition_Data_Library_v1_0_4` and checked against
-the hashes in `data/manifest.json`. Production loads USDA only.
+The nutrition library is read in place from the `Nutrition` folder beside the project (`Swastham_Nutrition_Data_Library_v1_0_4`) and
+checked against the hashes in `data/manifest.json`. Production loads USDA only.
 
 ## Recipes (phase 5)
 
