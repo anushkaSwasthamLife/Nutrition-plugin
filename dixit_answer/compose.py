@@ -9,8 +9,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-from .dish_lookup import AMBIGUOUS, FOUND, fact_text as dish_fact_text, find_in_text
-from .facts import Fact
+from .dish_lookup import AMBIGUOUS, FOUND, fact_text as dish_fact_text, find_in_text, plain_sentence
+from .facts import Fact, fact_sentence
 from .foods import FoodIndex
 from .golden import Status
 from .planner import AnswerPlan
@@ -109,6 +109,12 @@ class Composer:
             prefix = f"{_dish(fact)}: " if with_dish else ""
             return lock("F", f"{prefix}{fact.text} ({_short_source(fact)})")
 
+        def fact_line(fact: Fact, fid: str | None = None) -> str:
+            """One locked sentence for a fact: "A bowl of dal has about 139 calories. (USDA)"."""
+            d.facts.append(fact)
+            given.add(f"{fact.record_id}:{fact.field}")
+            return lock("F", f"{fact_sentence(fact, self.index.name(fid) if fid else '')} ({_short_source(fact)})")
+
         def free(text: str) -> None:
             d.free_lines.append(len(d.lines))
             d.lines.append(text)
@@ -200,7 +206,7 @@ class Composer:
                     if label:
                         parts.append(": " + lock("G", _without_blocked_staple(label, blocked)))
                     if fact:
-                        parts.append(" · " + fact_ph(fact))
+                        parts.append(" · " + fact_line(fact, fid))
                     d.lines.append("".join(parts))
             elif block == "food_position":
                 for fid in plan.focus_foods:
@@ -222,11 +228,11 @@ class Composer:
                         d.lines.append("**Good to know:** " + lock("G", f"{name(fid)} is a starchy vegetable, closer to {part}") + ".")
                     fact = self.s.pick_fact(fid, given)
                     if fact:
-                        d.lines.append(f"**{_cap(name(fid))}** · " + fact_ph(fact))
+                        d.lines.append(fact_line(fact, fid))
                     elif not group:
                         d.lines.append(lock("T", f"We don't have reliable nutrition numbers for {name(fid)} yet."))
             elif block == "lookup_facts":
-                self._lookup_lines(plan, u, d, given, fact_ph, name, person, lock)
+                self._lookup_lines(plan, u, d, given, fact_line, name, person, lock)
             elif block == "unknown_food":
                 d.lines.append(lock("T", "I couldn't find that food in our data yet. Could you tell me its name another way?"))
             elif block == "tip":
@@ -450,7 +456,7 @@ class Composer:
             return "That's common, especially in the first weeks.", ""
         return "", ""
 
-    def _lookup_lines(self, plan, u, d, given, fact_ph, name, person=None, lock=None) -> None:
+    def _lookup_lines(self, plan, u, d, given, fact_line, name, person=None, lock=None) -> None:
         field = "energy_kcal"
         for word, fld in (("carb", "carbohydrate_g"), ("protein", "protein_g"), ("fat", "fat_g"), ("fiber", "fiber_g")):
             if re.search(rf"\b{word}\b", u.cleaned):
@@ -462,19 +468,19 @@ class Composer:
                     continue
                 fact = self.s.pick_fact(fid, set(), fields=(field,))
                 if fact:
-                    d.lines.append(f"{_cap(name(fid))} · " + fact_ph(fact))
+                    d.lines.append(fact_line(fact, fid))
                 else:
                     d.lines.append(f"We don't have a reliable {field.split('_')[0]} value for {name(fid)} yet.")
             if self.index.foods[plan.focus_foods[0]].get("unit_weight_g") is None and re.search(r"\b(one|1|a|per)\b", u.cleaned):
                 d.lines.append("We don't have a reliable weight for one piece yet, so I can't give a per-piece number.")
             return
-        if self.dishes is not None and self._dish_lines(u, d, lock, fact_ph, person, field):
+        if self.dishes is not None and self._dish_lines(u, d, lock, given, person, field):
             return
         d.lines.append("I couldn't find that food in our data yet. Could you tell me its name another way?")
 
     DISH_FIELDS = {"energy_kcal": "energy_kcal", "carbohydrate_g": "carb_g", "protein_g": "protein_g", "fat_g": "fat_g", "fiber_g": "fibre_g"}
 
-    def _dish_lines(self, u, d, lock, fact_ph, person, field: str) -> bool:
+    def _dish_lines(self, u, d, lock, given, person, field: str) -> bool:
         """A nutrient question about a dish from the INDB data. Returns False when the message names no dish."""
         found = find_in_text(self.dishes, u.cleaned)
         if found is None:
@@ -514,9 +520,13 @@ class Composer:
                 d.lines.append(lock("T", f"We don't have a reliable value for that in {name} yet."))
                 return True
             source = "calculated from ingredients" if result.path == "B" else "Swastham library"
-            d.lines.append(fact_ph(Fact(f"DISH-{result.code}", field, shown.value, shown.text, shown.serving, source, result.name or name)))
+            fact = Fact(f"DISH-{result.code}", field, shown.value, shown.text, shown.serving, source, result.name or name)
+            d.facts.append(fact)
+            given.add(f"{fact.record_id}:{fact.field}")
+            sentence = plain_sentence(result, self.DISH_FIELDS.get(field, "energy_kcal"), name)
+            d.lines.append(lock("F", f"{sentence} ({_short_source(fact)})"))
             if shown.estimate:
-                d.lines.append(lock("T", "This is an estimate, so the real value can be a little higher or lower."))
+                d.lines.append(lock("T", "This is an estimate from the recipe, so the real number may be a bit higher or lower."))
             return True
         if blocked_in(result.name or ""):
             name = "that dish"                          # never name a food this person can't have, even to say we have no number

@@ -243,7 +243,6 @@ needs_data = pytest.mark.skipif(not RELEASES or not (NUTRITION / "indb_source" /
 
 @pytest.fixture(scope="module")
 def real_lookup():
-    pytest.importorskip("openpyxl")
     from dixit_answer.config import load_settings
     from dixit_answer.indb_compare import latest_ingredient_map
     from dixit_answer.loader import load_library
@@ -274,8 +273,9 @@ def test_real_ambiguous_dishes_ask(real_lookup):
 
 @needs_data
 def test_real_dish_missing_from_the_library_is_calculated(real_lookup):
-    result = real_lookup.resolve("sesame toast")
-    assert result.code == "ASC046" and result.path == "B" and result.estimate and result.has_numbers
+    result = real_lookup.resolve("tomato ketchup")
+    assert result.code == "BFP602" and result.path == "B" and result.estimate and result.has_numbers
+    assert real_lookup.resolve("sesame toast").status == dl.IMPLAUSIBLE        # 311 kcal per toast triangle is not possible
 
 
 @needs_data

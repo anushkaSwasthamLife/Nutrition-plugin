@@ -22,10 +22,10 @@ def test_no_fact_from_unclear_serving_or_impossible_values(engine):
 
 def test_facts_carry_serving_and_about(engine):
     fact = make_fact(engine.library, "SURVEY-2707713", "carbohydrate_g")          # USDA chapati
-    assert fact.text == "about 46.1 g carbohydrate per 100 g"
+    assert fact.text == "about 46.1 g of carbohydrate per 100 g"
     assert fact.source == "USDA"
     dev = make_fact(engine.library, "NUTR-INDB-ASC178", "energy_kcal")            # dry aloo
-    assert dev.text == "about 109 kcal per bowl" and dev.source != "USDA"
+    assert dev.text == "about 109 calories per bowl" and dev.source != "USDA"
 
 
 def test_range_only_energy_is_shown_as_a_range(engine):

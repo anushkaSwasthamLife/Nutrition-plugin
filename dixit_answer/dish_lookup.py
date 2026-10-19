@@ -157,12 +157,24 @@ class DishLookup:
             return self._path_b(code, query)
         return DishResult(NOT_FOUND, query, code=code)
 
-    def _plausible(self, per_100g: dict | None, per_serving: dict | None) -> bool:
+    def _plausible(self, per_100g: dict | None, per_serving: dict | None, calculated: bool = False, serving_text: str = "") -> bool:
         cfg = self.rules.get("plausibility", {})
         if per_100g and per_100g["energy_kcal"] > cfg.get("max_kcal_per_100g", 900):
             return False
-        return not (per_serving and per_serving["energy_kcal"] is not None
-                    and per_serving["energy_kcal"] > cfg.get("max_kcal_per_serving", 1500))
+        if not per_serving or per_serving["energy_kcal"] is None:
+            return True
+        kcal = per_serving["energy_kcal"]
+        if kcal > cfg.get("max_kcal_per_serving_calculated" if calculated else "max_kcal_per_serving", 1500):
+            return False
+        quantity, _, unit = serving_text.partition(" ")
+        if unit and unit not in cfg.get("vessel_units", []):               # a serving counted in pieces: judge it per piece
+            try:
+                count = float(quantity)
+            except ValueError:
+                count = 1.0
+            if count > 0 and kcal / count > cfg.get("max_kcal_per_count_unit", 400):
+                return False
+        return True
 
     def _range(self, kcal: float, meat_fish: bool) -> tuple[float, float]:
         pct = self.rules.get("range_percent", {}).get("meat_fish" if meat_fish else "default", 15) / 100.0
@@ -186,7 +198,7 @@ class DishLookup:
             if per_100g is None:
                 return DishResult(NO_SERVING, note="the serving size of this record is unclear and there is no per-100 g value", **base)
             per_serving, text = None, ""
-        if not self._plausible(per_100g, per_serving):
+        if not self._plausible(per_100g, per_serving, False, text):
             return DishResult(IMPLAUSIBLE, note="the stored energy is higher than a dish can be", **base)
         result = DishResult(FOUND, per_serving=per_serving, per_100g=per_100g, serving_text=text, **base)
         if quality.get("requires_approximation_disclosure"):
@@ -219,7 +231,7 @@ class DishLookup:
         if recipe.servings and recipe.servings > 0:
             per_serving = {n: result.totals[n] / recipe.servings for n in NUTRIENTS}
             text = f"{recipe.serving_size:g} {recipe.serving_unit}" if recipe.serving_size and recipe.serving_unit else "1 serving"
-        if not self._plausible(per_100g, per_serving):
+        if not self._plausible(per_100g, per_serving, True, text):
             return DishResult(IMPLAUSIBLE, note="the calculated energy is higher than a dish can be", **base)
         letters = set(self.rules.get("meat_fish_categories", []))
         meat_fish = any(str(c)[:1] in letters for c, _n, _g, _k in result.parts)
@@ -240,6 +252,8 @@ class DishFact:
     value: float | None       # None for a range
     serving: str
     estimate: bool
+    low: float | None = None  # the range, rounded the way it is shown
+    high: float | None = None
 
 
 def _serving_words(result: DishResult) -> str:
@@ -275,9 +289,58 @@ def fact_text(result: DishResult, field_name: str = "energy_kcal") -> DishFact |
         low, high = value * (1 - pct), value * (1 + pct)
     thing = "kcal" if unit == "kcal" else f"g {label}"
     if low is not None:
-        return DishFact(f"about {_amount(low, unit, label, True)}–{_amount(high, unit, label, True)} {thing} {serving}, an estimate",
-                        None, serving, True)
-    return DishFact(f"about {_amount(value, unit, label, False)} {thing} {serving}", float(value), serving, False)
+        shown_low, shown_high = _amount(low, unit, label, True), _amount(high, unit, label, True)
+        return DishFact(f"about {shown_low}–{shown_high} {thing} {serving}, an estimate", None, serving, True,
+                        float(shown_low), float(shown_high))
+    shown_value = _amount(value, unit, label, False)
+    return DishFact(f"about {shown_value} {thing} {serving}", float(shown_value), serving, False)
+
+
+# ---------------------------------------------------------------- plain wording for a person who is not an expert
+NUTRIENT_PHRASE = {"energy_kcal": "calories", "carb_g": "g of carbohydrate", "protein_g": "g of protein", "fat_g": "g of fat",
+                   "fibre_g": "g of fibre"}
+
+
+def _plural(unit: str) -> str:
+    return unit if unit.endswith("s") else unit + "s"
+
+
+def _number_word(value: float) -> str:
+    return f"{value:g}"
+
+
+def plain_sentence(result: DishResult, field_name: str, dish_name: str) -> str | None:
+    """"A bowl of poha has about 161 calories." The same numbers as fact_text, in a sentence a person can read at a glance.
+
+    Calories, not kcal; a household unit, not a serving code; a range is introduced with "roughly" and given as "from X to Y".
+    """
+    shown = fact_text(result, field_name)
+    if shown is None:
+        return None
+    dish = (dish_name or result.name or "this dish").split(" (")[0].strip()
+    dish = dish.lower()
+    phrase = NUTRIENT_PHRASE[field_name]
+    if shown.low is not None:
+        amount = f"roughly {_number_word(shown.low)} to {_number_word(shown.high)} {phrase}"
+    else:
+        amount = f"about {_number_word(shown.value)} {phrase}"
+    if result.per_serving is None:
+        who = f"100 g of {dish}"
+    elif not result.serving_text:
+        who = f"One serving of {dish}"
+    else:
+        quantity, _, unit = result.serving_text.partition(" ")
+        try:
+            count = float(quantity)
+        except ValueError:
+            count = 1.0
+        if not unit:
+            who = f"One serving of {dish}"
+        elif count == 1:
+            who = f"{'An' if unit[:1].lower() in 'aeiou' else 'A'} {unit} of {dish}"
+        else:
+            who = f"One serving of {dish} ({_number_word(count)} {_plural(unit)})"
+    return f"{who} has {amount}."
 
 
 # ---------------------------------------------------------------- finding a dish inside a sentence

@@ -17,7 +17,11 @@
   "plausibility": {
     "max_kcal_per_100g": 900,
     "max_kcal_per_serving": 1500,
-    "note": "A value above either limit is never shown. 900 kcal per 100 g is pure fat; 1,500 kcal is more than most people eat in a whole meal. INDB has 108 recipes above 1,000 kcal per serving that look like data errors."
+    "max_kcal_per_serving_calculated": 1000,
+    "max_kcal_per_count_unit": 400,
+    "vessel_units": ["bowl", "small bowl", "curry bowl", "soup bowl", "plate", "small plate", "cup", "tea cup", "glass", "tall glass", "katori",
+                     "jar", "box", "cake", "portion", "serving", "tablespoon", "teaspoon"],
+    "note": "A value above a limit is never shown. 900 kcal per 100 g is pure fat; 1,500 kcal is more than most people eat in a whole meal. Dishes calculated from ingredients (path B) use 1,000 because INDB's own serving data is least reliable there, and a serving counted in pieces (a piece of mathri, a slice of cake) is limited to 400 kcal per piece: INDB has 'one piece' of mathri at 1,182 kcal and 'two uttapam' at 1,295 kcal, which are data errors. INDB has 108 recipes above 1,000 kcal per serving."
   },
   "max_candidates_asked": 4
 }

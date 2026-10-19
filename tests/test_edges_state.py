@@ -76,7 +76,7 @@ def test_a_reply_with_no_question_pending_is_just_a_new_message(engine):
 def test_a_new_question_instead_of_the_answer_is_answered_as_a_question(engine):
     r1 = engine.answer("I have aloo and onion, what can I make?", None, None)        # asks about allergies
     r2 = engine.answer("how many carbs in one chapati?", r1.conversation_id, None)
-    assert r2.type == "neutral_nutrient_lookup" and "46.1 g carbohydrate" in r2.answer
+    assert r2.type == "neutral_nutrient_lookup" and "46.1 g of carbohydrate" in r2.answer
 
 
 def test_safety_status_is_never_lost_between_turns(engine):

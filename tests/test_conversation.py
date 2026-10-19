@@ -33,7 +33,7 @@ def test_six_turn_conversation(chat):
 
     # Turn 2: safety reply understood; named sabjis; a sourced number; asks what's cooked at home.
     t2 = r[1].answer
-    assert "bhindi" in t2 and "aloo" in t2 and "kcal" in t2
+    assert "bhindi" in t2 and "aloo" in t2 and "calories" in t2
     assert r[1].plan["followup"]["slot"] == "home_foods"
 
     # Turn 3: the short reply is read as an answer and the three sabjis are compared.
@@ -58,7 +58,7 @@ def test_six_turn_conversation(chat):
 
 def test_no_status_question_for_a_plain_fact(chat):
     (r,) = chat("How many carbs in one chapati?")
-    assert "46.1 g carbohydrate per 100 g" in r.answer
+    assert "100 g of chapati" in r.answer and "46.1 g of carbohydrate" in r.answer
     assert "per-piece" in r.answer                      # honest: no unit weight yet
     assert not (r.plan["followup"] and r.plan["followup"]["slot"] == "safety")
 

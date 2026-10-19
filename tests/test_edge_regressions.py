@@ -39,7 +39,7 @@ def test_protocol_amounts_unchanged_when_nothing_is_blocked(engine):
 
 def test_nutrition_lookup_of_a_blocked_food_says_why_instead_of_falling_back(engine):
     r = _ask(engine, "carbs in paneer, dal, tomato what can I make?", {"allergies": ["milk"]})
-    assert not r.fallback and "won't suit you" in r.answer and "carbohydrate per" in r.answer
+    assert not r.fallback and "won't suit you" in r.answer and "g of carbohydrate" in r.answer
 
 
 def test_tips_never_name_a_food_the_person_cannot_have(engine):

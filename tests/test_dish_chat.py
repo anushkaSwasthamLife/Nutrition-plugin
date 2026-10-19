@@ -190,21 +190,22 @@ def test_chat_has_the_lookup_in_development(chat_engine):
 @pytest.mark.parametrize("message", ["how many calories in a plate of poha", "poha calories", "calories in Poha??"])
 def test_a_dish_question_gets_the_stored_value(chat_engine, message):
     r = ask(chat_engine, message)
-    assert r.type == "neutral_nutrient_lookup" and not r.fallback and "161 kcal per bowl" in r.answer and "poha" in r.answer.lower()
+    assert r.type == "neutral_nutrient_lookup" and not r.fallback and "A bowl of poha has about 161 calories." in r.answer
 
 
 @needs_data
 def test_other_names_and_nutrients(chat_engine):
-    assert "34 kcal per tea cup" in ask(chat_engine, "calories in garam chai").answer
-    assert "g protein" in ask(chat_engine, "protein in hot tea").answer
-    assert "g carbohydrate" in ask(chat_engine, "carbs in chicken curry").answer
-    assert "g fibre" in ask(chat_engine, "what is the fiber in mixed dal").answer
+    assert "A tea cup of hot tea has about 34 calories." in ask(chat_engine, "calories in garam chai").answer
+    assert "g of protein" in ask(chat_engine, "protein in hot tea").answer
+    assert "g of carbohydrate" in ask(chat_engine, "carbs in chicken curry").answer
+    assert "g of fibre" in ask(chat_engine, "what is the fiber in mixed dal").answer
 
 
 @needs_data
 def test_calculated_dish_is_a_labelled_range(chat_engine):
-    r = ask(chat_engine, "calories in sesame toast")
-    assert "–" in r.answer and "an estimate" in r.answer and "calculated from ingredients" in r.answer and not r.fallback
+    r = ask(chat_engine, "calories in tomato ketchup")
+    assert " to " in r.answer and "roughly" in r.answer and "estimate" in r.answer and "calculated from ingredients" in r.answer and not r.fallback
+    assert "can't give a reliable number" in ask(chat_engine, "calories in sesame toast").answer
 
 
 @needs_data
@@ -229,7 +230,7 @@ def test_a_dish_name_beats_the_food_inside_it(chat_engine):
 @needs_data
 def test_plain_foods_still_use_the_food_master(chat_engine):
     assert "USDA" in ask(chat_engine, "calories in cabbage").answer
-    assert "139 kcal per bowl" in ask(chat_engine, "how many calories in dal").answer
+    assert "A bowl of dal (washed moong dal) has about 139 calories." in ask(chat_engine, "how many calories in dal").answer
 
 
 @needs_data
@@ -241,7 +242,7 @@ def test_an_allergen_in_the_ingredients_stops_the_answer(chat_engine):
 @needs_data
 def test_known_allergies_that_do_not_apply_leave_the_answer_alone(chat_engine):
     r = ask(chat_engine, "I have no allergies", "calories in hot tea")
-    assert "kcal per tea cup" in r.answer
+    assert "tea cup of hot tea" in r.answer
 
 
 @needs_data
@@ -274,3 +275,106 @@ def test_every_number_in_every_dish_answer_comes_from_the_data(chat_engine):
 def test_audit_records_a_dish_as_the_source(chat_engine):
     r = ask(chat_engine, "calories in poha")
     assert any(str(rec).startswith("DISH-") for rec in r.records)
+
+
+# ---------------------------------------------------------------- plain wording
+def test_plain_sentences():
+    r = result(per_serving=NUT)
+    assert dl.plain_sentence(r, "energy_kcal", "Poha") == "A bowl of poha has about 161 calories."
+    assert dl.plain_sentence(r, "protein_g", "Poha") == "A bowl of poha has about 4.3 g of protein."
+    assert dl.plain_sentence(r, "carb_g", "Mango raita (Aam ka raita)") == "A bowl of mango raita has about 24 g of carbohydrate."
+    assert dl.plain_sentence(result(per_serving=NUT, serving="1 egg"), "fat_g", "Boiled egg") == "An egg of boiled egg has about 5 g of fat."
+    assert dl.plain_sentence(result(per_serving=NUT, serving="2 uttapam"), "energy_kcal", "Uttapam") ==         "One serving of uttapam (2 uttapams) has about 161 calories."
+    assert dl.plain_sentence(result(per_serving=NUT, serving=""), "energy_kcal", "Dal") == "One serving of dal has about 161 calories."
+    assert dl.plain_sentence(result(per_serving=None, per_100g=NUT), "energy_kcal", "Mayonnaise") == "100 g of mayonnaise has about 161 calories."
+    est = result(path="B", estimate=True, per_serving=NUT, rng=(137.0, 186.0), pct=15)
+    assert dl.plain_sentence(est, "energy_kcal", "Dish") == "A bowl of dish has roughly 135 to 185 calories."
+    assert dl.plain_sentence(result(status=dl.INCOMPLETE), "energy_kcal", "Dish") is None
+
+
+@pytest.mark.parametrize("name", ["", None, "X", "Dal (Toor) ((a) (b))"])
+def test_plain_sentence_survives_odd_names(name):
+    text = dl.plain_sentence(result(per_serving=NUT), "energy_kcal", name)
+    assert text and text.endswith("calories.")
+
+
+@needs_data
+def test_no_kcal_or_serving_codes_reach_the_person(chat_engine):
+    for message in ("calories in poha", "protein in hot tea", "calories in tomato ketchup", "calories in mayonnaise"):
+        answer = ask(chat_engine, message).answer
+        assert "kcal" not in answer and " per " not in answer.split("(")[0], answer
+
+
+# ---------------------------------------------------------------- readability (automatic part of phase 5)
+from dixit_answer import readability as rd  # noqa: E402
+
+
+@pytest.mark.parametrize("word,count", [("cat", 1), ("water", 2), ("calories", 3), ("make", 1), ("table", 2), ("tree", 1), ("", 0), ("123", 0),
+                                        ("a", 1), ("rhythm", 1), ("beautiful", 3)])
+def test_syllables(word, count):
+    assert rd.syllables(word) == count
+
+
+def test_reading_scores_order_easy_before_hard():
+    easy = "A bowl of poha has about 161 calories."
+    hard = "Postprandial glycaemic responses necessitate individualised macronutrient distribution strategies."
+    assert rd.reading_ease(easy) > 60 > rd.reading_ease(hard) and rd.grade_level(easy) < 6 < rd.grade_level(hard)
+
+
+@pytest.mark.parametrize("text", ["", "   ", "123 456", "(dev data)"])
+def test_no_words_means_no_score(text):
+    assert rd.reading_ease(text) is None and rd.grade_level(text) is None and rd.check_plain(text).plain
+
+
+def test_check_plain_flags_jargon_abbreviations_and_long_sentences():
+    assert rd.check_plain("A bowl of poha has about 161 calories. (dev data)", ["glycemic"]).plain
+    assert "kcal" in rd.check_plain("about 139 kcal per bowl").problems[0]
+    assert rd.check_plain("This raises your glycemic load.", ["glycemic"]).problems == ["jargon: ['glycemic']"]
+    long = " ".join(["word"] * 30) + "."
+    assert any("30 words" in p for p in rd.check_plain(long).problems)
+    hard = ("Postprandial glycaemic responses necessitate individualised macronutrient distribution strategies. " * 4)
+    assert any("reading grade" in p for p in rd.check_plain(hard).problems)
+
+
+def test_a_source_label_in_brackets_is_not_read_as_part_of_the_sentence():
+    assert rd.reading_ease("It has 5 calories. (calculated from ingredients, dev data)") == rd.reading_ease("It has 5 calories.")
+
+
+@needs_data
+def test_every_dish_answer_is_plain_for_every_nutrient(chat_engine):
+    """All dishes x all five nutrients: no jargon, no kcal, no long sentence, no reading grade above 8."""
+    jargon = chat_engine.words["jargon"]
+    nutrients = ("calories", "protein", "carbs", "fat", "fiber")
+    bad = []
+    for code in chat_engine.dishes.names:
+        name = chat_engine.dishes.label(code).split(" (")[0].lower()
+        for word in nutrients:
+            answer = ask(chat_engine, f"how many {word} in {name}").answer
+            if answer.startswith(("A ", "An ", "One serving", "100 g")):
+                report = rd.check_plain(answer, jargon)
+                if report.problems:
+                    bad.append((name, word, report.problems))
+    assert not bad, bad[:5]
+
+
+# ---------------------------------------------------------------- the same plain wording for facts about foods (food master)
+from dixit_answer.facts import Fact, fact_sentence  # noqa: E402
+
+
+def fact(food_name="Onions, raw", serving="per 100 g", amount="40 calories", source="USDA", text=None):
+    return Fact("R1", "energy_kcal", 40.0, text or f"about {amount} {serving}", serving, source, food_name, amount)
+
+
+def test_fact_sentences():
+    assert fact_sentence(fact(), "onion") == "100 g of onion (raw) has about 40 calories."
+    assert fact_sentence(fact("Cabbage, green, raw"), "cabbage") == "100 g of cabbage (green, raw) has about 40 calories."
+    assert fact_sentence(fact("Dry potato (Sookhe aloo)", "per bowl", "109 calories", "dev"), "aloo") == "A bowl of aloo (dry potato) has about 109 calories."
+    assert fact_sentence(fact("Okra (Bhindi)", "per bowl", "184 calories", "dev"), "okra") == "A bowl of okra has about 184 calories."
+    assert fact_sentence(fact("Egg curry", "per egg", "90 calories", "dev"), "") == "An egg of egg curry has about 90 calories."
+    assert fact_sentence(fact("Dal", "per bowl", "109–121 calories", "dev"), "dal") == "A bowl of dal has about 109–121 calories."
+
+
+@pytest.mark.parametrize("serving,name", [("", ""), ("per", "x"), ("bowl", "Y (z)"), ("per ", "Dal/Dalia")])
+def test_fact_sentence_survives_odd_input(serving, name):
+    text = fact_sentence(fact(name or "Dal", serving, "5 calories"), name)
+    assert text.endswith("has about 5 calories.") and text[0].isupper()

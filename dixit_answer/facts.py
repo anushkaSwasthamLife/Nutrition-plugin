@@ -27,6 +27,7 @@ class Fact:
     serving: str              # e.g. "per bowl", "per 100 g"
     source: str               # "USDA" or the Indian development flag
     food_name: str
+    amount: str = ""          # the number part in words a person reads: "139 calories", "3.2 g of fibre", "109–121 calories"
 
     def as_dict(self) -> dict:
         return asdict(self)
@@ -78,13 +79,29 @@ def make_fact(library: Library, record_id: str, field: str) -> Fact | None:
         if "range only" in constraint or FLAG_ENERGY_MISSING in flags:
             if not rng:
                 return None
-            text = f"about {_num(rng['low_kcal'], 'kcal')}–{_num(rng['high_kcal'], 'kcal')} kcal {serving}"
-            return Fact(record_id, field, None, text, serving, source_label(library, record_id), rec["food_name"])
+            amount = f"{_num(rng['low_kcal'], 'kcal')}–{_num(rng['high_kcal'], 'kcal')} calories"
+            return Fact(record_id, field, None, f"about {amount} {serving}", serving, source_label(library, record_id), rec["food_name"], amount)
     if value is None:
         return None
-    amount = f"{_num(value, unit)} {unit}" if unit == "kcal" else f"{_num(value, unit)} g {label}"
+    amount = f"{_num(value, unit)} calories" if unit == "kcal" else f"{_num(value, unit)} g of {label}"
     text = f"about {amount} {serving}"
-    return Fact(record_id, field, float(value), text, serving, source_label(library, record_id), rec["food_name"])
+    return Fact(record_id, field, float(value), text, serving, source_label(library, record_id), rec["food_name"], amount)
+
+
+def fact_sentence(fact: Fact, name: str = "") -> str:
+    """"A bowl of dal has about 139 calories." from a fact, with the food's everyday name when the caller has one.
+
+    A USDA record's descriptors ("Cabbage, green, raw") follow the name in brackets, so raw and cooked stay visible.
+    """
+    record = fact.food_name.split(" (")[0].split("/")[0].strip().lower()
+    base = (name or record).strip().lower()
+    if fact.source == "USDA" and ", " in fact.food_name:
+        base = f"{base} ({fact.food_name.split(', ', 1)[1].lower()})"
+    elif fact.source != "USDA" and record and record != base and record not in base:
+        base = f"{base} ({record})"                 # the number is for this dish ("dry potato"), not for the food in general
+    serving = fact.serving[4:] if fact.serving.startswith("per ") else fact.serving
+    who = f"{serving} of {base}" if serving[:1].isdigit() else f"{'An' if serving[:1] in 'aeiou' else 'A'} {serving} of {base}"
+    return f"{who[:1].upper()}{who[1:]} has about {fact.amount or fact.text}."
 
 
 def preferred_records(food: dict, library: Library) -> list[str]:

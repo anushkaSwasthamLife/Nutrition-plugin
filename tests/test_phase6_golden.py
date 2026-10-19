@@ -91,7 +91,7 @@ def test_golden_rules_file_is_marked_unsigned_and_production_refuses_it(settings
 # ---------------------------------------------------------------- amendment tests NUT-T005 / T008 / T011 / T012 / T017
 def test_T005_mango_for_a_diabetic_shares_facts_and_states_the_fruit_rule_separately(ask):
     r = ask("Is mango nutritious for someone with diabetes?", {"allergies": [], "diabetes_status": "diabetic"})
-    assert "Mango" in r.answer and "g carbohydrate per 100 g" in r.answer or "kcal per 100 g" in r.answer   # facts shown
+    assert "mango" in r.answer.lower() and ("g of carbohydrate" in r.answer or "calories" in r.answer)   # facts shown
     assert "fruit rule" in r.answer and "not permission" in r.answer and not failed(r)
     assert "you can" not in r.answer.lower()
 

@@ -246,7 +246,6 @@ needs_data = pytest.mark.skipif(not (INDB_DIR / "recipes.xlsx").exists() or not 
 
 @needs_data
 def test_real_comparison_arithmetic_matches_indb_and_accuracy_does_not_slip(tmp_path):
-    pytest.importorskip("openpyxl")
     info = cmp.run(INDB_DIR, DEFAULT_LIBRARY_DIR, cmp.latest_ingredient_map(NUTRITION), tmp_path)
     assert info["recipes"] == 1014
     import csv
