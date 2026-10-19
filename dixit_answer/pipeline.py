@@ -101,6 +101,7 @@ class Engine:
             "emergency_rules": self.data.emergency_rules["version"],
             "white_lists": self.data.white_lists["version"],
             "black_lists": self.data.black_lists["version"],
+            "dish_rules": self.data.dish_rules["version"],
         }
 
     # ------------------------------------------------------------------

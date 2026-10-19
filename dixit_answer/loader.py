@@ -66,6 +66,7 @@ class SwasthamData:
     support_content: dict
     white_lists: dict
     black_lists: dict
+    dish_rules: dict
     manifest: dict
 
 

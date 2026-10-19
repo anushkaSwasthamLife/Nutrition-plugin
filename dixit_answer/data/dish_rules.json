@@ -1,0 +1,23 @@
+{
+  "version": "DR-0.1.0",
+  "status": "PROPOSED",
+  "note": "Rules for the dish lookup (INDB plan, phase 3). Every number here is my proposal from the phase 2 comparison with INDB (indb_phase2/PHASE2_REPORT.md); a dietitian confirms or changes them before production.",
+  "calculated_dishes": {
+    "enabled": true,
+    "min_coverage": 1.0,
+    "note": "Path B: a dish that is in INDB but not in the library is calculated from its ingredients, and only when every ingredient has a value (coverage 1.0). It is always labelled an estimate and given as a range."
+  },
+  "range_percent": {
+    "default": 15,
+    "meat_fish": 25,
+    "note": "15% covered 96% of the 847 fully calculated INDB recipes, 25% covered 99%. Meat and fish dishes drifted most (chicken -23%, mutton -20% median)."
+  },
+  "meat_fish_categories": ["N", "O", "P"],
+  "meat_fish_note": "First letter of the INDB ingredient code. N = poultry, O = meat, P = fish, as seen in codes N003 chicken, O064 mutton, P057 pomfret.",
+  "plausibility": {
+    "max_kcal_per_100g": 900,
+    "max_kcal_per_serving": 1500,
+    "note": "A value above either limit is never shown. 900 kcal per 100 g is pure fat; 1,500 kcal is more than most people eat in a whole meal. INDB has 108 recipes above 1,000 kcal per serving that look like data errors."
+  },
+  "max_candidates_asked": 4
+}
