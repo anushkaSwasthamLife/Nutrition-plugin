@@ -11,7 +11,7 @@ from dixit_answer.consistency import find_problems
 from dixit_answer.person import Person
 from dixit_answer.recipes import EXTRA_NUTRIENTS, CheckedRecipe
 
-OLD_LIBRARY = Path.home() / "Desktop" / "Nutrition" / "Swastham_Nutrition_Data_Library_v1_0_3" / "01_data" / "nutrition_usda_reference.jsonl"
+OLD_LIBRARY = Path(__file__).resolve().parents[2] / "Nutrition" / "Swastham_Nutrition_Data_Library_v1_0_3" / "01_data" / "nutrition_usda_reference.jsonl"
 
 
 def _recipe(items, steps=None):
