@@ -115,4 +115,7 @@ def find_problems(data, library, index, environment: str) -> list[str]:
         for option in cfg["options"]:
             for fid in option["foods"]:
                 need(fid, f"golden rules amount option '{option['text']}'")
+
+    from .lists import list_problems
+    problems += list_problems(data, library, index, environment)
     return problems

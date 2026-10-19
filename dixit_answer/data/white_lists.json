@@ -1,0 +1,50 @@
+{
+  "version": "WL-0.1.0",
+  "status": "PROPOSED",
+  "note": "Allow lists: only what is written here may be used. Every entry needs approved_by and approved_on from a dietitian before production (the readiness report counts the ones that are empty). allowed_in says where an entry may be used. Anything not listed is refused or sent to the review queue, never guessed.",
+  "recipe_sources": {
+    "rule": "A recipe with a 'source' must name one of these, and the source must be allowed in the running environment. In production every recipe needs a source.",
+    "entries": [
+      {"id": "swastham_dietitian", "label": "Written and signed by the Swastham dietitian", "allowed_in": ["development", "production"], "approved_by": null, "approved_on": null},
+      {"id": "swastham_dev_draft", "label": "Draft written for development, not signed", "allowed_in": ["development"], "approved_by": null, "approved_on": null},
+      {"id": "ai_draft_gated", "label": "Drafted by the AI and passed by the checks", "allowed_in": ["development"], "note": "AI drafting stays off in production until the 100-recipe dietitian review (item G) has passed.", "approved_by": null, "approved_on": null},
+      {"id": "indb_recipes", "label": "INDB recipes (Art & Science of Cooking, Basic Food Preparation, web recipes)", "allowed_in": ["development"], "note": "INDB is derived from ICMR-NIN data; development only until a licence or ownership is confirmed.", "approved_by": null, "approved_on": null}
+    ]
+  },
+  "cooking_methods": {
+    "rule": "A recipe or AI draft that names a 'method' must use one of these. A method not listed gets no calculation. Deep frying is left out on purpose: it needs a measured oil uptake from a reviewer first.",
+    "entries": [
+      {"id": "raw", "aliases": ["raw", "uncooked", "salad"], "allowed_in": ["development", "production"], "calculation": "weights as given, no cooking factor", "approved_by": null, "approved_on": null},
+      {"id": "boil", "aliases": ["boil", "boiled", "boiling"], "allowed_in": ["development", "production"], "calculation": "sum of raw weights; energy and macros factor 1.0; vitamin and mineral retention from USDA (not used yet)", "approved_by": null, "approved_on": null},
+      {"id": "steam", "aliases": ["steam", "steamed", "steaming"], "allowed_in": ["development", "production"], "calculation": "as boil", "approved_by": null, "approved_on": null},
+      {"id": "pressure_cook", "aliases": ["pressure cook", "pressure cooked", "pressure cooking", "cooker"], "allowed_in": ["development", "production"], "calculation": "as boil", "approved_by": null, "approved_on": null},
+      {"id": "saute", "aliases": ["saute", "sauteed", "stir fry", "stir fried", "tadka", "tempering"], "allowed_in": ["development", "production"], "calculation": "all oil counted in full", "approved_by": null, "approved_on": null},
+      {"id": "shallow_fry", "aliases": ["shallow fry", "shallow fried", "pan fry", "pan fried"], "allowed_in": ["development", "production"], "calculation": "all oil counted in full", "approved_by": null, "approved_on": null},
+      {"id": "dry_roast", "aliases": ["dry roast", "dry roasted", "roast", "roasted", "tawa"], "allowed_in": ["development", "production"], "calculation": "no added fat", "approved_by": null, "approved_on": null},
+      {"id": "bake", "aliases": ["bake", "baked", "baking"], "allowed_in": ["development", "production"], "calculation": "as dry roast", "approved_by": null, "approved_on": null}
+    ]
+  },
+  "units": {
+    "rule": "Household units a recipe or food row may use. 'fixed_ml' is a real measure; other units need a food-specific gram weight from the food master (USDA portion data). A unit not listed is flagged, never guessed. Units taken from NIN tables are development only until NIN permission is confirmed.",
+    "entries": [
+      {"id": "teaspoon", "aliases": ["tsp", "teaspoon", "teaspoons"], "fixed_ml": 5, "source": "UCUM [tsp_m]", "allowed_in": ["development", "production"], "approved_by": null, "approved_on": null},
+      {"id": "tablespoon", "aliases": ["tbsp", "tablespoon", "tablespoons"], "fixed_ml": 15, "source": "UCUM [tbs_m]", "allowed_in": ["development", "production"], "approved_by": null, "approved_on": null},
+      {"id": "cup", "aliases": ["cup", "cups"], "fixed_ml": 240, "source": "Working choice, matches INDB; NIN uses 200 mL and the US cup is 236.588 mL. Confirm.", "allowed_in": ["development", "production"], "approved_by": null, "approved_on": null},
+      {"id": "katori", "aliases": ["katori", "katoris", "small katori", "medium katori", "large katori"], "fixed_ml": null, "source": "NIN Annexure I (115, 155, 200 and 360 mL); used pending NIN permission", "allowed_in": ["development"], "approved_by": null, "approved_on": null},
+      {"id": "piece", "aliases": ["piece", "pieces"], "fixed_ml": null, "source": "USDA portion weight per piece, per food", "allowed_in": ["development", "production"], "approved_by": null, "approved_on": null},
+      {"id": "small", "aliases": ["small"], "fixed_ml": null, "source": "USDA portion weight, per food", "allowed_in": ["development", "production"], "approved_by": null, "approved_on": null},
+      {"id": "medium", "aliases": ["medium"], "fixed_ml": null, "source": "USDA portion weight, per food", "allowed_in": ["development", "production"], "approved_by": null, "approved_on": null},
+      {"id": "large", "aliases": ["large"], "fixed_ml": null, "source": "USDA portion weight, per food", "allowed_in": ["development", "production"], "approved_by": null, "approved_on": null},
+      {"id": "medium head", "aliases": ["medium head"], "fixed_ml": null, "source": "USDA portion weight, per food", "allowed_in": ["development", "production"], "approved_by": null, "approved_on": null},
+      {"id": "bunch", "aliases": ["bunch", "bunches"], "fixed_ml": null, "source": "USDA portion weight, per food", "allowed_in": ["development", "production"], "approved_by": null, "approved_on": null},
+      {"id": "clove", "aliases": ["clove", "cloves"], "fixed_ml": null, "source": "USDA portion weight, per food", "allowed_in": ["development", "production"], "approved_by": null, "approved_on": null},
+      {"id": "inch", "aliases": ["inch", "inches"], "fixed_ml": null, "source": "USDA portion weight, per food", "allowed_in": ["development", "production"], "approved_by": null, "approved_on": null},
+      {"id": "half", "aliases": ["half"], "fixed_ml": null, "source": "half of the food's medium or whole unit", "allowed_in": ["development", "production"], "approved_by": null, "approved_on": null},
+      {"id": "squeeze", "aliases": ["squeeze"], "fixed_ml": null, "approximate": true, "source": "no standard measure; a dietitian should replace it with a spoon measure", "allowed_in": ["development"], "approved_by": null, "approved_on": null}
+    ]
+  },
+  "ingredient_aliases": {
+    "rule": "In production every name in the food master (its name and aliases, Hindi and regional too) must be approved here for that food. In development unapproved names still work, so reviewers can see them in use. A name that is a proxy match is listed in black_lists.json until a better record is found.",
+    "entries": []
+  }
+}

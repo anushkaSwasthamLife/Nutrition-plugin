@@ -101,7 +101,7 @@ def _signed(engine):
 
 def test_signed_limits_pass_the_startup_check(engine):
     found = find_problems(_signed(engine), engine.library, engine.index, "production")
-    assert not [p for p in found if "source" in p or "reviewer" in p or "review_date" in p or "twice" in p]
+    assert not [p for p in found if p.startswith("limits")]
 
 
 def test_one_unsigned_row_is_enough(engine):
@@ -126,6 +126,18 @@ def signed_copy(tmp_path):
         if key == "condition_limits":
             for r in doc["limits"]:
                 r.update(source="Real source 2026", reviewer="Dr Rao", review_date="2026-10-01")
+        if key == "white_lists":
+            for section in ("recipe_sources", "cooking_methods", "units"):
+                for e in doc[section]["entries"]:
+                    e.update(approved_by="Dr Rao", approved_on="2026-10-01")
+            foods = json.loads((d / manifest["swastham_data"]["food_master"]).read_text(encoding="utf-8"))["foods"]
+            doc["ingredient_aliases"]["entries"] = [{"food_id": f["id"], "alias": a, "approved_by": "Dr Rao", "approved_on": "2026-10-01"}
+                                                    for f in foods for a in [f["name"], *f.get("aliases", [])]]
+        if key == "black_lists":
+            for section in ("blocked_records", "allergen_derivatives", "bad_mappings"):
+                for e in doc[section]["entries"]:
+                    e.update(reviewer="Dr Rao", review_date="2026-10-01")
+            doc["unsafe_ingredients"].update(reviewed_empty_by="Dr Rao", reviewed_empty_on="2026-10-01")
         (d / name).write_text(json.dumps(doc), encoding="utf-8")
     return d
 

@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from decimal import Decimal, ROUND_HALF_UP
 
 from .foods import FoodIndex
+from .lists import method_allowed
 from .loader import FLAG_MACRO_MISMATCH, FLAG_MACROS_INCOMPLETE, Library, SwasthamData
 from .person import AllergyFilter, Person
 from .textnorm import clean
@@ -275,6 +276,10 @@ class RecipeService:
             return None, "bad name"
         if not _plain_text(name) or any(ch.isdigit() for ch in name):
             return None, "name has markup, links or numbers"
+        method = draft.get("method")
+        if method is not None and (not isinstance(method, str)
+                                   or not method_allowed(self.data.white_lists, method, self.library.environment)):
+            return None, "cooking method is not on the white list"
         if not isinstance(items, list) or not 2 <= len(items) <= 15:
             return None, "bad ingredient list"
         if not isinstance(steps, list) or not 2 <= len(steps) <= 6 or not all(isinstance(s, str) and 5 <= len(s) <= 220 for s in steps):

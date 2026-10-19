@@ -17,6 +17,7 @@ from .checks import CheckResult, blocking, check_ai_text, check_final
 from .compose import Composer
 from .config import Settings, load_settings
 from .consistency import find_problems
+from .lists import apply_blocked_records
 from .foods import FoodIndex
 from .llm import LLMError, make_llm
 from .emergency import EmergencyRules
@@ -73,8 +74,9 @@ class Engine:
         problems = find_problems(self.data, self.library, self.index, self.settings.environment)
         if problems:
             raise LoadError("data files disagree with each other:\n  - " + "\n  - ".join(problems[:20]))
+        apply_blocked_records(self.library, self.data.black_lists, self.settings.environment)
         self.services = Services(self.library, self.data, self.index)
-        self.allergy = AllergyFilter(self.data.allergen_map, self.index)
+        self.allergy = AllergyFilter(self.data.allergen_map, self.index, self.data.black_lists)
         self.store = StateStore(self.settings.state_db)
         self.audit = AuditLog(self.settings.audit_log)
         self.llm = llm or make_llm(self.settings)
@@ -97,6 +99,8 @@ class Engine:
             "rules_registry": self.data.rules_registry["version"],
             "cooking_factors": self.data.cooking_factors["version"],
             "emergency_rules": self.data.emergency_rules["version"],
+            "white_lists": self.data.white_lists["version"],
+            "black_lists": self.data.black_lists["version"],
         }
 
     # ------------------------------------------------------------------

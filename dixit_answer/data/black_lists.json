@@ -1,0 +1,35 @@
+{
+  "version": "BL-0.1.0",
+  "status": "PROPOSED",
+  "note": "Block lists: what must never be used or offered. Every entry needs a reviewer before production (the readiness report counts the ones that are empty). The clinical lists (unsafe_ingredients) are deliberately empty: a doctor or dietitian decides what goes in, with a source.",
+  "blocked_records": {
+    "rule": "A library record listed here is removed from the library while the app runs in an environment named in blocked_in. Records already quarantined or failing a quality gate are blocked by the loader, not listed here.",
+    "entries": [
+      {"id": "BR-001", "record_id": "USDA-2647442", "reason": "PROXY: USDA queso fresco stands in for paneer until a dietitian confirms a better record (FOOD-PANEER).", "blocked_in": ["production"], "reviewer": null, "review_date": null}
+    ]
+  },
+  "unsafe_ingredients": {
+    "rule": "For a person with the named condition the food is never offered or used in a recipe. Each row needs a source, reviewer and review_date (same rules as the limits table). action is always 'block'; reducing a food (for example salt) is a limit, not a block.",
+    "reviewed_empty_by": null,
+    "reviewed_empty_on": null,
+    "entries": []
+  },
+  "allergen_derivatives": {
+    "rule": "Words and foods that contain an allergen without carrying its name. A person who names the word is read as having that allergy, and any listed foods are blocked for them. Allergen keys must exist in allergen_map.json.",
+    "entries": [
+      {"id": "AD-001", "allergen": "milk", "words": ["whey", "casein", "caseinate", "buttermilk", "malai", "mawa", "khoya", "lassi", "chaas"], "foods": [], "reviewer": null, "review_date": null},
+      {"id": "AD-002", "allergen": "sesame", "words": ["gingelly", "tahini", "til oil", "sesame oil"], "foods": [], "reviewer": null, "review_date": null},
+      {"id": "AD-003", "allergen": "peanut", "words": ["peanut butter", "peanut oil", "groundnut oil"], "foods": [], "reviewer": null, "review_date": null},
+      {"id": "AD-004", "allergen": "gluten", "words": ["semolina", "sooji", "dalia", "seitan", "bulgur", "barley", "rye"], "foods": ["FOOD-SUJI"], "reviewer": null, "review_date": null},
+      {"id": "AD-005", "allergen": "egg", "words": ["mayonnaise", "albumin", "meringue"], "foods": [], "reviewer": null, "review_date": null},
+      {"id": "AD-006", "allergen": "soy", "words": ["soy sauce", "soya chunks", "soya nuggets", "nutrela", "tempeh", "edamame", "miso"], "foods": ["FOOD-TOFU", "FOOD-SOYBEAN"], "reviewer": null, "review_date": null}
+    ]
+  },
+  "bad_mappings": {
+    "rule": "A question word that must never resolve to a record whose name contains the blocked word. The search drops that record. Whole words only, so 'dal' never matches inside 'medallion'.",
+    "entries": [
+      {"id": "BM-001", "query_word": "poha", "blocked_name_word": "groundcherries", "reason": "USDA 'poha' is the groundcherry fruit, not flattened rice.", "reviewer": null, "review_date": null},
+      {"id": "BM-002", "query_word": "poha", "blocked_name_word": "groundcherry", "reason": "as BM-001, singular", "reviewer": null, "review_date": null}
+    ]
+  }
+}

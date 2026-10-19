@@ -13,7 +13,9 @@ import sys
 from pathlib import Path
 
 from .config import DATA_DIR
+from .lists import unsigned_counts
 from .sign_off import _unfilled, file_problems, limit_problems
+from .textnorm import clean
 
 MANIFEST_PATH = DATA_DIR / "manifest.json"
 # data files that carry an approver and a date once signed
@@ -34,6 +36,7 @@ def check(manifest_path: Path = MANIFEST_PATH, data_dir: Path = DATA_DIR) -> dic
     """{'ready': bool, 'items': [{'area', 'file', 'problem'}], 'files': {key: status}}"""
     items: list[dict] = []
     files: dict[str, str] = {}
+    loaded: dict[str, dict] = {}
 
     def add(area: str, file: str, problem: str):
         items.append({"area": area, "file": file, "problem": problem})
@@ -54,6 +57,7 @@ def check(manifest_path: Path = MANIFEST_PATH, data_dir: Path = DATA_DIR) -> dic
             files[key] = "unreadable"
             continue
         files[key] = str(data.get("status", "")) or "missing"
+        loaded[key] = data
         for problem in file_problems(str(name), data):
             add(key, str(name), problem)
         for field in APPROVAL_FIELDS.get(key, ()):
@@ -62,6 +66,16 @@ def check(manifest_path: Path = MANIFEST_PATH, data_dir: Path = DATA_DIR) -> dic
         if key == "condition_limits":
             for problem in limit_problems(data):
                 add(key, str(name), problem)
+
+    for problem in unsigned_counts(loaded):
+        add("lists", "white_lists.json / black_lists.json", problem)
+    if "food_master" in loaded and "white_lists" in loaded:
+        approved = {(e.get("food_id"), clean(str(e.get("alias", "")))) for e in loaded["white_lists"].get("ingredient_aliases", {}).get("entries", [])
+                    if isinstance(e, dict) and not _unfilled(e.get("approved_by")) and not _unfilled(e.get("approved_on"))}
+        foods = [f for f in loaded["food_master"].get("foods", []) if isinstance(f, dict) and "id" in f and "name" in f]
+        missing = sum(1 for f in foods for a in {clean(f["name"]), *(clean(x) for x in f.get("aliases", []))} if (f["id"], a) not in approved)
+        if missing:
+            add("lists", "white_lists.json", f"ingredient_aliases: {missing} food names are not approved for production")
 
     production = (manifest.get("environments") or {}).get("production")
     if not isinstance(production, dict):

@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 
 from .config import DATA_DIR, load_settings
 from .foods import LibrarySearch
+from .lists import bad_mapping_pairs
 from .pipeline import Engine
 from .review_queue import ApplyError, QueueError, ReviewQueue
 
@@ -125,7 +126,7 @@ def create_app(engine: Engine | None = None, data_dir=None) -> FastAPI:
     def review_search(q: str = Query(..., min_length=2, max_length=60)):
         eng = get_engine()
         if app.state.search is None:
-            app.state.search = LibrarySearch(eng.library)
+            app.state.search = LibrarySearch(eng.library, bad_mapping_pairs(eng.data.black_lists))
         hits = [h for h in app.state.search.search(q, limit=15) if not eng.library.is_indian(h["record_id"])][:8]
         out = []
         for h in hits:

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .loader import FLAG_MACRO_MISMATCH, Library
+from .loader import FLAG_ENERGY_MISSING, FLAG_MACRO_MISMATCH, FLAG_MACROS_INCOMPLETE, FLAG_SERVING_UNCLEAR, Library
 from .textnorm import clean, has_phrase
 
 
@@ -78,8 +78,9 @@ class FoodIndex:
 class LibrarySearch:
     """Whole-word search over the loaded library records."""
 
-    def __init__(self, library: Library):
+    def __init__(self, library: Library, bad_mappings: list[tuple[str, str]] | None = None):
         self.library = library
+        self.bad_mappings = bad_mappings or []    # (query word, record-name word): never return that record (black list)
         self._names: list[tuple[str, set[str], str]] = []   # (record_id, words, cleaned name)
         for rid, rec in library.records.items():
             names = {clean(rec.get("food_name", ""))}
@@ -97,14 +98,24 @@ class LibrarySearch:
         for rid, words, name in self._names:
             if not q_words <= words:
                 continue
+            if any(qw in q_words and nw in words for qw, nw in self.bad_mappings):
+                continue
             if FLAG_MACRO_MISMATCH in self.library.flags.get(rid, set()):
                 continue
             rec = self.library.records[rid]
             exact = name == q
             extra = len(words - q_words)
             prepared = rec.get("record_type") == "prepared_food"
-            published = (rec.get("data_quality") or {}).get("energy_basis") == "source_published"
-            score = (exact, -extra, prepared, published)
+            quality = rec.get("data_quality") or {}
+            published = quality.get("energy_basis") == "source_published"
+            # Identity first (the four above), then record quality. Quality only orders records of the same dish;
+            # ties between different dishes still go to resolve() as ambiguous (N14).
+            flags = self.library.flags.get(rid, set())
+            complete = not (flags & {FLAG_ENERGY_MISSING, FLAG_MACROS_INCOMPLETE, FLAG_SERVING_UNCLEAR})
+            confidence = quality.get("calorie_confidence_pct")
+            confidence = float(confidence) if isinstance(confidence, (int, float)) and not isinstance(confidence, bool) \
+                and 0 <= confidence <= 100 else 0.0
+            score = (exact, -extra, prepared, published, complete, confidence)
             if rid not in best or score > best[rid][0]:
                 best[rid] = (score, name)
         ranked = sorted(best.items(), key=lambda kv: kv[1][0], reverse=True)[:limit]
@@ -115,7 +126,7 @@ class LibrarySearch:
         hits = self.search(query, limit=5)
         if not hits:
             return {"status": "not_found", "query": query}
-        if len(hits) > 1 and hits[0]["score"] == hits[1]["score"] and \
+        if len(hits) > 1 and hits[0]["score"][:4] == hits[1]["score"][:4] and \
                 clean(hits[0]["food_name"]) != clean(hits[1]["food_name"]):
             return {"status": "ambiguous", "query": query, "candidates": hits[:2]}
         return {"status": "found", "query": query, "record_id": hits[0]["record_id"], "food_name": hits[0]["food_name"]}

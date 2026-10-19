@@ -13,6 +13,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
+from . import lists
 from .foods import FoodIndex
 from .golden import Status
 from .state import ChatState
@@ -134,12 +135,15 @@ class Person:
 
 
 class AllergyFilter:
-    def __init__(self, allergen_map: dict, index: FoodIndex):
+    def __init__(self, allergen_map: dict, index: FoodIndex, black_lists: dict | None = None):
         self.map = allergen_map
         self.index = index
+        self.black = black_lists or {}
+        self.derivative_words = lists.derivative_words(self.black)
 
     def foods_for(self, allergens: list[str]) -> set[str]:
         blocked: set[str] = set()
+        blocked |= lists.derivative_foods(self.black, allergens)
         for allergen in allergens:
             blocked.update(self.map["allergens"].get(allergen, {}).get("foods", []))
             for fid, food in self.index.foods.items():
@@ -150,7 +154,7 @@ class AllergyFilter:
     def blocked_foods(self, person: Person) -> set[str]:
         """Food IDs this person must never be offered: allergies (with derivatives), avoid list, diet type."""
         allergens = person.allergies if person.allergies is not None else []
-        blocked = self.foods_for(allergens) | set(person.avoid_foods)
+        blocked = self.foods_for(allergens) | set(person.avoid_foods) | lists.condition_blocked_foods(self.black, person.conditions)
         if person.unmapped_allergies:                       # an allergy we can't map: stay clear of every common allergen
             blocked |= self.major_allergen_foods()
         if person.diet_type in ("vegetarian", "jain"):
@@ -185,7 +189,7 @@ class AllergyFilter:
         """Allergies from a reply ('milk and peanuts', 'none'). None if the reply says nothing about allergies."""
         cleaned = clean(text)
         found = [name for name, entry in self.map["allergens"].items()
-                 if any(has_phrase(cleaned, clean(w)) for w in entry["words"])]
+                 if any(has_phrase(cleaned, clean(w)) for w in [*entry["words"], *self.derivative_words.get(name, [])])]
         if found:
             return found
         if any(has_phrase(cleaned, clean(w)) for w in self.map["none_words"]):

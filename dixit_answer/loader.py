@@ -64,6 +64,8 @@ class SwasthamData:
     rules_registry: dict
     emergency_rules: dict
     support_content: dict
+    white_lists: dict
+    black_lists: dict
     manifest: dict
 
 
