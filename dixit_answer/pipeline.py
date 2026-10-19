@@ -104,6 +104,7 @@ class Engine:
             "white_lists": self.data.white_lists["version"],
             "black_lists": self.data.black_lists["version"],
             "dish_rules": self.data.dish_rules["version"],
+            "book_measures": self.data.book_measures["version"],
         }
 
     def _dish_in_text(self, cleaned: str) -> list[dict]:

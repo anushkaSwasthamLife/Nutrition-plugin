@@ -58,6 +58,7 @@
     "support_content": "support_content.json",
     "white_lists": "white_lists.json",
     "black_lists": "black_lists.json",
-    "dish_rules": "dish_rules.json"
+    "dish_rules": "dish_rules.json",
+    "book_measures": "book_measures_draft.json"
   }
 }

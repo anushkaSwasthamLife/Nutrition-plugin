@@ -1,0 +1,72 @@
+{
+  "version": "BM-0.1.0",
+  "status": "DRAFT",
+  "note": "Household measures and food equivalents from the client's book, as listed in Desktop\\Nutrition\\workflow.html section 3b. Nothing here is used to calculate or answer yet: it is the reference the system's own measures are compared with (see conflicts). Production refuses this file until the client (ADORE Trust, Dr. Dixit) and a dietitian sign it.",
+  "source": {
+    "title": "Healthful Diet: Think wise. Eat twice. Drop size",
+    "publisher": "ADORE Trust, 2021",
+    "pages_note": "Page numbers are the printed ones; PDF page = printed page + 2."
+  },
+  "household_measures": [
+    {"id": "vati", "amount": 60, "unit": "g", "page": "61", "text": "1 vati = 60 g"},
+    {"id": "cup", "amount": 125, "unit": "ml", "page": "61", "text": "1 cup = 125 ml (about 2 vati)", "about_vati": 2},
+    {"id": "teaspoon", "amount": 5, "unit": "ml", "page": "61", "text": "1 teaspoon = 5 ml"},
+    {"id": "tablespoon", "amount": 15, "unit": "ml", "page": "61", "text": "1 tablespoon = 15 ml (3 teaspoons)", "teaspoons": 3},
+    {"id": "ounce", "amount": 28.3, "unit": "g", "page": "61", "text": "1 oz = 28.3 g"}
+  ],
+  "equivalents": [
+    {"id": "carbohydrate_serving", "page": "60-61",
+     "text": "1 chapati (6 inch, about 30 g wheat) = 23.4 g carbohydrate; use 30 g for quick sums",
+     "carbohydrate_g": 23.4, "wheat_g": 30, "quick_sum_g": 30},
+    {"id": "same_as_one_chapati", "page": "61-62",
+     "text": "1 vati cooked rice; half a jowar bhakri (8 inch); 2 idli; 3 appe; 2 jowar ghavan; one 8 inch besan chilla; 2 vati cooked quinoa; 2 vati cauliflower rice. To be eaten in a meal, not as a snack",
+     "items": ["1 vati cooked rice", "1/2 jowar bhakri (8 inch)", "2 idli", "3 appe", "2 jowar ghavan", "1 besan chilla (8 inch)", "2 vati cooked quinoa", "2 vati cauliflower rice"]},
+    {"id": "hidden_carbohydrate", "page": "62", "text": "1 vati cooked usal (beans) = about 20 g carbohydrate and 7 g protein",
+     "per": "1 vati cooked usal", "carbohydrate_g": 20, "protein_g": 7},
+    {"id": "about_20_g_protein", "page": "62-63",
+     "text": "Any one of: 2 whole eggs + 1 white; 1 and a half vati paneer; 2 vati tofu; 85 g chicken (add vegetables); 3 vati moong usal (about 60 g carbohydrate)",
+     "protein_g": 20, "items": ["2 whole eggs + 1 egg white", "1.5 vati paneer", "2 vati tofu", "85 g chicken (add vegetables)", "3 vati moong usal (about 60 g carbohydrate)"]},
+    {"id": "oil_for_a_family_of_four", "page": "63-64",
+     "text": "100 ml for the meal (about 6 tablespoons): up to 3 tablespoons for the vegetable tadka, 2 for the dal, usal or chicken, 1 for the salad tadka. Use less if the meal has nuts, cheese or fatty meat",
+     "oil_ml": 100, "tablespoons": {"vegetable_tadka": 3, "dal_usal_or_chicken": 2, "salad_tadka": 1}},
+    {"id": "one_meal_unit_example", "page": "65-66",
+     "text": "1 chapati + 1 vati sprouted moong usal + 1 vati koshimbir. Up to three units fit the allowance (3 vati usal + 2 vati koshimbir + 2 chapati)",
+     "units_allowed": 3}
+  ],
+  "per_meal_and_day": {
+    "basis": "a sedentary 60 kg adult. The engine must scale these by the person's weight and ideal weight, not hard-code 60 kg.",
+    "rows": [
+      {"nutrient": "protein_g", "per_meal": 22.5, "per_day": 45, "page": "42, 60", "text": "45 g a day (0.75 g per kg); 15-20% of energy"},
+      {"nutrient": "carbohydrate_g", "per_meal": 150, "per_day": 300, "page": "37, 60", "text": "300 g a day; 50-60% of energy"},
+      {"nutrient": "oil_ml", "per_meal": 25, "per_day": 50, "page": "45, 60, 63", "text": "25 ml (5 teaspoons) a meal; under 30% of energy, saturated fat under 10%"},
+      {"nutrient": "fibre_g", "per_meal": null, "per_day": "25-30", "page": "38", "text": "25 to 30 g a day"},
+      {"nutrient": "energy_kcal", "per_meal": 915, "per_day": 1830, "page": "60", "text": "about 1,830 kcal a day (30 kcal per kg of ideal weight)"}
+    ]
+  },
+  "conflicts_with_current_system": [
+    {"id": "C1", "topic": "cup",
+     "book": "1 cup = 125 ml (page 61)",
+     "system": "white_lists.json units: cup = 240 ml, a working choice that matches INDB's cookbook cups; the library's Unit Definitions sheet says 'Confirm'",
+     "effect": "None yet: no answer is calculated from the cup value. INDB's own recipes use 240 ml for the cookbook's cups, so those must keep 240 unless the client says the cookbooks meant 125 ml.",
+     "decision_needed": "Does a cup in a person-facing answer mean 125 ml (the book) while a cup in a cookbook recipe stays 240 ml?"},
+    {"id": "C2", "topic": "vati, katori and bowl",
+     "book": "1 vati = 60 g (page 61)",
+     "system": "Dish answers say 'A bowl of poha has about 161 calories' and use INDB's serving, whose bowl is about 249 g (median of 253 recipes); white_lists.json katori uses NIN sizes of 115 to 360 ml, development only",
+     "effect": "A person who thinks in vati (60 g) could read a bowl of about 249 g as one vati. The calories per bowl are right for the INDB bowl, but the wording invites the wrong comparison.",
+     "decision_needed": "Say the serving in grams as well, show answers per vati, or keep per bowl?"},
+    {"id": "C3", "topic": "one chapati",
+     "book": "1 chapati (6 inch, about 30 g wheat) = 23.4 g carbohydrate (pages 60-61)",
+     "system": "The food list has no weight for one chapati, so the chat says it cannot give a per-piece number; the chapati record is USDA, per 100 g",
+     "effect": "Questions like 'calories in one chapati' get no per-piece answer.",
+     "decision_needed": "Is 30 g of wheat (not cooked weight) usable as the unit weight, or does the dietitian give a cooked weight?"},
+    {"id": "C4", "topic": "limits per meal and day",
+     "book": "Per meal: protein 22.5 g, carbohydrate 150 g, oil 25 ml, about 915 kcal; per day: 45 g, 300 g, 50 ml, about 1,830 kcal (pages 37-63), for a 60 kg adult",
+     "system": "condition_limits_test.json (TEST ONLY, placeholders): general 2,000 kcal and 70 g fat a day; obesity 1,800 kcal and 55 g fat; diabetes carbohydrate 200 g a day",
+     "effect": "The recipe gate checks the placeholders, not the book's numbers.",
+     "decision_needed": "The clinical reviewer chooses which numbers become the limits, scaled to the person's weight."}
+  ],
+  "open_questions_from_the_page": [
+    "Is the book still the client's current position? Its foreword says it is not 100% the campaign's position.",
+    "The book has no number for honey, ghee, egg yolk or butter ('in moderation'), so there is nothing to enforce."
+  ]
+}

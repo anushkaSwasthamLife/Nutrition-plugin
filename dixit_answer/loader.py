@@ -67,6 +67,7 @@ class SwasthamData:
     white_lists: dict
     black_lists: dict
     dish_rules: dict
+    book_measures: dict
     manifest: dict
 
 
@@ -182,6 +183,6 @@ def load_swastham_data(settings: Settings, manifest: dict | None = None) -> Swas
             raise LoadError(f"{name}: must be a JSON object")
     if not env.get("allow_test_only_data"):
         for key, data in loaded.items():
-            if str(data.get("status", "")).upper() in {"TEST ONLY", "STUB", "PARTIAL", "PROPOSED"}:
+            if str(data.get("status", "")).upper() in {"TEST ONLY", "STUB", "PARTIAL", "PROPOSED", "DRAFT"}:
                 raise LoadError(f"Production refuses {names[key]}: status is {data['status']}.")
     return SwasthamData(manifest=manifest, **loaded)
