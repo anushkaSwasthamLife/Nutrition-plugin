@@ -58,6 +58,8 @@ DIET_WORDS = re.compile(r"\b(eat|eating|food|foods|meal|meals|diet|weight|sabji|
 WELLBEING = re.compile(r"\b(anxious|anxiety|panic|panicking|stressed|stress|stressful|nervous|overwhelmed|worried|worrying|tension|"
                        r"depressed|depression|hopeless|feeling low|feel low|feel sad|feeling sad|am sad|so sad|very sad|low mood|"
                        r"ghabrahat|ghabra|ghabrata|ghabrati|chinta|pareshan|tanav)\b")
+NUTRIENT_WORDS = re.compile(r"\b(calorie|calories|kcal|carb|carbs|carbohydrate|carbohydrates|protein|proteins|fat|fats|fibre|fiber|"
+                            r"nutrition|nutrients?)\b")
 TOPIC_SABJI = re.compile(r"\b(sabji|vegetable|curry)\b")
 
 
@@ -239,7 +241,8 @@ def read_reply(cleaned: str, slot: str, foods: list[str], index: FoodIndex, word
     return {}
 
 
-def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_finder=None, allergy_reader=None) -> Understanding:
+def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_finder=None, allergy_reader=None,
+               dish_finder=None) -> Understanding:
     cleaned = clean(text, word_lists["spelling_map"])
     mentions = index.find(scrub_conditions(cleaned, word_lists), already_clean=True)       # "high sugar" is a condition, not the food sugar
     foods = [m.food_id for m in mentions]
@@ -295,5 +298,12 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
         u.is_reply = True
     if question_type == "out_of_scope" and u.conditions and not u.slot_fill:
         question_type = "food_choice_guidance"       # "I have obesity": a health condition on its own is a food question in this programme
+    if dish_finder and not u.slot_fill and NUTRIENT_WORDS.search(cleaned):
+        hit = dish_finder(cleaned)
+        if hit and not foods and question_type in {"out_of_scope", "food_choice_guidance", "food_allowed"}:
+            question_type = "neutral_nutrient_lookup"       # "poha calories": a dish from the INDB data, asked in a few words
+        elif hit and hit["exact"] and foods and question_type == "neutral_nutrient_lookup" and \
+                all(has_phrase(hit["span"], m.alias) and hit["span"] != m.alias for m in mentions):
+            u.foods = []                                    # "calories in chilli paneer" is the dish, not the food paneer
     u.type = question_type
     return u

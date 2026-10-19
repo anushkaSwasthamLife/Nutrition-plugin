@@ -9,6 +9,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
+from .dish_lookup import AMBIGUOUS, FOUND, fact_text as dish_fact_text, find_in_text
 from .facts import Fact
 from .foods import FoodIndex
 from .golden import Status
@@ -45,7 +46,9 @@ class Draft:
 
 
 def _short_source(fact: Fact) -> str:
-    return "USDA" if fact.source == "USDA" else "dev data"
+    if fact.source == "USDA":
+        return "USDA"
+    return "calculated from ingredients, dev data" if fact.source.startswith("calculated") else "dev data"
 
 
 def _dish(fact: Fact) -> str:
@@ -65,12 +68,22 @@ def _without_blocked_staple(text: str, blocked: set) -> str:
     return text
 
 
+def _short_dish(name: str, names: list[str]) -> str:
+    """"Cabbage rolls (dry) ((Pattagobhi rolls) (dry))" -> "Cabbage rolls", or "Cabbage rolls (dry)" when two names would collide."""
+    base = name.split(" (")[0]
+    if sum(n.split(" (")[0] == base for n in names) < 2:
+        return base
+    first = re.match(r"[^()]*\([^()]*\)", name)
+    return first.group(0) if first else name
+
+
 def _cap(text: str) -> str:
     return text[:1].upper() + text[1:]
 
 
 class Composer:
-    def __init__(self, services: Services, index: FoodIndex, word_lists: dict, recipes=None, allergy=None):
+    def __init__(self, services: Services, index: FoodIndex, word_lists: dict, recipes=None, allergy=None, dishes=None):
+        self.dishes = dishes
         self.s = services
         self.index = index
         self.words = word_lists
@@ -455,7 +468,61 @@ class Composer:
             if self.index.foods[plan.focus_foods[0]].get("unit_weight_g") is None and re.search(r"\b(one|1|a|per)\b", u.cleaned):
                 d.lines.append("We don't have a reliable weight for one piece yet, so I can't give a per-piece number.")
             return
+        if self.dishes is not None and self._dish_lines(u, d, lock, fact_ph, person, field):
+            return
         d.lines.append("I couldn't find that food in our data yet. Could you tell me its name another way?")
+
+    DISH_FIELDS = {"energy_kcal": "energy_kcal", "carbohydrate_g": "carb_g", "protein_g": "protein_g", "fat_g": "fat_g", "fiber_g": "fibre_g"}
+
+    def _dish_lines(self, u, d, lock, fact_ph, person, field: str) -> bool:
+        """A nutrient question about a dish from the INDB data. Returns False when the message names no dish."""
+        found = find_in_text(self.dishes, u.cleaned)
+        if found is None:
+            return False
+        span, result = found
+        blocked = d.blocked_foods
+
+        def blocked_in(name: str) -> str | None:
+            hit = sorted({m.food_id for m in self.index.find(name or "")} & blocked)
+            return hit[0] if hit else None
+
+        if result.status == AMBIGUOUS:
+            shown = [c["name"] for c in result.candidates if not blocked_in(c["name"])]
+            names = [_short_dish(n, shown) for n in shown]
+            if names:
+                d.lines.append(lock("T", f"I found a few dishes with that name: {_join(names)}. Which one do you mean?"))
+                return True
+            return False
+        name = (result.name or span).split(" (")[0]
+        if result.status == FOUND:
+            food = blocked_in(result.name or "")
+            if food:
+                self._blocked_line(food, person, d, lock)
+                return True
+            allergens = set(person.allergies or []) if person else set()
+            if person and person.unmapped_allergies and self.allergy:
+                allergens |= set(self.allergy.map["major"])         # an allergy we could not map: stay clear of every common one
+            if allergens and self.allergy:
+                found_in = sorted((set(self.allergy.read_reply(" , ".join(self.dishes.ingredient_names(result.code))) or [])) & allergens)
+                if found_in:
+                    text = f"{name} contains {self.allergy.label(found_in[0])}, so it won't suit you. Please check with your doctor or dietitian."
+                    d.exclusion_texts.append(text)
+                    d.lines.append(lock("T", text))
+                    return True
+            shown = dish_fact_text(result, self.DISH_FIELDS.get(field, "energy_kcal"))
+            if shown is None:
+                d.lines.append(lock("T", f"We don't have a reliable value for that in {name} yet."))
+                return True
+            source = "calculated from ingredients" if result.path == "B" else "Swastham library"
+            d.lines.append(fact_ph(Fact(f"DISH-{result.code}", field, shown.value, shown.text, shown.serving, source, result.name or name)))
+            if shown.estimate:
+                d.lines.append(lock("T", "This is an estimate, so the real value can be a little higher or lower."))
+            return True
+        if blocked_in(result.name or ""):
+            name = "that dish"                          # never name a food this person can't have, even to say we have no number
+        d.lines.append(lock("T", f"I can't give a reliable number for {name} yet."))
+        d.unknown_items.append({"word": span, "kind": "dish", "suggested_food_id": ""})
+        return True
 
     def _struggle_lines(self, u, d, lock) -> None:
         if re.search(r"\b(hungry|hunger|craving|cravings)\b", u.cleaned):

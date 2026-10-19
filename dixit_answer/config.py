@@ -39,6 +39,8 @@ class Settings:
     environment: str = "development"            # development | production
     library_dir: Path = DEFAULT_LIBRARY_DIR
     var_dir: Path = PROJECT_DIR / "var"          # chat state and audit log (gitignored)
+    nutrition_dir: Path = PROJECT_DIR.parent / "Nutrition"   # INDB source files and releases (development only)
+    dish_lookup: bool = True                     # answer "calories in poha" from INDB dishes (development only; off in production)
     llm_provider: str = "mock"                   # mock | groq
     llm_api_key: str = field(default="", repr=False)
     llm_base_url: str = "https://api.groq.com/openai/v1"
@@ -76,6 +78,8 @@ def load_settings(**overrides) -> Settings:
         environment=env.get("DIXIT_ENVIRONMENT", "development").lower(),
         library_dir=Path(env.get("DIXIT_LIBRARY_DIR") or DEFAULT_LIBRARY_DIR),
         var_dir=Path(env.get("DIXIT_VAR_DIR") or PROJECT_DIR / "var"),
+        nutrition_dir=Path(env.get("DIXIT_NUTRITION_DIR") or PROJECT_DIR.parent / "Nutrition"),
+        dish_lookup=env.get("DIXIT_DISH_LOOKUP", "on").strip().lower() not in {"off", "0", "false", "no"},
         llm_provider=provider,
         llm_api_key=api_key,
         llm_base_url=env.get("LLM_BASE_URL") or "https://api.groq.com/openai/v1",

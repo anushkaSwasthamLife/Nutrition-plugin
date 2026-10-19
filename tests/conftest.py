@@ -41,7 +41,8 @@ def full_engine(settings, _classic_recipe_collection):
 
 @pytest.fixture(scope="session")
 def settings(tmp_path_factory):
-    return load_settings(llm_provider="mock", llm_api_key="", var_dir=tmp_path_factory.mktemp("var"))
+    # The INDB dish lookup is tested on its own (test_dish_chat.py); the rest of the suite runs without it.
+    return load_settings(llm_provider="mock", llm_api_key="", var_dir=tmp_path_factory.mktemp("var"), dish_lookup=False)
 
 
 @pytest.fixture(scope="session")

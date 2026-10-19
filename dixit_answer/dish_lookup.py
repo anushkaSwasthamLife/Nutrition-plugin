@@ -12,6 +12,7 @@ the INDB and Indian sources are off (licence pending), so every dish is "not fou
 from __future__ import annotations
 
 import csv
+import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -50,6 +51,7 @@ class DishResult:
     unvalued: list = field(default_factory=list)
     lineage: dict = field(default_factory=dict)
     note: str = ""
+    range_percent: float | None = None   # how wide the estimate range is, as a percentage of the value
 
     @property
     def has_numbers(self) -> bool:
@@ -122,6 +124,13 @@ class DishLookup:
             return [], q
         low = min(extra for extra, _ in best)
         return sorted(code for extra, code in best if extra == low), q
+
+    def ingredient_names(self, code: str) -> list[str]:
+        """Every ingredient name INDB lists for a dish, for allergy checks. Empty when INDB has no recipe rows for it."""
+        recipe = self.recipes.get(code)
+        if recipe is None:
+            return []
+        return [str(n) for row in recipe.rows for n in (row.get("food_name"), row.get("ingredient_name_org")) if n]
 
     def label(self, code: str) -> str:
         if code in self.by_code:
@@ -215,8 +224,107 @@ class DishLookup:
         letters = set(self.rules.get("meat_fish_categories", []))
         meat_fish = any(str(c)[:1] in letters for c, _n, _g, _k in result.parts)
         kcal = per_serving["energy_kcal"] if per_serving else per_100g["energy_kcal"]
-        return DishResult(FOUND, per_serving=per_serving, per_100g=per_100g, serving_text=text,
+        pct = float(self.rules.get("range_percent", {}).get("meat_fish" if meat_fish else "default", 15))
+        return DishResult(FOUND, per_serving=per_serving, per_100g=per_100g, serving_text=text, range_percent=pct,
                           range_kcal=self._range(kcal, meat_fish) if per_serving else None, **base)
+
+
+# ---------------------------------------------------------------- the sentence for one nutrient
+FIELD_WORDS = {"energy_kcal": ("kcal", ""), "carb_g": ("g", "carbohydrate"), "protein_g": ("g", "protein"), "fat_g": ("g", "fat"),
+               "fibre_g": ("g", "fibre")}
+
+
+@dataclass
+class DishFact:
+    text: str                 # "about 161 kcal per bowl"
+    value: float | None       # None for a range
+    serving: str
+    estimate: bool
+
+
+def _serving_words(result: DishResult) -> str:
+    if result.per_serving is None:
+        return "per 100 g"
+    if not result.serving_text:
+        return "per serving"
+    quantity, _, unit_name = result.serving_text.partition(" ")
+    return f"per {unit_name}" if quantity in {"1", "1.0"} and unit_name else f"per {result.serving_text}"
+
+
+def _amount(value: float, unit: str, label: str, estimate: bool) -> str:
+    if unit == "kcal":
+        return f"{int(round(value / 5.0) * 5) if estimate else round(value):d}"
+    return f"{round(value, 1):g}"
+
+
+def fact_text(result: DishResult, field_name: str = "energy_kcal") -> DishFact | None:
+    """The sentence for one nutrient of a found dish, or None when the dish has no number for it. Every estimate is a range."""
+    if not result.has_numbers or field_name not in FIELD_WORDS:
+        return None
+    unit, label = FIELD_WORDS[field_name]
+    block = result.per_serving if result.per_serving is not None else result.per_100g
+    value = block.get(field_name) if block else None
+    serving = _serving_words(result)
+    pct = (result.range_percent if result.range_percent is not None else 15.0) / 100.0
+    low = high = None
+    if field_name == "energy_kcal" and result.range_kcal is not None and result.per_serving is not None:
+        low, high = result.range_kcal
+    elif value is None:
+        return None
+    elif result.path == "B":
+        low, high = value * (1 - pct), value * (1 + pct)
+    thing = "kcal" if unit == "kcal" else f"g {label}"
+    if low is not None:
+        return DishFact(f"about {_amount(low, unit, label, True)}–{_amount(high, unit, label, True)} {thing} {serving}, an estimate",
+                        None, serving, True)
+    return DishFact(f"about {_amount(value, unit, label, False)} {thing} {serving}", float(value), serving, False)
+
+
+# ---------------------------------------------------------------- finding a dish inside a sentence
+# Words that make up the question itself ("how many calories in a plate of ..."), never the dish.
+SCAFFOLD = {"how", "many", "much", "what", "whats", "is", "are", "the", "in", "of", "a", "an", "calorie", "calories", "kcal", "carb",
+            "carbs", "carbohydrate", "carbohydrates", "protein", "proteins", "fat", "fats", "fibre", "fiber", "nutrition", "nutrients",
+            "nutrient", "energy", "per", "one", "1", "plate", "bowl", "cup", "katori", "piece", "pieces", "glass", "serving", "servings",
+            "tell", "me", "about", "for", "give", "does", "do", "have", "has", "contain", "contains", "there", "any", "total", "approx",
+            "approximately", "and", "or", "to", "can", "you", "please", "pls", "my", "i", "it", "this", "that", "show", "ka", "ki",
+            "mein", "kitna", "kitni", "hai", "hota"}
+MAX_SPAN_WORDS = 8
+
+
+def find_in_text(lookup: "DishLookup", cleaned: str) -> tuple[str, DishResult] | None:
+    """The dish a sentence is about: the longest run of words that names one, ignoring the words of the question itself."""
+    words = cleaned.split()[:40]
+    spans = [(i, i + length) for length in range(min(len(words), MAX_SPAN_WORDS), 0, -1) for i in range(0, len(words) - length + 1)]
+    spans = [(i, j) for i, j in spans if any(w not in SCAFFOLD for w in words[i:j])]
+    for exact_only in (True, False):
+        for i, j in spans:
+            span = " ".join(words[i:j])
+            if exact_only:
+                if span in lookup.exact:
+                    return span, lookup.resolve(span)
+            elif words[i] not in SCAFFOLD and words[j - 1] not in SCAFFOLD and lookup.candidates(span)[0]:
+                return span, lookup.resolve(span)
+    return None
+
+
+def build_dish_lookup(settings, library: Library, rules: dict, spelling_map: dict | None = None) -> "DishLookup | None":
+    """The lookup for the chat, or None where it must stay off: production, switched off, or the INDB files are not on this PC."""
+    if settings.environment != "development" or not settings.dish_lookup:
+        return None
+    nutrition = Path(settings.nutrition_dir)
+    indb_dir = nutrition / "indb_source"
+    maps = sorted((nutrition / "releases").glob("*/ingredient_map.csv"))
+    aliases = sorted((nutrition / "releases").glob("*/alias_table.csv"))
+    if not (indb_dir / "recipes.xlsx").is_file() or not maps or not aliases:
+        return None
+    try:
+        from .indb_calc import load_fct, load_ingredient_map, load_usda
+        sources = Sources(usda=load_usda(settings.library_dir), ingredient_map=load_ingredient_map(maps[-1]),
+                          fct={**load_fct(indb_dir / "UK_fct.xlsx", "uk_cofid"), **load_fct(indb_dir / "US_fct.xlsx", "us_fct")},
+                          allowed_matches=WITH_PROXIES)
+        return DishLookup(library, load_alias_rows(aliases[-1]), load_indb_recipes(indb_dir), sources, rules, spelling_map)
+    except (OSError, KeyError, ValueError, IndexError, StopIteration, zipfile.BadZipFile):
+        return None
 
 
 # ---------------------------------------------------------------- data in

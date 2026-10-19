@@ -17,6 +17,7 @@ from .checks import CheckResult, blocking, check_ai_text, check_final
 from .compose import Composer
 from .config import Settings, load_settings
 from .consistency import find_problems
+from .dish_lookup import build_dish_lookup, find_in_text
 from .lists import apply_blocked_records
 from .foods import FoodIndex
 from .llm import LLMError, make_llm
@@ -83,7 +84,8 @@ class Engine:
         ai_drafting = bool(manifest["environments"][self.settings.environment].get("recipe_ai_drafting"))
         self.recipes = RecipeService(self.library, self.data, self.index, self.allergy, self.llm, ai_drafting,
                                      self.services.golden)
-        self.composer = Composer(self.services, self.index, self.words, self.recipes, self.allergy)
+        self.dishes = build_dish_lookup(self.settings, self.library, self.data.dish_rules, self.words["spelling_map"])
+        self.composer = Composer(self.services, self.index, self.words, self.recipes, self.allergy, self.dishes)
         self.versions = {
             "runtime": manifest["runtime_id"],
             "library": manifest["library"]["version"],
@@ -103,6 +105,11 @@ class Engine:
             "black_lists": self.data.black_lists["version"],
             "dish_rules": self.data.dish_rules["version"],
         }
+
+    def _dish_in_text(self, cleaned: str) -> dict | None:
+        """The dish a message names, for understand(): {"span", "exact"} or None. exact = the words are a known dish name."""
+        found = find_in_text(self.dishes, cleaned)
+        return None if found is None else {"span": found[0], "exact": found[0] in self.dishes.exact}
 
     # ------------------------------------------------------------------
     def answer(self, message: str, conversation_id: str | None = None, profile: dict | None = None) -> TurnResult:
@@ -124,7 +131,8 @@ class Engine:
         state.safety_status.update(gate.updates)
 
         # 4 understand (+ apply what a reply tells us)
-        u = understand(text, state, self.index, self.words, self.recipes.find_recipes_in_text, self.allergy.read_reply)
+        u = understand(text, state, self.index, self.words, self.recipes.find_recipes_in_text, self.allergy.read_reply,
+                       self._dish_in_text if self.dishes else None)
         if gate.emergency:
             u.type = "emergency"
         self._apply_slot_fill(u, state, text)

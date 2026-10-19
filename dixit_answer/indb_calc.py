@@ -56,6 +56,78 @@ def to_grams(amount, unit: str, code: str, food_name: str = "") -> float | None:
     return grams
 
 
+# ---------------------------------------------------------------- reading .xlsx without extra packages
+_MAIN = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
+_REL = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}"
+
+
+def _column(ref: str) -> int:
+    n = 0
+    for ch in ref:
+        if not ch.isalpha():
+            break
+        n = n * 26 + (ord(ch.upper()) - 64)
+    return n - 1
+
+
+def read_xlsx(path) -> list[list]:
+    """Rows of the first sheet of an .xlsx file as plain Python values, like openpyxl's values_only (no formulas evaluated).
+
+    Written so the chat can read INDB's tables from the project's own environment, which has no spreadsheet package.
+    """
+    import re
+    import xml.etree.ElementTree as ET
+    import zipfile
+
+    with zipfile.ZipFile(path) as archive:
+        names = set(archive.namelist())
+        shared: list[str] = []
+        if "xl/sharedStrings.xml" in names:
+            for si in ET.fromstring(archive.read("xl/sharedStrings.xml")).iter(_MAIN + "si"):
+                shared.append("".join(t.text or "" for t in si.iter(_MAIN + "t")))
+        sheet = "xl/worksheets/sheet1.xml"
+        if "xl/workbook.xml" in names and "xl/_rels/workbook.xml.rels" in names:
+            first = next(iter(ET.fromstring(archive.read("xl/workbook.xml")).iter(_MAIN + "sheet")), None)
+            if first is not None:
+                rid = first.get(_REL + "id")
+                for rel in ET.fromstring(archive.read("xl/_rels/workbook.xml.rels")):
+                    if rel.get("Id") == rid:
+                        target = rel.get("Target", "").lstrip("/")
+                        sheet = target if target.startswith("xl/") else "xl/" + target
+        root = ET.fromstring(archive.read(sheet))
+    rows: dict[int, dict[int, object]] = {}
+    for row in root.iter(_MAIN + "row"):
+        for cell in row.iter(_MAIN + "c"):
+            ref, kind = cell.get("r", ""), cell.get("t")
+            value_node = cell.find(_MAIN + "v")
+            if kind == "inlineStr":
+                value = "".join(t.text or "" for t in cell.iter(_MAIN + "t"))
+            elif value_node is None or value_node.text is None:
+                continue
+            elif kind == "s":
+                index = int(value_node.text)
+                value = shared[index] if 0 <= index < len(shared) else None
+            elif kind in ("str", "d"):
+                value = value_node.text
+            elif kind == "b":
+                value = value_node.text == "1"
+            elif kind == "e":
+                value = None
+            else:
+                text = value_node.text.strip()
+                try:
+                    value = int(text) if re.fullmatch(r"-?\d+", text) else float(text)
+                except ValueError:
+                    value = None
+            number_match = re.search(r"\d+", ref)
+            if number_match:
+                rows.setdefault(int(number_match.group()), {})[_column(ref)] = value
+    if not rows:
+        return []
+    width = max((max(cells) for cells in rows.values() if cells), default=-1) + 1
+    return [[rows.get(r, {}).get(c) for c in range(width)] for r in range(1, max(rows) + 1)]
+
+
 # ---------------------------------------------------------------- values per 100 g
 def number(value, blank_is_zero: bool = True) -> float | None:
     """A table cell as a number. Trace marks (and blanks, unless told otherwise) are zero as INDB reads them; anything else
@@ -139,10 +211,7 @@ def load_usda(library_dir: Path) -> dict[str, dict]:
 
 def load_fct(path: Path, kind: str) -> dict[str, dict]:
     """INDB's UK CoFID or US ingredient table: INDB code -> per 100 g. A row with an unreadable value is left out."""
-    import openpyxl
-    workbook = openpyxl.load_workbook(path, read_only=True, data_only=True)
-    rows = list(workbook.active.iter_rows(values_only=True))
-    workbook.close()
+    rows = read_xlsx(path)
     head = [str(h) for h in rows[0]]
     col = {name: head.index(name) for name in ("food_code", "energy_kcal", "carb_g", "protein_g", "fat_g", "fibre_g")}
     out = {}

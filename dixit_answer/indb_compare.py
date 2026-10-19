@@ -18,7 +18,8 @@ from datetime import date
 from pathlib import Path
 
 from .config import DEFAULT_LIBRARY_DIR, PROJECT_DIR
-from .indb_calc import NUTRIENTS, STRICT, WITH_PROXIES, Sources, calculate, load_fct, load_ingredient_map, load_usda
+from .indb_calc import (NUTRIENTS, STRICT, WITH_PROXIES, Sources, calculate, load_fct, load_ingredient_map, load_usda,
+                        read_xlsx)
 
 NUTRITION_DIR = PROJECT_DIR.parent / "Nutrition"
 ENERGY_FLOOR = 5.0          # kcal per 100 g; below this a percentage means nothing (water, tea)
@@ -166,10 +167,7 @@ def summarise(rows: list[dict], suspects: list[list] | None = None) -> str:
 
 # ---------------------------------------------------------------- data in, files out
 def _table(path: Path) -> list[dict]:
-    import openpyxl
-    workbook = openpyxl.load_workbook(path, read_only=True, data_only=True)
-    rows = list(workbook.active.iter_rows(values_only=True))
-    workbook.close()
+    rows = read_xlsx(path)
     head = [str(h) for h in rows[0]]
     return [dict(zip(head, r)) for r in rows[1:] if any(c is not None for c in r)]
 
