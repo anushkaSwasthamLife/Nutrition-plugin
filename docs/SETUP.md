@@ -67,6 +67,15 @@ the project, in case you keep it there.)
 Open **http://127.0.0.1:8100**. The port is 8100 so it never clashes with the Swastham website (8000, 5173). The server listens on
 this machine only (`127.0.0.1`); it is a development tool, not a deployment.
 
+**Letting a teammate try the chat from another computer.** Set `DIXIT_HOST=0.0.0.0` (in `.env` or the environment) and start the
+server as above. It prints the addresses to share, for example `http://192.168.1.20:8100`. Both computers must be on the same
+network, and Windows may ask you to allow Python through the firewall for private networks: say yes. Notes:
+
+- The chat, its answers and the feedback buttons are open to anyone who can reach that address. Use it on a trusted network only.
+- The dietitian review pages (`/review` and `/api/review/*`) change files, so they answer only the computer running the server.
+- The chat has no sign-in and nothing here is encrypted (plain http). Do not put it on the open internet.
+- To go back, remove the line or set `DIXIT_HOST=127.0.0.1`.
+
 Run the tests (about 6 to 15 minutes, no AI calls):
 
 ```
@@ -92,6 +101,7 @@ Set them in `.env` or as environment variables.
 | `DIXIT_LIBRARY_DIR` | `../Nutrition/Swastham_Nutrition_Data_Library_v1_0_5` | The library (required) |
 | `DIXIT_ENVIRONMENT` | `development` | `production` refuses all TEST ONLY and PROPOSED data, so it will not start until reviewers have signed everything |
 | `DIXIT_PORT` | `8100` | Chat page port |
+| `DIXIT_HOST` | `127.0.0.1` | Address the server listens on. `0.0.0.0` = reachable from the network (see section 4) |
 | `DIXIT_DISH_LOOKUP` | `on` | `off` skips INDB dish answers |
 | `DIXIT_VAR_DIR` | `./var` | Chat state (SQLite) and the audit log |
 | `LLM_ENV_FILE`, `LLM_PROVIDER`, `LLM_MODEL`, `LLM_BASE_URL`, `LLM_API_KEY` | mock | Optional AI wording (Groq `openai/gpt-oss-120b`) |
@@ -113,4 +123,6 @@ Set them in `.env` or as environment variables.
 | `LoadError: Hash mismatch for ...` | The library is not v1.0.5, or a file was changed. Get a fresh copy. |
 | `LoadError: Production refuses ...` | You set `DIXIT_ENVIRONMENT=production` before the data was signed. Use `development`. |
 | Port already in use | Another program has 8100. Set `DIXIT_PORT`. |
+| A teammate cannot open the page | `DIXIT_HOST` is not `0.0.0.0`, the firewall blocks Python, or the computers are on different networks. |
+| `DIXIT_HOST must be an IP address or a host name` | The value has spaces, `http://`, a port or other characters. Use `0.0.0.0` or an address like `192.168.1.20`. |
 | Tests are very slow | Antivirus or file syncing (OneDrive) scanning the `.venv` folder. Exclude it. |

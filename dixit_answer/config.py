@@ -6,7 +6,9 @@ from another `.env` named by LLM_ENV_FILE, so the Swastham Report analysis key i
 """
 from __future__ import annotations
 
+import ipaddress
 import os
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -19,6 +21,35 @@ LIBRARY_NAME = "Swastham_Nutrition_Data_Library_v1_0_5"
 # live under OneDrive (it moved there on 19 Oct 2026) and then Path.home() / "Desktop" is an empty stub.
 _BESIDE_PROJECT = PROJECT_DIR.parent / "Nutrition" / LIBRARY_NAME
 DEFAULT_LIBRARY_DIR = _BESIDE_PROJECT if _BESIDE_PROJECT.is_dir() else Path.home() / "Desktop" / "Nutrition" / LIBRARY_NAME
+
+
+LOOPBACK_HOST = "127.0.0.1"
+_HOST_NAME = re.compile(r"^(?=.{1,253}$)[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$")
+
+
+def parse_host(value: str) -> str:
+    """The address the web server listens on: an IP address or a host name. Empty means this machine only (127.0.0.1)."""
+    value = (value or "").strip()
+    if not value:
+        return LOOPBACK_HOST
+    try:
+        return str(ipaddress.ip_address(value.strip("[]")))
+    except ValueError:
+        pass
+    if _HOST_NAME.match(value) and not re.fullmatch(r"[\d.]+", value):        # "1.2.3.4.5" is a mistyped address, not a name
+        return value.lower()
+    raise ValueError(f"DIXIT_HOST must be an IP address or a host name, for example 127.0.0.1 or 0.0.0.0 (got {value!r}).")
+
+
+def is_loopback(host: str) -> bool:
+    """True for an address that only this machine can reach (127.x.x.x, ::1, localhost)."""
+    host = (host or "").strip().strip("[]").lower()
+    if host == "localhost":
+        return True
+    try:
+        return ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        return False
 
 
 def _read_env_file(path: Path) -> dict[str, str]:
@@ -48,6 +79,7 @@ class Settings:
     llm_timeout_seconds: int = 30
     llm_reasoning: str = "low"
     port: int = 8100                             # not 8000 / 5173: those are the Swastham website servers
+    host: str = LOOPBACK_HOST                    # 127.0.0.1 = this machine only; 0.0.0.0 = reachable from the network (DIXIT_HOST)
 
     @property
     def state_db(self) -> Path:
@@ -87,6 +119,7 @@ def load_settings(**overrides) -> Settings:
         llm_timeout_seconds=int(env.get("LLM_TIMEOUT_SECONDS") or 30),
         llm_reasoning=env.get("LLM_REASONING", "low"),
         port=int(env.get("DIXIT_PORT") or 8100),
+        host=parse_host(env.get("DIXIT_HOST", "")),
     )
     for key, value in overrides.items():
         setattr(settings, key, value)

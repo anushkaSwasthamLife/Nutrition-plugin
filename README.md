@@ -265,3 +265,10 @@ When the whole message is a dish name ("poha", "what is masala dosa?", "tell me 
 dish's calories, the same answer as "how many calories in poha". A message with anything else in it ("I like poha", "is poha good for
 me") is not taken this way. A name that fits several dishes ("biryani") asks which one is meant; a dish the person cannot have
 (allergy, diet) is refused as before. Tests: `tests/test_bare_dish.py`.
+
+## Letting a teammate open the chat (`DIXIT_HOST`, 21 Oct 2026)
+
+By default the server listens on this machine only. Set `DIXIT_HOST=0.0.0.0` to let a teammate on the same network open it; the
+start-up message prints the address to share. The chat is then open to anyone who can reach it (no sign-in, plain http), so use a trusted
+network. The dietitian review pages (`/review`, `/api/review/*`) change files and answer only the computer running the server.
+Steps and troubleshooting: `docs/SETUP.md` section 4. Tests: `tests/test_host.py`.

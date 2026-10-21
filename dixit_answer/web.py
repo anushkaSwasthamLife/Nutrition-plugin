@@ -1,16 +1,19 @@
 """Local chat page for trying the pipeline in a browser (development only).
 
 Run:  .venv\\Scripts\\python.exe -m dixit_answer.web      then open http://127.0.0.1:8100
+
+The server listens on this machine only unless DIXIT_HOST says otherwise (0.0.0.0 lets a teammate on the network open the chat).
+Then the chat stays open to the network, but the dietitian review pages and their API stay on this machine: they change files.
 """
 from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
-from .config import DATA_DIR, load_settings
+from .config import DATA_DIR, is_loopback, load_settings
 from .foods import LibrarySearch
 from .lists import bad_mapping_pairs
 from .pipeline import Engine
@@ -100,6 +103,14 @@ def create_app(engine: Engine | None = None, data_dir=None) -> FastAPI:
         return {"ok": True}
 
     # ---- dietitian review of unknown items (plan item D). Development build: production keeps this in the app's database.
+    def this_machine_only(request: Request) -> None:
+        """With the server open to the network, the review pages (they change files) answer only the machine they run on."""
+        if is_loopback(getattr(get_engine().settings, "host", "127.0.0.1")):
+            return                                  # nobody else can connect anyway
+        client = request.client.host if request.client else ""
+        if not is_loopback(client):
+            raise HTTPException(status_code=403, detail="The review pages can only be opened on the machine that runs this server.")
+
     def get_queue() -> ReviewQueue:
         eng = get_engine()
         if eng.settings.environment == "production":
@@ -108,11 +119,11 @@ def create_app(engine: Engine | None = None, data_dir=None) -> FastAPI:
             app.state.queue = ReviewQueue(eng.settings.var_dir / "review_queue.sqlite3", eng.settings.audit_log)
         return app.state.queue
 
-    @app.get("/review")
+    @app.get("/review", dependencies=[Depends(this_machine_only)])
     def review_page():
         return FileResponse(STATIC / "review.html")
 
-    @app.get("/api/review/items")
+    @app.get("/api/review/items", dependencies=[Depends(this_machine_only)])
     def review_items():
         queue, eng = get_queue(), get_engine()
         queue.sync()
@@ -122,7 +133,7 @@ def create_app(engine: Engine | None = None, data_dir=None) -> FastAPI:
                 "categories": categories, "allergens": sorted(eng.data.allergen_map["allergens"]),
                 "food_master_version": eng.data.food_master["version"]}
 
-    @app.get("/api/review/search")
+    @app.get("/api/review/search", dependencies=[Depends(this_machine_only)])
     def review_search(q: str = Query(..., min_length=2, max_length=60)):
         eng = get_engine()
         if app.state.search is None:
@@ -136,7 +147,7 @@ def create_app(engine: Engine | None = None, data_dir=None) -> FastAPI:
                         "per_100g": rec.get("nutrients_per_100g") or {}})
         return {"results": out}
 
-    @app.post("/api/review/decide")
+    @app.post("/api/review/decide", dependencies=[Depends(this_machine_only)])
     def review_decide(body: DecideIn):
         queue, eng = get_queue(), get_engine()
         fields = {k: v for k, v in body.model_dump().items() if k not in {"word", "kind", "action", "by"} and v not in (None, "")}
@@ -148,7 +159,7 @@ def create_app(engine: Engine | None = None, data_dir=None) -> FastAPI:
         except QueueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    @app.post("/api/review/reopen")
+    @app.post("/api/review/reopen", dependencies=[Depends(this_machine_only)])
     def review_reopen(body: ReopenIn):
         try:
             get_queue().reopen(body.word, body.kind)
@@ -156,7 +167,7 @@ def create_app(engine: Engine | None = None, data_dir=None) -> FastAPI:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         return {"ok": True}
 
-    @app.post("/api/review/apply")
+    @app.post("/api/review/apply", dependencies=[Depends(this_machine_only)])
     def review_apply(body: ApplyIn):
         queue, eng = get_queue(), get_engine()
         try:
@@ -174,11 +185,29 @@ def create_app(engine: Engine | None = None, data_dir=None) -> FastAPI:
     return app
 
 
+def network_urls(host: str, port: int) -> list[str]:
+    """The addresses a teammate can type: the machine's own address when the server listens on every interface."""
+    import socket
+
+    if host not in {"0.0.0.0", "::"}:
+        return [f"http://{host}:{port}"]
+    try:
+        addresses = sorted({info[4][0] for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET) if not is_loopback(info[4][0])})
+    except OSError:
+        addresses = []
+    return [f"http://{a}:{port}" for a in addresses] or [f"http://<this machine's address>:{port}"]
+
+
 def main() -> None:
     import uvicorn
 
     settings = load_settings()
-    uvicorn.run(create_app(), host="127.0.0.1", port=settings.port)
+    if not is_loopback(settings.host):
+        print(f"DIXIT_HOST={settings.host}: the chat is open to anyone who can reach this machine on port {settings.port}. "
+              "The review pages stay on this machine. Use it on a trusted network only.", flush=True)
+        for url in network_urls(settings.host, settings.port):
+            print("  teammates can open", url, flush=True)
+    uvicorn.run(create_app(), host=settings.host, port=settings.port)
 
 
 if __name__ == "__main__":
