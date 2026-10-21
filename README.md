@@ -243,3 +243,18 @@ still get an AI-drafted, gate-checked recipe, except dry pulses (they need soaki
 for it gets an honest answer: it is a sweet, and the Golden Rules do not allow a sweet as a home-meal dish, so it is never offered on its
 own. `khichdi` and `chilla` were added as allowed home-meal dish kinds (to confirm with Dixit). Most older tests run against the first eight
 recipes (`CLASSIC_RECIPES` in `tests/conftest.py`); `tests/test_recipe_variety.py` covers the full collection.
+
+## Hindi in Devanagari script (21 Oct 2026)
+
+`dixit_answer/hindi.py` rewrites a message before anything reads it: "पोहा में कितनी कैलोरी है" reaches the pipeline as
+"how much calories in poha". Each Devanagari word is looked up in a table of everyday words (questions, nutrients, conditions,
+foods); a word that is not in the table is spelled out letter by letter, so a dish name still reaches the food and dish lookup.
+A few sentence shapes are rewritten as English questions (how much ... in ..., can I eat ..., recipe for ..., X or Y, allergic to ...),
+and the same shapes work for Roman Hindi ("dal mein kitna protein hai"). Text with no Devanagari and no such shape is not changed.
+
+- The safety check reads the original Devanagari text and the rewritten text together, so the Devanagari emergency phrases still
+  stop the turn (chest pain, breathing, fainting, low sugar, suicide ...).
+- Numbers still come from the same locked facts; the answer is in English. A word we cannot read is named in Roman letters and
+  reported as an unknown item, never guessed.
+- Add a word by adding it to the table in `hindi.py` (Devanagari, then the Roman word the food list already knows).
+Tests: `tests/test_hindi.py`.

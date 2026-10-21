@@ -20,6 +20,7 @@ from .consistency import find_problems
 from .dish_lookup import build_dish_lookup, find_all_in_text
 from .lists import apply_blocked_records
 from .foods import FoodIndex
+from .hindi import translate as hindi_translate
 from .llm import LLMError, make_llm
 from .emergency import EmergencyRules
 from .loader import LoadError, load_library, load_manifest, load_swastham_data
@@ -127,7 +128,10 @@ class Engine:
         apply_profile_safety(profile, state)
         if profile.get("diet_type") and state.food_preference == "unknown":
             state.food_preference = profile["diet_type"]       # the app already knows: never ask it in the chat
-        gate = safety_gate.check(text, state, self.words, self.emergency)
+        original = text
+        text = hindi_translate(text)                      # Devanagari and Roman-Hindi question shapes, read as plain words
+        gate_text = original if text == original else f"{original} . {text}"      # the emergency phrases include Devanagari ones
+        gate = safety_gate.check(gate_text, state, self.words, self.emergency)
         state.safety_status.update(gate.updates)
 
         # 4 understand (+ apply what a reply tells us)
@@ -261,7 +265,7 @@ class Engine:
                                "suggested_food_id": item["suggested_food_id"]})
         if draft.backlog_request:
             self.audit.append({"kind": "recipe_backlog", "at": time.strftime("%Y-%m-%dT%H:%M:%S"),
-                               "conversation_id": conversation_id, "turn": state.turn, "message": text[:200],
+                               "conversation_id": conversation_id, "turn": state.turn, "message": original[:200],
                                "ingredients": plan.ingredients, "recipe_ids": plan.recipe_ids})
         return result
 
