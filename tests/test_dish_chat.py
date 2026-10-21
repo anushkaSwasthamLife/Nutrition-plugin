@@ -254,9 +254,10 @@ def test_nonsense_never_gets_a_dish_number(chat_engine, message):
 
 
 @needs_data
-def test_a_bare_dish_name_is_not_turned_into_a_nutrition_answer(chat_engine):
-    r = ask(chat_engine, "poha")
-    assert r.type != "neutral_nutrient_lookup"
+def test_a_bare_dish_name_is_a_nutrition_answer_but_a_sentence_about_it_is_not(chat_engine):
+    """Since 21 Oct 2026 the whole message being a dish name gives its calories (tests/test_bare_dish.py); anything more does not."""
+    assert ask(chat_engine, "poha").type == "neutral_nutrient_lookup"
+    assert ask(chat_engine, "I like poha").type != "neutral_nutrient_lookup"
 
 
 @needs_data

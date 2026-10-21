@@ -258,3 +258,10 @@ and the same shapes work for Roman Hindi ("dal mein kitna protein hai"). Text wi
   reported as an unknown item, never guessed.
 - Add a word by adding it to the table in `hindi.py` (Devanagari, then the Roman word the food list already knows).
 Tests: `tests/test_hindi.py`.
+
+## A dish name on its own (21 Oct 2026)
+
+When the whole message is a dish name ("poha", "what is masala dosa?", "tell me about upma", "poha nutrition") the chat gives that
+dish's calories, the same answer as "how many calories in poha". A message with anything else in it ("I like poha", "is poha good for
+me") is not taken this way. A name that fits several dishes ("biryani") asks which one is meant; a dish the person cannot have
+(allergy, diet) is refused as before. Tests: `tests/test_bare_dish.py`.

@@ -253,6 +253,25 @@ def question_part(text: str) -> str:
     return " ".join(kept) if kept else (text or "")
 
 
+ABOUT = re.compile(r"^(?:what is|what's|what s|whats|what are|what about|tell me about|tell me more about|about|info on|information on|show me|nutrition of|nutrition for)\s+")
+BARE_FILLER = {"a", "an", "the", "some", "one", "and", "aur", "or", "please", "pls", "ok", "okay"}
+BARE_TAIL = re.compile(r"\s+(?:nutrition|info|information|details)$")
+
+
+def _bare_dish(focus: str, dish_finder) -> bool:
+    """True when the whole message is one or more dish names ("poha", "what is masala dosa", "upma and poha") and nothing else."""
+    words = BARE_TAIL.sub("", ABOUT.sub("", focus.strip(), count=1)).strip()
+    if not words or len(words) > 80:
+        return False
+    hits = dish_finder(words)
+    if not hits:
+        return False
+    rest = f" {words} "
+    for hit in hits:
+        rest = rest.replace(f" {hit['span']} ", " ", 1)
+    return all(w in BARE_FILLER for w in rest.split())
+
+
 def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_finder=None, allergy_reader=None,
                dish_finder=None) -> Understanding:
     cleaned = clean(text, word_lists["spelling_map"])
@@ -318,5 +337,7 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
         elif hits and foods and question_type == "neutral_nutrient_lookup":
             inside = {m.food_id for m in mentions for h in hits if has_phrase(h["span"], m.alias) and h["span"] != m.alias}
             u.foods = [f for f in u.foods if f not in inside]      # "calories in chilli paneer" is the dish, not the food paneer
+    elif dish_finder and not u.slot_fill and not foods and question_type in {"out_of_scope", "food_choice_guidance"} and _bare_dish(focus, dish_finder):
+        question_type = "neutral_nutrient_lookup"           # "poha", "what is poha?": the whole message is a dish name, so give its calories
     u.type = question_type
     return u
