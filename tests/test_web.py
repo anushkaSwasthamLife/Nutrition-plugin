@@ -17,5 +17,5 @@ def test_chat_feedback_and_audit(engine):
     assert client.post("/api/feedback", json={"conversation_id": "x", "turn": 1, "kind": "bogus"}).status_code == 400
     lines = [json.loads(line) for line in engine.settings.audit_log.read_text(encoding="utf-8").splitlines()]
     turns = [l for l in lines if l["kind"] == "turn" and l["conversation_id"] == first["conversation_id"]]
-    assert len(turns) == 2 and turns[0]["versions"]["library"] == "1.0.4"
+    assert len(turns) == 2 and turns[0]["versions"]["library"] == "1.0.5"
     assert any(l["kind"] == "feedback" for l in lines)

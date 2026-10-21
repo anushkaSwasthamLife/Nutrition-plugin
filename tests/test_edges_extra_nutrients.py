@@ -235,7 +235,7 @@ def _settings(engine, library_dir, environment="development"):
 def test_production_mode_loads_the_new_library_with_the_same_fields(engine):
     lib = load_library(_settings(engine, DEFAULT_LIBRARY_DIR, "production"), load_manifest())
     rec = next(iter(lib.records.values()))
-    assert lib.report["library_version"] == "1.0.4" and all(k in rec["nutrients_per_100g"] for k in EXTRA_NUTRIENTS)
+    assert lib.report["library_version"] == "1.0.5" and all(k in rec["nutrients_per_100g"] for k in EXTRA_NUTRIENTS)
     assert not any(lib.is_indian(r) for r in lib.records)
 
 

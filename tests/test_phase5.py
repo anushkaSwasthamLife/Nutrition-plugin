@@ -55,7 +55,7 @@ GOOD = draft("Lauki Tomato Sabji", [("FOOD-LAUKI", 250), ("FOOD-TOMATO", 100), (
 
 # ---------------------------------------------------------------- data and filter
 def test_zero_macro_oil_records_are_flagged(engine):
-    assert FLAG_MACROS_INCOMPLETE in engine.library.flags["USDA-748278"]        # "Oil, canola": 900 kcal, 0 g fat
+    assert FLAG_MACROS_INCOMPLETE in engine.library.flags["SURVEY-2710672"]    # "Black Russian": 279 kcal, almost no macros (canola oil, 900 kcal and 0 g fat, was corrected in v1.0.5)
     assert FLAG_MACROS_INCOMPLETE not in engine.library.flags.get("LEGACY-171017", set())
 
 

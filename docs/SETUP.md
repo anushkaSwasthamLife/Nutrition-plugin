@@ -34,7 +34,7 @@ Put it **next to** the project folder, with this name and layout:
 D:\work\
   Nutrition-plugin\                     <- this repo
   Nutrition\                            <- the data folder
-    Swastham_Nutrition_Data_Library_v1_0_4\      REQUIRED: the chat will not start without it
+    Swastham_Nutrition_Data_Library_v1_0_5\      REQUIRED: the chat will not start without it
       01_data\  (the .jsonl files)
     indb_source\                                  optional: dish answers such as "calories in poha"
       recipes.xlsx  INDB.xlsx  UK_fct.xlsx  US_fct.xlsx  recipes_names.xlsx  recipes_servingsize.xlsx
@@ -48,10 +48,10 @@ If you keep the data somewhere else, set two paths in `.env`:
 
 ```
 DIXIT_NUTRITION_DIR=D:\data\Nutrition
-DIXIT_LIBRARY_DIR=D:\data\Nutrition\Swastham_Nutrition_Data_Library_v1_0_4
+DIXIT_LIBRARY_DIR=D:\data\Nutrition\Swastham_Nutrition_Data_Library_v1_0_5
 ```
 
-The library must be **exactly version 1.0.4**: the start-up check compares each file with a fingerprint stored in
+The library must be **exactly version 1.0.5**: the start-up check compares each file with a fingerprint stored in
 `dixit_answer/data/manifest.json` and refuses a different copy.
 
 **Do not commit the data folder to git.** Its Indian records come from NIN-derived sources whose licence for commercial use is not
@@ -75,7 +75,7 @@ Run the tests (about 6 to 15 minutes, no AI calls):
 
 ## 5. Check that it works
 
-1. The page loads, and `http://127.0.0.1:8100/api/info` shows `"environment":"development"` and library version `1.0.4`.
+1. The page loads, and `http://127.0.0.1:8100/api/info` shows `"environment":"development"` and library version `1.0.5`.
 2. Ask: **how many calories in a plate of poha**. Expected: *A bowl of poha has about 161 calories. (dev data)*
 3. Ask: **calories in cabbage rolls**. Expected: it asks which one (dry or curry).
 
@@ -89,7 +89,7 @@ Set them in `.env` or as environment variables.
 | Setting | Default | Meaning |
 |---|---|---|
 | `DIXIT_NUTRITION_DIR` | `../Nutrition` | Folder with `indb_source` and `releases` |
-| `DIXIT_LIBRARY_DIR` | `../Nutrition/Swastham_Nutrition_Data_Library_v1_0_4` | The library (required) |
+| `DIXIT_LIBRARY_DIR` | `../Nutrition/Swastham_Nutrition_Data_Library_v1_0_5` | The library (required) |
 | `DIXIT_ENVIRONMENT` | `development` | `production` refuses all TEST ONLY and PROPOSED data, so it will not start until reviewers have signed everything |
 | `DIXIT_PORT` | `8100` | Chat page port |
 | `DIXIT_DISH_LOOKUP` | `on` | `off` skips INDB dish answers |
@@ -110,7 +110,7 @@ Set them in `.env` or as environment variables.
 | Message | Cause and fix |
 |---|---|
 | `LoadError: Library file missing: ...` | The data folder is not where the project looks. Check section 3 or set `DIXIT_LIBRARY_DIR`. |
-| `LoadError: Hash mismatch for ...` | The library is not v1.0.4, or a file was changed. Get a fresh copy. |
+| `LoadError: Hash mismatch for ...` | The library is not v1.0.5, or a file was changed. Get a fresh copy. |
 | `LoadError: Production refuses ...` | You set `DIXIT_ENVIRONMENT=production` before the data was signed. Use `development`. |
 | Port already in use | Another program has 8100. Set `DIXIT_PORT`. |
 | Tests are very slow | Antivirus or file syncing (OneDrive) scanning the `.venv` folder. Exclude it. |

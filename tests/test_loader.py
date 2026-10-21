@@ -8,16 +8,17 @@ from dixit_answer.loader import (FLAG_MACRO_MISMATCH, FLAG_SERVING_UNCLEAR, Load
 
 def test_development_loads_both_sources_with_pinned_counts(engine):
     report = engine.library.report
-    assert report["eligible"] == {"usda": 13554, "indian": 865}
+    assert report["eligible"] == {"usda": 13560, "indian": 865}
     assert set(report["sources"]) == {"usda", "indian"}
 
 
 def test_quality_gates_catch_the_known_bad_records(engine):
     flags = engine.library.flags
-    assert FLAG_MACRO_MISMATCH in flags["NUTR-INDB-ASC205"]          # lauki kofta curry, 495 g fat per bowl (D1)
+    assert FLAG_MACRO_MISMATCH in flags["SURVEY-2705587"]            # cocoa powder: macros do not add up to 228 kcal (D1); lauki kofta (495 g fat) was corrected in v1.0.5
+    assert FLAG_MACRO_MISMATCH not in flags.get("NUTR-INDB-ASC205", set())
     assert FLAG_SERVING_UNCLEAR in flags["NUTR-INDB-ASC096"]         # "4 chapati" at 73 kcal (D2)
     assert FLAG_SERVING_UNCLEAR in flags["NUTR-INDB-ASC144"]         # "4 idli" at 34 kcal (D2)
-    assert not engine.library.usable("NUTR-INDB-ASC205")
+    assert not engine.library.usable("SURVEY-2705587")
 
 
 def test_bad_hash_stops_start(settings):

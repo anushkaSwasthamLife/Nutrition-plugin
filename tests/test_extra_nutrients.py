@@ -11,7 +11,7 @@ from dixit_answer.consistency import find_problems
 from dixit_answer.person import Person
 from dixit_answer.recipes import EXTRA_NUTRIENTS, CheckedRecipe
 
-OLD_LIBRARY = Path(__file__).resolve().parents[2] / "Nutrition" / "Swastham_Nutrition_Data_Library_v1_0_3" / "01_data" / "nutrition_usda_reference.jsonl"
+OLD_LIBRARY = Path(__file__).resolve().parents[2] / "Nutrition" / "Swastham_Nutrition_Data_Library_v1_0_4" / "01_data" / "nutrition_usda_reference.jsonl"
 
 
 def _recipe(items, steps=None):
@@ -22,7 +22,7 @@ def _recipe(items, steps=None):
 
 def test_library_v104_carries_the_six_nutrients(engine):
     usda = [r for r in engine.library.records.values() if r.get("source_collection") == "USDA_NUTRIENT_REFERENCE"]
-    assert len(usda) == 13554 and engine.library.report["library_version"] == "1.0.4"
+    assert len(usda) == 13560 and engine.library.report["library_version"] == "1.0.5"
     for rec in usda:
         for key in EXTRA_NUTRIENTS:
             assert key in rec["nutrients_per_100g"] and key in rec["nutrients_per_serving"]
@@ -40,21 +40,22 @@ def test_unknown_stays_null_and_is_never_zero(engine):
     assert not any("added_sugar_g" in r["nutrients_per_100g"] for r in usda)        # no USDA download has it
 
 
-@pytest.mark.skipif(not OLD_LIBRARY.exists(), reason="library v1.0.3 is not on this PC")
-def test_nothing_else_changed_since_v103(engine):
-    new_ids, checked = {}, 0
+@pytest.mark.skipif(not OLD_LIBRARY.exists(), reason="library v1.0.4 is not on this PC")
+def test_nothing_but_the_corrected_values_changed_since_v104(engine):
+    """v1.0.5 corrects values and status; every identity field of every v1.0.4 record, and the six extra nutrients, stay as they were."""
+    checked = 0
     for line in OLD_LIBRARY.read_text(encoding="utf-8").splitlines():
         old = json.loads(line)
         rec = engine.library.records.get(old["nutrition_record_id"])
-        if rec is None:
-            continue
-        stripped = copy.deepcopy(rec)
-        for part in ("nutrients_per_100g", "nutrients_per_serving"):
-            for key in EXTRA_NUTRIENTS:
-                stripped[part].pop(key)
-        assert stripped == old
+        assert rec is not None, old["nutrition_record_id"]
+        for key in ("nutrition_record_id", "source_record_id", "normalized_name", "aliases", "source_collection", "record_type", "category", "subtype",
+                    "serving", "retrieval"):
+            assert rec[key] == old[key], (old["nutrition_record_id"], key)
+        for key in EXTRA_NUTRIENTS:
+            assert rec["nutrients_per_100g"][key] == old["nutrients_per_100g"][key], (old["nutrition_record_id"], key)
         checked += 1
-    assert checked > 13000
+    assert checked == 13554
+    assert len([r for r in engine.library.records.values() if r.get("source_collection") == "USDA_NUTRIENT_REFERENCE"]) == checked + 6
 
 
 def test_totals_add_up_the_new_nutrients_exactly(engine):
@@ -132,8 +133,8 @@ def test_startup_check_catches_a_checkable_nutrient_the_library_does_not_carry(e
 
 
 def test_manifest_pins_the_new_library(engine):
-    assert engine.data.manifest["library"]["version"] == "1.0.4"
-    assert engine.versions["library"] == "1.0.4"
+    assert engine.data.manifest["library"]["version"] == "1.0.5"
+    assert engine.versions["library"] == "1.0.5"
 
 
 def test_ai_drafting_now_runs_for_blood_pressure_and_a_salty_draft_is_repaired(settings):

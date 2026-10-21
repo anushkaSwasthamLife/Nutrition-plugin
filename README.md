@@ -17,7 +17,7 @@ copy .env.example .env
 ```
 
 **The repo does not hold the nutrition data.** The chat will not start without the library folder
-`Nutrition\Swastham_Nutrition_Data_Library_v1_0_4`, kept next to this project folder (or set `DIXIT_LIBRARY_DIR`). The INDB files in
+`Nutrition\Swastham_Nutrition_Data_Library_v1_0_5`, kept next to this project folder (or set `DIXIT_LIBRARY_DIR`). The INDB files in
 `Nutrition\indb_source` and `Nutrition\releases` are optional and switch on the dish answers ("calories in poha"). The Indian records
 are NIN-derived with the licence unconfirmed, so share that folder privately and never commit it.
 
@@ -52,7 +52,7 @@ is sent.
 
 `food_master.json`, `approved_list_test.json`, `cooking_tips_test.json`, `word_lists.json` are drafts; `golden_rules_stub.json`
 only repeats what the live Dixit app said on 13 Oct 2026. Production refuses all of them until a dietitian / Dixit sign them.
-The nutrition library is read in place from the `Nutrition` folder beside the project (`Swastham_Nutrition_Data_Library_v1_0_4`) and
+The nutrition library is read in place from the `Nutrition` folder beside the project (`Swastham_Nutrition_Data_Library_v1_0_5`) and
 checked against the hashes in `data/manifest.json`. Production loads USDA only.
 
 ## Recipes (phase 5)
@@ -143,7 +143,7 @@ production keeps the queue in the app database. Tests: `tests/test_review_queue.
 
 ## Extra nutrients (item E, 16 Oct 2026)
 
-Library **v1.0.4** adds six nutrients per 100 g to every USDA record: `sodium_mg`, `sugars_g`, `saturated_fat_g`, `cholesterol_mg`,
+Library **v1.0.4** added six nutrients per 100 g to every USDA record: `sodium_mg`, `sugars_g`, `saturated_fat_g`, `cholesterol_mg`,
 `potassium_mg`, `phosphorus_mg`. They come from the official USDA files via the USDA workbook (Fix 20, Change Log section 20), and
 every other value is identical to v1.0.3. `null` means USDA publishes no value: the recipe maths treats it as missing data
 ("no nutrition data for X"), never as zero. Added sugars are in none of the three USDA downloads, so `added_sugar_g` stays
@@ -151,8 +151,11 @@ unverifiable and the reviewer must choose another route (limit `sugars_g`, or fi
 
 The gate now adds up the six nutrients for the whole dish and checks any limit in `condition_limits_test.json` that names them
 (`verifiable_nutrients`). They are never shown in answers. At start-up, every nutrient marked checkable must be one the maths adds
-up and one the library carries. The library is built by `Desktop\Nutrition\usda_checks\build_library_v1_0_4.py`.
-Known gap: workbook fixes 3 to 19 (energy corrections, duplicates, raw or cooked state) are not yet in the library records.
+up and one the library carries. The library is built by `Desktop\Nutrition\usda_checks\build_library_v1_0_5.py`.
+Library **v1.0.5** also carries workbook fixes 3 to 19 and the Indian corrections: USDA energy and fibre corrections, 461
+`approved_flagged` records with a usage constraint, 6 new USDA records (13,560), gram weights for all 894 Indian recipes, and 103
+fried dishes calibrated to USDA analogues (proposed, pending dietitian sign-off). USDA fibre and net carbohydrate are `null`
+where USDA does not measure fibre.
 Tests: `tests/test_extra_nutrients.py`.
 
 ## Emergency check: how a message is read (EM-0.1.3)

@@ -14,7 +14,7 @@ PACKAGE_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = PACKAGE_DIR.parent
 DATA_DIR = PACKAGE_DIR / "data"
 
-LIBRARY_NAME = "Swastham_Nutrition_Data_Library_v1_0_4"
+LIBRARY_NAME = "Swastham_Nutrition_Data_Library_v1_0_5"
 # The Nutrition folder sits beside this project on the Desktop. Follow the project's own location, because the Desktop can
 # live under OneDrive (it moved there on 19 Oct 2026) and then Path.home() / "Desktop" is an empty stub.
 _BESIDE_PROJECT = PROJECT_DIR.parent / "Nutrition" / LIBRARY_NAME

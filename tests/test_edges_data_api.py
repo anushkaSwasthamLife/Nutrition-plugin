@@ -33,7 +33,7 @@ def with_library(settings, path):
 
 
 def test_untouched_copy_loads(settings, library_copy):
-    assert load_library(with_library(settings, library_copy)).report["eligible"]["usda"] == 13554
+    assert load_library(with_library(settings, library_copy)).report["eligible"]["usda"] == 13560
 
 
 def test_one_changed_byte_stops_start(settings, library_copy, tmp_path):

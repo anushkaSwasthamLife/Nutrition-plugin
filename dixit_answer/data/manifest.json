@@ -3,21 +3,21 @@
   "note": "Release bundle for the Dixit answer pipeline. The loader checks every pin at start and stops on any mismatch.",
   "library": {
     "name": "Swastham_Nutrition_Data_Library",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "files": {
       "indian": {
         "path": "01_data/nutrition_indian_meals.jsonl",
-        "sha256": "5f3f89306192d21fc053d65d369edb7d5d7edf8117829785bfad868e840a55cd",
+        "sha256": "116c13c6d398bb264e43d16d9d7c5a854121371a9b030c78677692299efa9cc6",
         "eligible_count": 865
       },
       "usda": {
         "path": "01_data/nutrition_usda_reference.jsonl",
-        "sha256": "3e8a55dc5f29a7ec86378e39feadee0f563bb32c3c1116cf890aa7f42b7a894f",
-        "eligible_count": 13554
+        "sha256": "2f0c8071b39db9553f0df078210caba9cb92499016b2548d190628d9a9722e03",
+        "eligible_count": 13560
       },
       "quarantine": {
         "path": "01_data/quarantined_indian_records.jsonl",
-        "sha256": "b4c02ff96393495456ee26db84d9ebdf3a5eaa02ec1ad9d2b5637285b657d10f",
+        "sha256": "0adfa427d277fd9cc99a89bce078c6634371c9cdbb0d53cead34917744f59b18",
         "count": 29
       }
     }
