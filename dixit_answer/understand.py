@@ -66,6 +66,11 @@ EXCLUDE = re.compile(r"\b(?:other than|apart from|aside from|except for|except|b
 # "what else", "any other", "something different": a follow-up that only makes sense after the last answer
 MORE = re.compile(r"\b(what else|anything else|something else|any other|any more|more options|other options|another one|another|one more|"
                   r"something different|show more|different one|other ones?|else|more)\b")
+# "why?", "tell me more", "where is that from": only the written reason or source of the last answer is given, never a new claim
+EXPLAIN_FOLLOW = re.compile(r"^(?:ok |okay |but |and |so )?(?:why|why so|why is that|why is it|why is that so|how come|tell me more|more details|more info|"
+                            r"more information|explain|explain that|explain it|explain more|explain please|what do you mean|how so|where is that from|"
+                            r"where is this from|where does that come from|where does this come from|source|sources|how do you know|reason|the reason|"
+                            r"what is the reason|why please|why is this)$")
 RECIPE_FLOW = {"recipe_request", "meal_from_ingredients"}
 TOPIC_SABJI = re.compile(r"\b(sabji|vegetable|curry)\b")
 
@@ -443,6 +448,11 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
             u.foods = [f for f in u.foods if f not in inside]      # "calories in chilli paneer" is the dish, not the food paneer
     elif dish_finder and not u.slot_fill and not foods and question_type in {"out_of_scope", "food_choice_guidance"} and _bare_dish(focus, dish_finder):
         question_type = "neutral_nutrient_lookup"           # "poha", "what is poha?": the whole message is a dish name, so give its calories
+    if ((question_type in {"out_of_scope", "food_choice_guidance"} or (question_type == "source_fact_lookup" and (getattr(state, "last_explain", None) or {}).get("kind") == "recipe"))
+            and not u.slot_fill and EXPLAIN_FOLLOW.match(cleaned)
+            and getattr(state, "last_explain", None) and state.turn - getattr(state, "last_explain_turn", -99) <= RECENT_TURNS):
+        u.type = "explain_last"
+        return u
     last = getattr(state, "last_question", None) or {}
     if (question_type in {"out_of_scope", "food_choice_guidance", "food_allowed"} and not u.slot_fill and not foods and len(cleaned.split()) <= 8
             and MORE.search(cleaned) and last.get("type") in RECIPE_FLOW):

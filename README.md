@@ -293,3 +293,10 @@ A short follow-up is now read in the light of the last answer, in the same chat:
   ("poha"); "what about dal?" asks the same nutrient about dal, or "can I eat dal" after a can-I-eat question; "is it good for
   diabetes" means the food just discussed. This applies within three turns and only to short messages that name no food of their own.
 Tests: `tests/test_followups.py`.
+
+## "Why?" and "tell me more" (21 Oct 2026)
+
+After an answer, "why", "tell me more", "where is that from" and similar short messages get only what is already written down
+(`dixit_answer/explain.py`): for a recipe, its approved reason and how the nutrition was calculated; for a number, which source it
+came from; for a programme answer ("rice is allowed"), a plain "I don't have a written reason for that yet, please ask your Dixit
+coach". No new claim is made. It works within three turns of the answer. Tests: `tests/test_explain.py`.

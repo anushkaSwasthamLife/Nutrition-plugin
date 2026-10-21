@@ -40,6 +40,8 @@ class ChatState:
     last_subject_kind: str = ""                              # "nutrient" (a calories / protein question) or "allowed" (can I eat it)
     last_nutrient: str = ""                                  # calories | protein | carbs | fat | fibre, as asked
     last_subject_turn: int = -99
+    last_explain: dict | None = None                         # what "why?" / "tell me more" may say about the last answer: {"kind", "lines"}
+    last_explain_turn: int = -99
     recipes_shown: list = field(default_factory=list)        # approved recipe IDs already shown in this chat ("what else" skips them)
     diabetes_status: str = "unknown"                         # unknown | diabetic | prediabetic | non_diabetic | currently_non_diabetic
     prior_diabetes_history: bool | None = None
@@ -75,7 +77,7 @@ class ChatState:
         for key in SAFETY_FIELDS:
             if state.safety_status.get(key) not in ("yes", "no", "unknown"):
                 state.safety_status[key] = "unknown"
-        for key in ("last_followup", "last_question", "pending_confirm"):
+        for key in ("last_followup", "last_question", "pending_confirm", "last_explain"):
             if getattr(state, key) is not None and not isinstance(getattr(state, key), dict):
                 setattr(state, key, None)
         for key in ("allergies",):

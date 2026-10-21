@@ -131,6 +131,9 @@ def make_plan(u: Understanding, state: ChatState, emergency: bool = False, aller
     if u.type == "out_of_scope":
         plan.blocks = ["out_of_scope"]
         return plan
+    if u.type == "explain_last":
+        plan.blocks = ["explain_last"]
+        return plan
     if u.type == "support_wellbeing":
         plan.blocks, plan.rules, plan.max_words = ["support"], ["R13"], 140
         return plan

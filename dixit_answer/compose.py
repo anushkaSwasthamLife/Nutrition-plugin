@@ -149,6 +149,9 @@ class Composer:
                 d.lines.append(lock("T", topic["urgent"]))
                 d.lines.append(lock("T", topic["bridge"]))
                 d.support_sources = [f["id"] for f in topic["facts"]]
+            elif block == "explain_last":
+                for line in (state.last_explain or {}).get("lines", []):
+                    d.lines.append(lock("T", line))
             elif block == "out_of_scope":
                 free("I can only help with food, meals and the Dixit programme. Is there something about your meals I can help with?")
             elif block == "opening":

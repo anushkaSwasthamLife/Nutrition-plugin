@@ -21,6 +21,7 @@ from .dish_lookup import build_dish_lookup, find_all_in_text
 from .lists import apply_blocked_records
 from .foods import FoodIndex
 from .hindi import translate as hindi_translate
+from .explain import explain_lines
 from .semantics import SemanticJudge
 from .llm import LLMError, make_llm
 from .emergency import EmergencyRules
@@ -235,11 +236,15 @@ class Engine:
                 state.consultant_asked_turn = state.turn
         else:
             state.last_followup = None
+        if u.type != "explain_last":
+            explain = explain_lines(draft, plan, self.library)
+            if explain:
+                state.last_explain, state.last_explain_turn = explain, state.turn
         if u.subject:
             state.last_subject, state.last_subject_kind, state.last_subject_turn = u.subject, u.subject_kind, state.turn
             if u.subject_nutrient:
                 state.last_nutrient = u.subject_nutrient
-        if u.type not in {"followup_reply", "greeting_thanks", "out_of_scope"}:
+        if u.type not in {"followup_reply", "greeting_thanks", "out_of_scope", "explain_last"}:
             state.last_question = {"type": plan.type, "topic": plan.topic, "foods": plan.focus_foods,
                                    "recipe_ids": plan.recipe_ids, "wants_list": plan.wants_list,
                                    "recipe_foods": ([i["food"] for i in draft.recipe.ingredients] if draft.recipe else None)}
