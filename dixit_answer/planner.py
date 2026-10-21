@@ -49,6 +49,7 @@ class AnswerPlan:
     recipe_ids: list = field(default_factory=list)
     exclude_recipes: list = field(default_factory=list)
     more_request: bool = False
+    targets: list = field(default_factory=list)
     wants_list: bool = False
     needs_status: bool = False            # the programme's answer depends on diabetes status (fruit)
     frequency_note: bool = False          # add the "no approved evidence on other eating patterns" line
@@ -130,6 +131,10 @@ def make_plan(u: Understanding, state: ChatState, emergency: bool = False, aller
         return plan
     if u.type == "out_of_scope":
         plan.blocks = ["out_of_scope"]
+        return plan
+    if u.type == "target_meal_search":
+        plan.blocks, plan.max_words = ["target_meals", "profile_note"], 200
+        plan.targets = list(u.targets)
         return plan
     if u.type == "explain_last":
         plan.blocks = ["explain_last"]

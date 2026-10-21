@@ -17,6 +17,7 @@ from .planner import AnswerPlan
 from .safety import EMERGENCY_ANSWER, safety_caution
 from .services import Services
 from .state import ChatState
+from .targets import TargetSearch
 from .textnorm import clean
 
 PLACEHOLDER_RE = re.compile(r"\{\{([A-Z]+\d*)\}\}")
@@ -76,6 +77,9 @@ def _short_dish(name: str, names: list[str]) -> str:
         return base
     first = re.match(r"[^()]*\([^()]*\)", name)
     return first.group(0) if first else name
+
+
+LABEL_FOR = {"energy_kcal": "calories", "protein_g": "g of protein", "carb_g": "g of carbohydrate", "fat_g": "g of fat", "fibre_g": "g of fibre"}
 
 
 def _cap(text: str) -> str:
@@ -149,6 +153,8 @@ class Composer:
                 d.lines.append(lock("T", topic["urgent"]))
                 d.lines.append(lock("T", topic["bridge"]))
                 d.support_sources = [f["id"] for f in topic["facts"]]
+            elif block == "target_meals":
+                self._target_meals(plan, d, lock, person)
             elif block == "explain_last":
                 for line in (state.last_explain or {}).get("lines", []):
                     d.lines.append(lock("T", line))
@@ -392,6 +398,36 @@ class Composer:
         else:
             d.lines.append(lock("T", "We don't have a checked recipe for this yet, so here is what helps most:"))
         self._tips_lines(plan, state, d, lock, given)
+
+    def _target_meals(self, plan, d: Draft, lock, person) -> None:
+        asked = [(t.field, t.value, t.mode) for t in plan.targets]
+        parts = []
+        every_about = all(mode == "about" for _f, _v, mode in asked)
+        for fld, value, mode in asked:
+            word = "" if every_about else {"max": "up to ", "min": "at least "}.get(mode, "about ")
+            parts.append(f"{word}{value:g} {LABEL_FOR[fld]}")
+        want = ("about " if every_about else "") + _join(parts)
+        if self.dishes is None:
+            d.lines.append(lock("T", "I can't look dishes up by their nutrients here yet."))
+            return
+        matches, close = TargetSearch(self.dishes, self.allergy, self.index).search(plan.targets, person, d.blocked_foods)
+        if not matches:
+            d.lines.append(lock("T", f"I couldn't find a checked dish with {want} that suits you. Try a different amount, or ask me about a dish by name."))
+            return
+        d.lines.append(lock("T", f"Dishes with {want}:" if close else f"No dish matches {want} closely. These are the nearest:"))
+        for m in matches:
+            res = m.result
+            quantity, _, unit = res.serving_text.partition(" ")
+            serving = f"per {unit}" if quantity in {"1", "1.0"} and unit else f"per {res.serving_text}"
+            pieces = []
+            for fld in [t.field for t in plan.targets]:
+                value = res.per_serving[fld]
+                text = f"{value:.0f} {LABEL_FOR[fld]}" if fld == "energy_kcal" else f"{value:.1f}".rstrip("0").rstrip(".") + f" {LABEL_FOR[fld]}"
+                pieces.append(text)
+                d.facts.append(Fact(f"DISH-{m.code}", fld, float(value), f"about {text} {serving}", serving, "Swastham library", m.name))
+            shown = f"about {_join(pieces)} {serving}"
+            d.lines.append("- " + m.name.split(" (")[0] + ": " + lock("F", shown + " (dev data)"))
+        d.lines.append(lock("T", "These are the values stored for each dish, one serving as shown. They are not a meal plan, and amounts change with how it is cooked."))
 
     @staticmethod
     def _remember_shown(state, recipe_ids) -> None:

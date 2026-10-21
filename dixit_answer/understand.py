@@ -10,6 +10,7 @@ import re
 from dataclasses import dataclass, field
 
 from .foods import FoodIndex
+from .targets import is_target_request
 from .semantics import NON_FOOD_WORDS, NEGATED, NEGATED_AFTER, meaningful_words, negated_foods, split_chunks
 from .status import parse_status
 from .textnorm import clean, has_phrase
@@ -91,6 +92,7 @@ class Understanding:
     unknown_food_query: str = ""                         # food-like words not in the food master
     preference: str = ""
     recipe_ids: list = field(default_factory=list)       # approved recipes named in the message
+    targets: list = field(default_factory=list)          # nutrient amounts asked for ("326 kcal", "26 g protein"): a dish search
     subject: str = ""                                    # the food or dish this question is about (for "and protein?" next)
     subject_kind: str = ""
     subject_nutrient: str = ""
@@ -448,6 +450,12 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
             u.foods = [f for f in u.foods if f not in inside]      # "calories in chilli paneer" is the dish, not the food paneer
     elif dish_finder and not u.slot_fill and not foods and question_type in {"out_of_scope", "food_choice_guidance"} and _bare_dish(focus, dish_finder):
         question_type = "neutral_nutrient_lookup"           # "poha", "what is poha?": the whole message is a dish name, so give its calories
+    if question_type not in {"support_wellbeing", "greeting_thanks", "followup_reply"} and not u.slot_fill and not foods and not u.recipe_ids:
+        targets = is_target_request(cleaned)
+        if targets and not (dish_finder and dish_finder(focus)):
+            question_type, u.targets = "target_meal_search", targets      # "a meal with 326 kcal and 26 g protein": dishes near those values
+            u.type = question_type
+            return u
     if ((question_type in {"out_of_scope", "food_choice_guidance"} or (question_type == "source_fact_lookup" and (getattr(state, "last_explain", None) or {}).get("kind") == "recipe"))
             and not u.slot_fill and EXPLAIN_FOLLOW.match(cleaned)
             and getattr(state, "last_explain", None) and state.turn - getattr(state, "last_explain_turn", -99) <= RECENT_TURNS):

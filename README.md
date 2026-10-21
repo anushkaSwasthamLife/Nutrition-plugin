@@ -300,3 +300,13 @@ After an answer, "why", "tell me more", "where is that from" and similar short m
 (`dixit_answer/explain.py`): for a recipe, its approved reason and how the nutrition was calculated; for a number, which source it
 came from; for a programme answer ("rice is allowed"), a plain "I don't have a written reason for that yet, please ask your Dixit
 coach". No new claim is made. It works within three turns of the answer. Tests: `tests/test_explain.py`.
+
+## Dishes near a nutrient target (21 Oct 2026)
+
+"I want a meal with 326 kcal and 26 g protein, what can I have" (also "under 400 calories", "at least 15 g fibre") lists up to three
+library dishes whose stored values per serving are close to the amounts (`dixit_answer/targets.py`). Within 15% it says "Dishes with ...";
+otherwise "No dish matches ... closely. These are the nearest". Only a number tied to a unit or a nutrient is read. Every number shown is
+the dish's own stored value (a locked fact); nothing is combined or scaled, so it is a look-up, not a meal plan. Dishes are left out for
+allergies (all common allergens when allergies are unknown), for meat, fish and egg unless the person's diet allows them, and for foods to
+avoid; dishes with only an estimated energy or no clear serving are not used. Production has no Indian dishes yet, so it finds none.
+Tests: `tests/test_targets.py`.
