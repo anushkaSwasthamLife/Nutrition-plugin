@@ -310,7 +310,7 @@ class RecipeService:
 
     # ------------------------------------------------------------------ the flow
     def run(self, *, person: Person, have: list[str], dish_ids: list[str], unknown_words: list[str],
-            suggestion: dict | None, wants_list: bool, home_foods: list[str]) -> RecipeOutcome:
+            suggestion: dict | None, wants_list: bool, home_foods: list[str], exclude: list[str] | None = None) -> RecipeOutcome:
         started = time.monotonic()
         out = RecipeOutcome(status="tips_only")
 
@@ -349,13 +349,16 @@ class RecipeService:
             return recipe
 
         # R4: approved collection.
-        candidates = [self._from_collection(rid) for rid in dish_ids if rid in self.recipes]
+        skip = set(exclude or [])                   # "other than paneer bhurji": never offered back
+        candidates = [self._from_collection(rid) for rid in dish_ids if rid in self.recipes and rid not in skip]
         matchable = set(usable_have)
         if not candidates and usable_have:
             # "dal" on its own means any of the dals; a named dal means that one
             matchable = set(usable_have) | {f for f, food in self.index.foods.items() if food.get("generic") in set(usable_have)}
             ranked = []
             for rid, raw in self.recipes.items():
+                if rid in skip:
+                    continue
                 main = set(raw["main_ingredients"])
                 overlap = main & matchable
                 if overlap:

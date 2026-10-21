@@ -60,6 +60,8 @@ WELLBEING = re.compile(r"\b(anxious|anxiety|panic|panicking|stressed|stress|stre
                        r"ghabrahat|ghabra|ghabrata|ghabrati|chinta|pareshan|tanav)\b")
 NUTRIENT_WORDS = re.compile(r"\b(calorie|calories|kcal|carb|carbs|carbohydrate|carbohydrates|protein|proteins|fat|fats|fibre|fiber|"
                             r"nutrition|nutrients?)\b")
+# "paneer, other than paneer bhurji": what comes after is a dish to leave out, not something the person has or a food we don't know
+EXCLUDE = re.compile(r"\b(?:other than|apart from|aside from|except for|except|besides|excluding|not counting|but not|anything but)\s+(?P<x>.+)$")
 TOPIC_SABJI = re.compile(r"\b(sabji|vegetable|curry)\b")
 
 
@@ -79,6 +81,7 @@ class Understanding:
     unknown_food_query: str = ""                         # food-like words not in the food master
     preference: str = ""
     recipe_ids: list = field(default_factory=list)       # approved recipes named in the message
+    exclude_recipes: list = field(default_factory=list)  # approved recipes the person asked to leave out ("other than paneer bhurji")
     unknown_words: list = field(default_factory=list)    # pantry words we don't know (never sent to the AI)
     suggestion: dict | None = None                       # {"word", "food_id"} close match to confirm first
     ack_only: bool = False                               # allergy reply that doesn't affect the recipe already shown
@@ -276,10 +279,19 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
                dish_finder=None) -> Understanding:
     cleaned = clean(text, word_lists["spelling_map"])
     focus = clean(question_part(text), word_lists["spelling_map"])
+    excluded_dishes: list = []
+    cut = EXCLUDE.search(cleaned)
+    if cut:
+        if recipe_finder:
+            excluded_dishes = recipe_finder(cut.group("x"))
+        cleaned = cleaned[:cut.start()].strip()                 # what is left is what the person has and asks
+        focus_cut = EXCLUDE.search(focus)
+        focus = focus[:focus_cut.start()].strip() if focus_cut else focus
     mentions = index.find(scrub_conditions(focus, word_lists), already_clean=True)         # "high sugar" is a condition, not the food sugar
     foods = [m.food_id for m in mentions]
     u = Understanding(cleaned=cleaned, type="", focus=focus, foods=foods, conditions=_conditions(cleaned, word_lists),
                       preference=_preference(cleaned, word_lists))
+    u.exclude_recipes = list(excluded_dishes)
     u.wellbeing = bool(WELLBEING.search(cleaned))
     u.fruit_foods = [f for f in foods if index.foods[f]["category"] == "fruit" and f != "FOOD-LEMON"]
     if recipe_finder:

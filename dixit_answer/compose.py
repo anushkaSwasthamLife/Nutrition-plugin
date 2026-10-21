@@ -326,7 +326,7 @@ class Composer:
         out = self.recipes.run(person=person, have=list(plan.ingredients), dish_ids=list(plan.recipe_ids),
                                unknown_words=[] if reply else list(u.unknown_words),
                                suggestion=None if reply else u.suggestion, wants_list=plan.wants_list,
-                               home_foods=list(state.home_foods))
+                               home_foods=list(state.home_foods), exclude=list(plan.exclude_recipes))
         d.recipe_trace = out.trace
         if plan.unknown_dish and not plan.reply_slot:
             d.unknown_items.append({"word": plan.unknown_dish, "kind": "dish", "suggested_food_id": ""})

@@ -296,6 +296,12 @@
   "foods"
  ],
  "ingredient_stop_words": [
+  "anything",
+  "something",
+  "else",
+  "more",
+  "other",
+  "another",
   "some",
   "a",
   "an",
