@@ -154,7 +154,7 @@ class Composer:
                 d.lines.append(lock("T", topic["bridge"]))
                 d.support_sources = [f["id"] for f in topic["facts"]]
             elif block == "target_meals":
-                self._target_meals(plan, d, lock, person)
+                self._target_meals(plan, d, lock, person, state)
             elif block == "explain_last":
                 for line in (state.last_explain or {}).get("lines", []):
                     d.lines.append(lock("T", line))
@@ -335,7 +335,7 @@ class Composer:
         out = self.recipes.run(person=person, have=list(plan.ingredients), dish_ids=list(plan.recipe_ids),
                                unknown_words=[] if reply else list(u.unknown_words),
                                suggestion=None if reply else u.suggestion, wants_list=plan.wants_list,
-                               home_foods=list(state.home_foods), exclude=list(plan.exclude_recipes))
+                               home_foods=list(state.home_foods), exclude=list(plan.exclude_recipes), exclude_foods=list(plan.exclude_foods))
         d.recipe_trace = out.trace
         if plan.unknown_dish and not plan.reply_slot:
             d.unknown_items.append({"word": plan.unknown_dish, "kind": "dish", "suggested_food_id": ""})
@@ -399,7 +399,7 @@ class Composer:
             d.lines.append(lock("T", "We don't have a checked recipe for this yet, so here is what helps most:"))
         self._tips_lines(plan, state, d, lock, given)
 
-    def _target_meals(self, plan, d: Draft, lock, person) -> None:
+    def _target_meals(self, plan, d: Draft, lock, person, state=None) -> None:
         asked = [(t.field, t.value, t.mode) for t in plan.targets]
         parts = []
         every_about = all(mode == "about" for _f, _v, mode in asked)
@@ -410,11 +410,21 @@ class Composer:
         if self.dishes is None:
             d.lines.append(lock("T", "I can't look dishes up by their nutrients here yet."))
             return
-        matches, close = TargetSearch(self.dishes, self.allergy, self.index).search(plan.targets, person, d.blocked_foods)
+        if plan.target_mode != "more" and state is not None:
+            state.target_shown = []                                # a changed search starts again; "what else" keeps going
+        shown_before = list(state.target_shown) if state is not None else []
+        left = [w for w in plan.target_exclude]
+        matches, close = TargetSearch(self.dishes, self.allergy, self.index).search(plan.targets, person, d.blocked_foods, leave_out=left, skip_codes=shown_before)
+        without = f", without {_join(sorted({w for w in left if len(w) > 2})[:4])}" if left else ""
         if not matches:
-            d.lines.append(lock("T", f"I couldn't find a checked dish with {want} that suits you. Try a different amount, or ask me about a dish by name."))
+            if plan.target_mode == "more" and shown_before:
+                d.lines.append(lock("T", f"Those are all the dishes I have near {want}{without}. Try a different amount, or ask me about a dish by name."))
+            else:
+                d.lines.append(lock("T", f"I couldn't find a checked dish with {want}{without} that suits you. Try a different amount, or ask me about a dish by name."))
             return
-        d.lines.append(lock("T", f"Dishes with {want}:" if close else f"No dish matches {want} closely. These are the nearest:"))
+        if state is not None:
+            state.target_shown = (state.target_shown + [m.code for m in matches])[-60:]
+        d.lines.append(lock("T", f"Dishes with {want}{without}:" if close else f"No dish matches {want}{without} closely. These are the nearest:"))
         for m in matches:
             res = m.result
             quantity, _, unit = res.serving_text.partition(" ")

@@ -236,6 +236,11 @@ class Engine:
                 state.consultant_asked_turn = state.turn
         else:
             state.last_followup = None
+        if u.type == "target_meal_search":
+            state.last_targets = [[t.field, t.value, t.mode] for t in u.targets]
+            state.last_targets_turn, state.target_exclude = state.turn, list(u.target_exclude)
+        elif u.type not in {"greeting_thanks", "out_of_scope", "explain_last"}:
+            state.last_targets = []                                # a different kind of question ends the dish search
         if u.type != "explain_last":
             explain = explain_lines(draft, plan, self.library)
             if explain:

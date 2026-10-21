@@ -42,6 +42,10 @@ class ChatState:
     last_subject_turn: int = -99
     last_explain: dict | None = None                         # what "why?" / "tell me more" may say about the last answer: {"kind", "lines"}
     last_explain_turn: int = -99
+    last_targets: list = field(default_factory=list)         # the nutrient amounts of the last dish search [[field, value, mode], ...]
+    last_targets_turn: int = -99
+    target_exclude: list = field(default_factory=list)       # words the person asked to leave out of that search ("paneer")
+    target_shown: list = field(default_factory=list)         # dish codes already listed for it ("what else" skips them)
     recipes_shown: list = field(default_factory=list)        # approved recipe IDs already shown in this chat ("what else" skips them)
     diabetes_status: str = "unknown"                         # unknown | diabetic | prediabetic | non_diabetic | currently_non_diabetic
     prior_diabetes_history: bool | None = None

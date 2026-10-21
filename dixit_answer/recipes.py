@@ -310,7 +310,8 @@ class RecipeService:
 
     # ------------------------------------------------------------------ the flow
     def run(self, *, person: Person, have: list[str], dish_ids: list[str], unknown_words: list[str],
-            suggestion: dict | None, wants_list: bool, home_foods: list[str], exclude: list[str] | None = None) -> RecipeOutcome:
+            suggestion: dict | None, wants_list: bool, home_foods: list[str], exclude: list[str] | None = None,
+            exclude_foods: list[str] | None = None) -> RecipeOutcome:
         started = time.monotonic()
         out = RecipeOutcome(status="tips_only")
 
@@ -350,6 +351,9 @@ class RecipeService:
 
         # R4: approved collection.
         skip = set(exclude or [])                   # "other than paneer bhurji": never offered back
+        no_food = set(exclude_foods or [])          # "without onion": no dish that uses it
+        if no_food:
+            skip |= {rid for rid, raw in self.recipes.items() if no_food & {i["food"] for i in raw["ingredients"]}}
         candidates = [self._from_collection(rid) for rid in dish_ids if rid in self.recipes and rid not in skip]
         matchable = set(usable_have)
         if not candidates and usable_have:

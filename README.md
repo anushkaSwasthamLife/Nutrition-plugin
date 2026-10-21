@@ -310,3 +310,11 @@ the dish's own stored value (a locked fact); nothing is combined or scaled, so i
 allergies (all common allergens when allergies are unknown), for meat, fish and egg unless the person's diet allows them, and for foods to
 avoid; dishes with only an estimated energy or no clear serving are not used. Production has no Indian dishes yet, so it finds none.
 Tests: `tests/test_targets.py`.
+
+## Changing the last search (21 Oct 2026)
+
+After a dish search ("a meal with 326 kcal and 26 g protein"), short follow-ups change that search instead of starting from nothing:
+"except paneer", "without onion", "no chicken" leave a food out (and its other names: curd also leaves out dahi); "make it 30 g protein",
+"and 400 kcal" change the amounts and keep what was left out; "what else" / "another one" give other dishes and never repeat one.
+A full new request starts a new search; a different kind of question, or three quiet turns, ends it. After a recipe answer,
+"except onion" / "no paneer" give the same request without dishes that use that food. Tests: `tests/test_refinements.py`.

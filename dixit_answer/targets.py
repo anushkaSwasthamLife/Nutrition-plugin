@@ -82,9 +82,11 @@ class TargetSearch:
     def __init__(self, dishes: DishLookup, allergy, index):
         self.dishes, self.allergy, self.index = dishes, allergy, index
 
-    def _allowed(self, code: str, person, blocked: set[str], allergens: set[str]) -> bool:
+    def _allowed(self, code: str, person, blocked: set[str], allergens: set[str], leave_out: set[str] = frozenset()) -> bool:
         names = [self.dishes.label(code), *self.dishes.ingredient_names(code)]
         words = _words(names)
+        if leave_out and (words & leave_out or {w.rstrip("s") for w in words} & {w.rstrip("s") for w in leave_out}):
+            return False
         diet = getattr(person, "diet_type", "unknown") if person is not None else "unknown"
         if words & MEAT_FISH and diet != "non_vegetarian":
             return False
@@ -103,7 +105,7 @@ class TargetSearch:
                 return False
         return True
 
-    def search(self, targets: list[Target], person, blocked: set[str], limit: int = 3) -> tuple[list[Match], bool]:
+    def search(self, targets: list[Target], person, blocked: set[str], limit: int = 3, leave_out=(), skip_codes=()) -> tuple[list[Match], bool]:
         """(best matches, whether they are within the normal tolerance). Dishes with no clear serving or only an estimate are left out."""
         rules = self.dishes.rules.get("range_percent", {})
         tight = float(rules.get("default", 15)) / 100.0
@@ -111,8 +113,12 @@ class TargetSearch:
         allergens: set[str] = set(person.allergies or []) if person is not None else set()
         if person is None or person.allergies is None or person.unmapped_allergies:
             allergens |= set(self.allergy.map["major"])          # allergies unknown or not understood: stay clear of every common one
+        leave = {str(w).lower() for w in leave_out}
+        skip = set(skip_codes)
         scored: list[Match] = []
         for code in self.dishes.by_code:
+            if code in skip:
+                continue
             result = self.dishes.values(code)
             if result.status != FOUND or result.estimate or result.per_serving is None or not result.serving_text:
                 continue
@@ -140,7 +146,7 @@ class TargetSearch:
                 if m.error > tol:
                     break
                 key = m.name.split(" (")[0].lower()
-                if key in seen or not self._allowed(m.code, person, blocked, allergens):
+                if key in seen or not self._allowed(m.code, person, blocked, allergens, leave):
                     continue
                 seen.add(key)
                 picked.append(m)

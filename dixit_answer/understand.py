@@ -10,7 +10,7 @@ import re
 from dataclasses import dataclass, field
 
 from .foods import FoodIndex
-from .targets import is_target_request
+from .targets import WANT, Target, is_target_request, parse_targets
 from .semantics import NON_FOOD_WORDS, NEGATED, NEGATED_AFTER, meaningful_words, negated_foods, split_chunks
 from .status import parse_status
 from .textnorm import clean, has_phrase
@@ -92,12 +92,15 @@ class Understanding:
     unknown_food_query: str = ""                         # food-like words not in the food master
     preference: str = ""
     recipe_ids: list = field(default_factory=list)       # approved recipes named in the message
+    target_exclude: list = field(default_factory=list)   # words to leave out of a dish search ("paneer")
+    target_mode: str = "new"                             # new | refine (changed amounts or something left out) | more (what else)
     targets: list = field(default_factory=list)          # nutrient amounts asked for ("326 kcal", "26 g protein"): a dish search
     subject: str = ""                                    # the food or dish this question is about (for "and protein?" next)
     subject_kind: str = ""
     subject_nutrient: str = ""
     more_request: bool = False                           # "what else": more of the last recipe answer, leaving out what was shown
     absent_foods: list = field(default_factory=list)     # foods the person said they do NOT have ("no onion")
+    exclude_foods: list = field(default_factory=list)    # foods the person wants no recipe to use ("without onion" after a recipe answer)
     exclude_recipes: list = field(default_factory=list)  # approved recipes the person asked to leave out ("other than paneer bhurji")
     unknown_words: list = field(default_factory=list)    # pantry words we don't know (never sent to the AI)
     suggestion: dict | None = None                       # {"word", "food_id"} close match to confirm first
@@ -235,6 +238,48 @@ def carry_over(text: str, state, index, word_lists: dict, dish_finder=None) -> s
 NUTRIENT_WORD_RE = re.compile(r"(?:calorie|calories|kcal|energy|carb|carbs|carbohydrate|carbohydrates|protein|proteins|fat|fats|fibre|fiber|nutrition|nutrients?)")
 
 
+# ---- a follow-up to a dish search: "except paneer", "without onion", "make it 30 g protein", "what else" ----
+TARGET_EXCLUDE = re.compile(r"^(?:(?:but|and|also|ok|okay|please|now|then)\s+)*(?:except(?: for)?|excluding|without|no|not|other than|apart from|besides|skip|"
+                            r"avoid|leave out|remove|minus)\s+(?P<x>.+?)(?:\s+(?:please|pls))?$")
+EXCLUDE_FILLER = {"the", "any", "anything", "and", "or", "of", "a", "an", "all", "dishes", "dish", "with", "in", "it", "that", "those", "food", "foods", "thanks", "thank", "you", "need", "more", "ok", "okay", "yes", "now", "today", "worries", "problem"}
+
+
+def target_refinement(text: str, state, index: FoodIndex, word_lists: dict):
+    """A short follow-up to the last dish search, read as the same search with a change; None when it is not one."""
+    last = getattr(state, "last_targets", None)
+    if not last or state.turn - getattr(state, "last_targets_turn", -99) > RECENT_TURNS:
+        return None
+    cleaned = clean(question_part(text), word_lists["spelling_map"])
+    words = cleaned.split()
+    if not words or len(words) > 10:
+        return None
+    targets = [Target(*t) for t in last]
+    exclude = list(getattr(state, "target_exclude", []) or [])
+    mode = None
+    cut = TARGET_EXCLUDE.match(cleaned)
+    new = parse_targets(cleaned)
+    if cut:
+        tokens = [w for w in cut.group("x").split() if w not in EXCLUDE_FILLER]
+        if tokens:
+            names = set(tokens)
+            for mention in index.find(" ".join(tokens), already_clean=True):      # "curd" also leaves out dahi, "potato" also aloo
+                food = index.foods[mention.food_id]
+                names |= {a for a in [food["name"], *food.get("aliases", [])] if " " not in a}
+            exclude += sorted(n for n in names if n not in exclude)
+            mode = "refine"
+    elif new and not WANT.search(cleaned):          # a full new request ("i want a meal with ...") starts a new search
+        merged = {t.field: t for t in targets}
+        merged.update({t.field: t for t in new})
+        targets, mode = list(merged.values()), "refine"
+    elif MORE.search(cleaned) and len(words) <= 5 and not index.find(cleaned, already_clean=True):
+        mode = "more"
+    if mode is None:
+        return None
+    u = Understanding(cleaned=cleaned, type="target_meal_search", focus=cleaned)
+    u.targets, u.target_exclude, u.target_mode = targets, exclude, mode
+    return u
+
+
 def pantry_words(cleaned: str, index: FoodIndex, stop_words: list[str], judge=None) -> tuple[list[str], dict | None, set]:
     """R1: words after "I have ..." that aren't known foods. Returns (unknown words, close-match suggestion or None, foods said to be absent).
 
@@ -370,10 +415,14 @@ def _bare_dish(focus: str, dish_finder) -> bool:
 
 def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_finder=None, allergy_reader=None,
                dish_finder=None, word_judge=None) -> Understanding:
+    again = target_refinement(text, state, index, word_lists)
+    if again is not None:
+        return again
     text = carry_over(text, state, index, word_lists, dish_finder)
     cleaned = clean(text, word_lists["spelling_map"])
     focus = clean(question_part(text), word_lists["spelling_map"])
     excluded_dishes: list = []
+    whole = cleaned
     cut = EXCLUDE.search(cleaned)
     if cut:
         if recipe_finder:
@@ -470,6 +519,16 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
         u.foods = list(u.ingredients)
         u.exclude_recipes = sorted(set(u.exclude_recipes) | set(getattr(state, "recipes_shown", []) or []))
         u.recipe_ids = []
+    last_type = (getattr(state, "last_question", None) or {}).get("type")
+    if question_type in {"out_of_scope", "food_choice_guidance", "food_allowed"} and not u.slot_fill and last_type in RECIPE_FLOW and len(whole.split()) <= 8:
+        leave = TARGET_EXCLUDE.match(whole)               # "except onion" / "without onion" after a recipe answer: the same request, no recipe with onion
+        left_out = [m.food_id for m in index.find(leave.group("x"), already_clean=True)] if leave else []
+        if left_out:
+            question_type = last_type
+            u.exclude_foods = left_out
+            u.ingredients = [f for f in (getattr(state, "ingredients_on_hand", []) or []) if f not in left_out]
+            u.foods = list(u.ingredients)
+            u.recipe_ids = []
     if question_type in {"meal_from_ingredients", "recipe_request"} and INGREDIENTS.search(cleaned):
         have_clause = cleaned[INGREDIENTS.search(cleaned).end():]
         absent = negated_foods(have_clause, index)                     # "I have paneer but no onion": onion is not in the kitchen
