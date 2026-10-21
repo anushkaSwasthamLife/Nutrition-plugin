@@ -51,6 +51,10 @@ class AnswerPlan:
     exclude_foods: list = field(default_factory=list)
     more_request: bool = False
     targets: list = field(default_factory=list)
+    statement: dict = field(default_factory=dict)
+    compare_sides: list = field(default_factory=list)
+    reading: float | None = None
+    refuse_plan: bool = False
     target_exclude: list = field(default_factory=list)
     target_mode: str = "new"
     wants_list: bool = False
@@ -134,6 +138,16 @@ def make_plan(u: Understanding, state: ChatState, emergency: bool = False, aller
         return plan
     if u.type == "out_of_scope":
         plan.blocks = ["out_of_scope"]
+        return plan
+    if u.type in {"definition_question", "portion_question", "reading_ack"}:
+        plan.blocks = [{"definition_question": "definition", "portion_question": "portion", "reading_ack": "reading"}[u.type]]
+        plan.reading = getattr(u, "reading", None)
+        return plan
+    if u.type == "profile_statement":
+        plan.blocks, plan.statement = ["profile_ack"], dict(u.statement)
+        return plan
+    if u.type == "safety_ack":
+        plan.blocks = ["safety_ack"]
         return plan
     if u.type == "target_meal_search":
         plan.blocks, plan.max_words = ["target_meals", "profile_note"], 200
@@ -240,6 +254,9 @@ def make_plan(u: Understanding, state: ChatState, emergency: bool = False, aller
         blocks += ["lookup_facts"]
     elif plan.type == "unknown_food_question":
         blocks += ["unknown_food"]
+    elif plan.type == "phrase_comparison":
+        plan.compare_sides = list(u.compare_sides)
+        blocks += ["phrase_compare"]
     elif plan.type == "neutral_food_comparison":
         plan.focus_foods = u.foods[:3]
         blocks += ["direct", "focus_compare"]
@@ -279,9 +296,12 @@ def make_plan(u: Understanding, state: ChatState, emergency: bool = False, aller
         blocks[blocks.index("protocol_full")] = "protocol_reminder"
     if u.wellbeing:
         blocks.insert(0, "support_opening")       # a kind line and where to get help, before the food answer
-    if plan.type in RECIPE_TYPES or plan.type in {"food_choice_guidance", "food_allowed", "protocol_permission", "personal_suitability", "unknown_food_question"}:
+    if plan.type in RECIPE_TYPES or plan.type in {"food_choice_guidance", "food_allowed", "protocol_permission", "personal_suitability", "unknown_food_question", "phrase_comparison"}:
         blocks.append("profile_note")        # says which allergies, conditions and diet the answer was checked against
     blocks.append("followup")
+    if u.refuse_plan:
+        plan.refuse_plan = True
+        blocks.insert(0, "plan_refusal")
     plan.blocks = blocks
     if plan.type in RECIPE_TYPES:
         plan.max_words = 260

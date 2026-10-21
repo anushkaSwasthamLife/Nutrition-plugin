@@ -152,6 +152,16 @@ _SHAPES = [
     # "poha mein kitni calories hai" / "dal mein protein kitna hota hai"
     (re.compile(rf"^(?P<x>.+?)\s+(?:mein|me|main)\s+{_HOW}\s+(?P<n>{_NUT}){_BE}\s*\??$"), r"how much \g<n> in \g<x>"),
     (re.compile(rf"^(?P<x>.+?)\s+(?:mein|me|main)\s+(?P<n>{_NUT})\s+{_HOW}{_BE}\s*\??$"), r"how much \g<n> in \g<x>"),
+    # "roti kitni calories ki hoti hai", "dal kitna protein hota hai"
+    (re.compile(rf"^(?P<x>.+?)\s+{_HOW}\s+(?P<n>{_NUT})(?:\s+(?:ki|ka|ke))?(?:\s+(?:hoti|hota|hote))?(?:\s+(?:hai|hain))?\s*\??$"), r"how much \g<n> in \g<x>"),
+    # "mujhe high protein khana batao"
+    (re.compile(r"^(?:mujhe\s+)?(?P<x>.+?)\s+khana\s+(?:batao|bataiye|dikhao|do|suggest\s+karo)\s*\??$"), r"i want \g<x> food, what can i have"),
+    # "aaj kya banau"
+    (re.compile(r"^(?:aaj|abhi|kal|raat ko|subah)?\s*kya\s+(?:banau|banaun|banaye|banayen|pakau|pakaun|bana)(?:\s+(?:aaj|abhi|kal))?\s*\??$"), "what can i cook today"),
+    # "mujhe weight kam karna hai"
+    (re.compile(r"^(?:mujhe\s+)?(?:weight|wazan|vajan|vajn|motapa)\s+(?:kam|ghatana|ghatani)\s+(?:karna|karni|karne)(?:\s+(?:hai|hain))?\s*\??$"), "i want to lose weight"),
+    # "protein kahan se milega"
+    (re.compile(r"^(?P<n>protein|calcium|fibre|fiber|iron)\s+(?:kahan|kahaan|kaha)\s+se\s+(?:milega|milta|milti)(?:\s+hai)?\s*\??$"), r"high \g<n> foods"),
     # "dal ki calories kitni hai"
     (re.compile(rf"^(?P<x>.+?)\s+(?:ki|ka|ke)\s+(?P<n>{_NUT})\s+{_HOW}{_BE}\s*\??$"), r"how much \g<n> in \g<x>"),
     (re.compile(rf"^(?P<x>.+?)\s+(?:ki|ka|ke)\s+{_HOW}\s+(?P<n>{_NUT}){_BE}\s*\??$"), r"how much \g<n> in \g<x>"),

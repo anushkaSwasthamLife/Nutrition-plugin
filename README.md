@@ -333,3 +333,20 @@ A prompt-by-prompt review (about 200 realistic questions, English, Roman Hindi a
 - Kinds of food ("fruits") and times ("after 8 pm") are not unknown foods; a piece or a cup gets an honest "no reliable weight" line only when
   one was asked for. Sugar and sodium can be asked for (USDA records only).
 Tests: `tests/test_qualitative.py`, `tests/test_unknown_foods.py`.
+
+## Prompt review, second part (21 Oct 2026)
+
+More gaps from the same review, each fixed and kept by `tests/test_prompt_review.py` (a snapshot of the answer kind for about 150 prompts,
+`tests/prompt_snapshot.py`, plus specific tests):
+
+- **Meal plans / diet charts / "7 day plan"** are declined plainly ("I can't write a meal plan or diet chart"), then the programme is shown.
+- **"What is protein / a calorie / carbs"** says what the chat can do and sends meaning questions to the coach (no programme blurb).
+- **"How much rice per meal", "how many rotis", "how much water"**: no amounts are given; the programme's "until satisfied, 55 minutes" line is.
+- **"My sugar is 250"** is a reading, thanked and passed to the doctor, not a question about the food sugar. **"I am on insulin", "I have kidney
+  disease", "heart disease"** are thanked and noted. A **symptom** ("headache", "nausea") gets a caring line, not the weight line.
+- **"I am lactose intolerant / vegan / jain / I don't eat onion garlic / no gluten for me"** are acknowledged and used for the rest of the chat
+  (allergies added to the app's list, never ignored; foods left out; diet set).
+- **"What can I cook with X", "recipes with X", "i have only oats", "what to cook today", "dinner ideas"** give dishes; a harmful word
+  (bomb, poison ...) or a creative request (poem, joke) is out of scope and never queued for the dietitian.
+- **"Oats vs poha", "brown rice vs white rice"** set two foods side by side (food list, dish, or USDA), with the same diet and allergy checks.
+- More Roman Hindi and Devanagari shapes ("roti kitni calories ki hoti hai", "mujhe high protein khana batao", "aaj kya banau").

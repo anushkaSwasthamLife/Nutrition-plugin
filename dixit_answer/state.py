@@ -46,6 +46,7 @@ class ChatState:
     last_targets_turn: int = -99
     target_exclude: list = field(default_factory=list)       # words the person asked to leave out of that search ("paneer")
     target_shown: list = field(default_factory=list)         # dish codes already listed for it ("what else" skips them)
+    avoid_foods: list = field(default_factory=list)          # food IDs the person said they do not eat ("i don't eat onion")
     recipes_shown: list = field(default_factory=list)        # approved recipe IDs already shown in this chat ("what else" skips them)
     diabetes_status: str = "unknown"                         # unknown | diabetic | prediabetic | non_diabetic | currently_non_diabetic
     prior_diabetes_history: bool | None = None

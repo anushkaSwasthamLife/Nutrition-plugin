@@ -43,6 +43,13 @@ NEGATED = re.compile(
     r"^(?:(?:but|and|also|plus|though|however)\s+)?(?:(?:i|we)\s+)?"
     r"(?:(?:do not|don't|dont|doesn't|never)\s+have|have no|have not|haven't|havent|has no|am out of|are out of|out of|ran out of|run out of|"
     r"finished|no more|no|not|without|except)\b\s*(?P<x>.*)$")
+# a "dish" or "food" that is really a request for something harmful or off-topic is never looked up or sent to the dietitian
+HARMFUL_WORDS = frozenset("""bomb bombs explosive explosives poison poisons poisonous weapon weapons gun guns grenade drug drugs meth cocaine heroin weed marijuana
+                             cannabis ganja opium napalm acid arsenic cyanide toxin virus malware hack hacking""".split())
+# words for an illness or a treatment: "i have kidney disease" is something said about the person, never a food to look up
+HEALTH_WORDS = frozenset("""kidney kidneys ckd renal dialysis heart cardiac cancer tumour tumor asthma epilepsy arthritis fever infection cold cough ulcer gastric acidity
+                            migraine insulin surgery tablet tablets medicine medicines disease diseases disorder syndrome illness condition cholesterol anaemia anemia
+                            jaundice hepatitis liver fatty stroke""".split())
 NEGATED_AFTER = re.compile(r"\b(?:nahi|nahin|khatam|khatm|finished)\b")
 SPLIT = re.compile(r"\b(?:but|plus|for|from|because|since|so|while|although|though|however|ki|jo|lekin|magar)\b|"
                    r"(?=\b(?:without|except|no|not|don't|dont|do not|doesn't|never|have no|have not|haven't|out of|ran out of|run out of|finished|no more)\b)")

@@ -142,6 +142,18 @@ class Engine:
                        self._dish_in_text if self.dishes else None, self.judge.judge)
         if gate.emergency:
             u.type = "emergency"
+        elif gate.em.glucose_mg_dl is not None and u.type in {"food_allowed", "out_of_scope", "food_choice_guidance", "neutral_nutrient_lookup", "protocol_permission"}:
+            u.type, u.reading = "reading_ack", float(gate.em.glucose_mg_dl)      # "my sugar is 250": a reading, not a question about sugar
+        elif u.type == "out_of_scope" and gate.updates and not u.slot_fill and "?" not in text:
+            u.type = "safety_ack"                          # "i am on insulin", "i have kidney disease": thanked, noted, nothing else guessed
+        if u.statement:
+            st = u.statement
+            if st.get("diet"):
+                state.food_preference = st["diet"]                                # said outright, so it replaces an earlier guess
+            if st.get("allergies"):
+                state.allergies = sorted(set(state.allergies or []) | set(st["allergies"]))
+            if st.get("avoid"):
+                state.avoid_foods = sorted(set(state.avoid_foods) | set(st["avoid"]))
         self._apply_slot_fill(u, state, text)
         for condition in u.conditions:
             if condition not in state.conditions_mentioned:

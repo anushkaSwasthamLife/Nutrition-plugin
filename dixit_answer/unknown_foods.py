@@ -33,7 +33,7 @@ CATEGORY_WORDS = {"fruit", "fruits", "vegetable", "vegetables", "veggies", "food
                   "everything", "something", "meat", "nonveg", "dairy", "grains", "cereals", "pulses", "nuts", "dessert", "desserts", "junk"}
 TIME_TALK = re.compile(r"\b\d{1,2}\s*(?:am|pm)\b|\bo clock\b|\b(?:after|before|at|till|until|by)\s+\d|\b(?:late night|midnight|every day|daily|twice|thrice)\b")
 UNWANTED = {"cake", "cakes", "candy", "candies", "infant", "formula", "baby", "babyfood", "toddler", "bubble", "supplement", "pet", "dog", "cat"}
-DISH_NOISE = {"reduce", "lose", "gain", "control", "manage", "improve", "increase", "avoid", "burn", "build", "cut", "stop", "start", "make", "do", "get", "feel", "am", "pm", "oclock", "clock", "hour", "hours", "minutes", "min", "late", "early", "time", "times", "a", "an", "the", "some", "any", "my", "your", "this", "that", "these", "those", "of", "for", "me", "us", "to", "in", "if", "i", "am", "is", "are",
+DISH_NOISE = {"fewer", "fewest", "higher", "lower", "highest", "lowest", "greater", "lesser", "healthier", "healthiest", "worse", "worst", "bigger", "smaller", "reduce", "lose", "gain", "control", "manage", "improve", "increase", "avoid", "burn", "build", "cut", "stop", "start", "make", "do", "get", "feel", "am", "pm", "oclock", "clock", "hour", "hours", "minutes", "min", "late", "early", "time", "times", "a", "an", "the", "some", "any", "my", "your", "this", "that", "these", "those", "of", "for", "me", "us", "to", "in", "if", "i", "am", "is", "are",
               "daily", "everyday", "regularly", "often", "sometimes", "today", "tonight", "tomorrow", "now", "later", "ever", "also", "too", "please", "plz", "pls",
               "diabetic", "diabetes", "sugar", "patient", "weight", "loss", "while", "during", "after", "before", "at", "night", "morning", "evening", "lunch", "dinner",
               "breakfast", "bp", "pcos", "thyroid", "pregnant", "pregnancy"}
@@ -87,11 +87,31 @@ def subject_of(cleaned: str) -> str:
         m = pattern.search(cleaned)
         if m:
             rest = m.group("x")
-            if re.match(r"(?:to|so|if|when|what|which|how|why|that|because)", rest):
+            if re.match(r"(?:to|so|if|when|what|which|how|why|that|because)\b", rest):
                 return ""                                      # "should i eat to reduce it": a purpose, not a food
             phrase = food_phrase(rest)
             return "" if (not phrase or set(phrase.split()) <= CATEGORY_WORDS) else phrase      # "can i eat fruits" is a question about a kind of food
     return ""
+
+
+COMPARE_LEAD = re.compile(r"^(?:please\s+)?(?:compare|comparison of|difference between|which is (?:better|healthier|lower|higher)|which one is (?:better|healthier)|"
+                          r"what is better|is|are|which has (?:more|fewer|less|higher|lower)\s+\w+)\s+")
+COMPARE_SPLIT = re.compile(r"\s+(?:vs|versus|or|and|aur|ya|than|with|against|ya phir)\s+")
+COMPARE_CUE = re.compile(r"\b(?:vs|versus|compare|comparison|difference between|better than|healthier|which is better|which has|which one)\b|"
+                         r"\b\w+(?: \w+)? (?:or|vs) \w+.*\b(?:better|healthier|more|less|fewer|higher|lower|which)\b")
+
+
+def compare_sides(cleaned: str) -> list[str]:
+    """The foods a "X vs Y" / "X or Y, which is better" question sets side by side (at most three), as plain food phrases."""
+    if not COMPARE_CUE.search(cleaned):
+        return []
+    text = COMPARE_LEAD.sub("", cleaned.strip())
+    sides = []
+    for part in COMPARE_SPLIT.split(text):
+        phrase = food_phrase(part)
+        if phrase and phrase not in sides and not set(phrase.split()) <= CATEGORY_WORDS:
+            sides.append(phrase)
+    return sides[:3] if len(sides) >= 2 else []
 
 
 def scaled_fact(fact: Fact, grams: float) -> Fact:

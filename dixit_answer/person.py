@@ -209,10 +209,12 @@ def build_person(profile: dict | None, state: ChatState, index: FoodIndex, aller
     elif allergies is not None:
         unmapped = list(allergies)
         allergies = []
+    learnt = [a for a in (state.allergies or []) if isinstance(a, str)] if isinstance(state.allergies, list) else None
     if allergies is None:
-        allergies = state.allergies if isinstance(state.allergies, list) else None
-        allergies = [a for a in allergies if isinstance(a, str)] if allergies is not None else None
-    avoid: list[str] = []
+        allergies = learnt
+    elif learnt:
+        allergies = sorted(set(allergies) | set(learnt))               # what was said in the chat is added to the app's list, never ignored
+    avoid: list[str] = [f for f in (getattr(state, "avoid_foods", None) or []) if f in index.foods]
     for item in profile.get("avoid_foods") or []:
         found = [m.food_id for m in index.find(str(item))]
         avoid += found or ([item] if item in index.foods else [])
