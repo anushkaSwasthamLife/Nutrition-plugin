@@ -235,6 +235,10 @@ class Engine:
                 state.consultant_asked_turn = state.turn
         else:
             state.last_followup = None
+        if u.subject:
+            state.last_subject, state.last_subject_kind, state.last_subject_turn = u.subject, u.subject_kind, state.turn
+            if u.subject_nutrient:
+                state.last_nutrient = u.subject_nutrient
         if u.type not in {"followup_reply", "greeting_thanks", "out_of_scope"}:
             state.last_question = {"type": plan.type, "topic": plan.topic, "foods": plan.focus_foods,
                                    "recipe_ids": plan.recipe_ids, "wants_list": plan.wants_list,

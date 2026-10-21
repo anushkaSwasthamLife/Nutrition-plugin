@@ -48,6 +48,7 @@ class AnswerPlan:
     reply_slot: str = ""
     recipe_ids: list = field(default_factory=list)
     exclude_recipes: list = field(default_factory=list)
+    more_request: bool = False
     wants_list: bool = False
     needs_status: bool = False            # the programme's answer depends on diabetes status (fruit)
     frequency_note: bool = False          # add the "no approved evidence on other eating patterns" line
@@ -248,6 +249,7 @@ def make_plan(u: Understanding, state: ChatState, emergency: bool = False, aller
         plan.ingredients = list(u.ingredients or ([] if u.recipe_ids else u.foods))
         plan.recipe_ids = list(u.recipe_ids)
         plan.exclude_recipes = list(u.exclude_recipes)
+        plan.more_request = u.more_request
         plan.unknown_dish = u.unknown_dish
         plan.wants_list = plan.type == "recipe_request" and not plan.recipe_ids and not plan.ingredients
         blocks += ["recipe", "meal_place"]

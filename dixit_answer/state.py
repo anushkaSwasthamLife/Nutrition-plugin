@@ -36,6 +36,11 @@ class ChatState:
     allergy_asked_turn: int | None = None
     pending_confirm: dict | None = None                      # unknown pantry word -> suggested food ("did you mean ...?")
     recipe_choices: list = field(default_factory=list)       # recipe IDs offered for the person to pick
+    last_subject: str = ""                                   # the food or dish the last question was about ("poha"), for "and protein?" / "what about dal?"
+    last_subject_kind: str = ""                              # "nutrient" (a calories / protein question) or "allowed" (can I eat it)
+    last_nutrient: str = ""                                  # calories | protein | carbs | fat | fibre, as asked
+    last_subject_turn: int = -99
+    recipes_shown: list = field(default_factory=list)        # approved recipe IDs already shown in this chat ("what else" skips them)
     diabetes_status: str = "unknown"                         # unknown | diabetic | prediabetic | non_diabetic | currently_non_diabetic
     prior_diabetes_history: bool | None = None
     consultant_validated: bool | None = None

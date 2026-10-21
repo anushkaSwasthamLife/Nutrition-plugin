@@ -370,6 +370,7 @@ class Composer:
                 more = f" (also needs {_join([self.index.name(f) for f in recipe.also_need])})" if recipe.also_need else ""
                 d.lines.append("- " + lock("T", recipe.name + more))
             state.recipe_choices = [r.recipe_id for r in out.choices]
+            self._remember_shown(state, [r.recipe_id for r in out.choices])
             if not (plan.followup and plan.followup.get("id") == "FU-ALLERGY"):        # the allergy question comes first, once
                 plan.followup = {"id": "FU-RECIPE-CHOICE", "slot": "recipe_choice", "text": FOLLOWUP_CHOICE}
             d.suppress.add("meal_place")
@@ -383,11 +384,24 @@ class Composer:
             text = f"I can't show {dish} for you: {reasons[0]}."
             d.exclusion_texts.append(text)
             d.lines.append(lock("T", text))
-        d.lines.append(lock("T", "We don't have a checked recipe for this yet, so here is what helps most:"))
+        if plan.more_request:
+            d.lines.append(lock("T", "Those are all the checked dishes I have for these foods so far. Here is what helps most:"))
+        else:
+            d.lines.append(lock("T", "We don't have a checked recipe for this yet, so here is what helps most:"))
         self._tips_lines(plan, state, d, lock, given)
+
+    @staticmethod
+    def _remember_shown(state, recipe_ids) -> None:
+        if state is not None:
+            for rid in recipe_ids:
+                if rid not in state.recipes_shown:
+                    state.recipes_shown.append(rid)
+            del state.recipes_shown[:-60]
 
     def _render_recipe(self, recipe, plan, d: Draft, lock, free, name, state=None) -> None:
         d.recipe = recipe
+        if recipe.origin == "approved":
+            self._remember_shown(state, [recipe.recipe_id])
         if not recipe.also_need and state is not None and state.ingredients_on_hand and recipe.origin == "approved" and plan.recipe_ids:
             # A dish picked from a list for what the person has: say what else it needs (never a food they cannot have).
             have = self.index.with_generics(set(state.ingredients_on_hand))

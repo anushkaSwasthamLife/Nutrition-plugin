@@ -370,7 +370,7 @@ class RecipeService:
         else:
             full, partial = candidates, []
         if wants_list and not candidates and not usable_have:
-            pool = sorted(self.recipes, key=lambda rid: -len(set(self.recipes[rid]["main_ingredients"]) & set(home_foods)))
+            pool = sorted((rid for rid in self.recipes if rid not in skip), key=lambda rid: -len(set(self.recipes[rid]["main_ingredients"]) & set(home_foods)))
             passed = [r for r in (check(self._from_collection(rid)) for rid in pool) if r.gate.passed]
             out.status, out.choices = "choices", passed[:3]
             out.trace.append(f"R4: offering {[r.name for r in out.choices]}")

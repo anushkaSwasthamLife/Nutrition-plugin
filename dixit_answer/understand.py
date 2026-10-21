@@ -63,6 +63,10 @@ NUTRIENT_WORDS = re.compile(r"\b(calorie|calories|kcal|carb|carbs|carbohydrate|c
                             r"nutrition|nutrients?)\b")
 # "paneer, other than paneer bhurji": what comes after is a dish to leave out, not something the person has or a food we don't know
 EXCLUDE = re.compile(r"\b(?:other than|apart from|aside from|except for|except|besides|excluding|not counting|but not|anything but)\s+(?P<x>.+)$")
+# "what else", "any other", "something different": a follow-up that only makes sense after the last answer
+MORE = re.compile(r"\b(what else|anything else|something else|any other|any more|more options|other options|another one|another|one more|"
+                  r"something different|show more|different one|other ones?|else|more)\b")
+RECIPE_FLOW = {"recipe_request", "meal_from_ingredients"}
 TOPIC_SABJI = re.compile(r"\b(sabji|vegetable|curry)\b")
 
 
@@ -82,6 +86,10 @@ class Understanding:
     unknown_food_query: str = ""                         # food-like words not in the food master
     preference: str = ""
     recipe_ids: list = field(default_factory=list)       # approved recipes named in the message
+    subject: str = ""                                    # the food or dish this question is about (for "and protein?" next)
+    subject_kind: str = ""
+    subject_nutrient: str = ""
+    more_request: bool = False                           # "what else": more of the last recipe answer, leaving out what was shown
     absent_foods: list = field(default_factory=list)     # foods the person said they do NOT have ("no onion")
     exclude_recipes: list = field(default_factory=list)  # approved recipes the person asked to leave out ("other than paneer bhurji")
     unknown_words: list = field(default_factory=list)    # pantry words we don't know (never sent to the AI)
@@ -160,6 +168,64 @@ def classify(cleaned: str, foods: list[str], index: FoodIndex) -> str:
 
 CLAUSE_END = re.compile(r"\b(so|what|how|which|can|could|please|tell|give|suggest|make|cook|prepare|any|for|to|is|are|"
                         r"kya|bana|banau|banaun|sakta|sakti)\b")
+
+
+# ---- follow-ups that only make sense after the last answer: "and protein?", "what about dal?", "how many calories in it" ----
+NUTRIENT_CANON = [(re.compile(r"\b(calorie|calories|kcal|energy)s?\b"), "calories"), (re.compile(r"\b(carb|carbs|carbohydrates?)s?\b"), "carbs"),
+                  (re.compile(r"\bproteins?\b"), "protein"), (re.compile(r"\bfats?\b"), "fat"), (re.compile(r"\bfib(re|er)s?\b"), "fibre")]
+PRONOUNS = {"it", "this", "that", "them", "these", "those"}
+ASK_FILLER = {"and", "also", "what", "whats", "what's", "about", "how", "ok", "okay", "its", "it's", "their", "the", "of", "it", "in", "for", "many", "much",
+              "is", "are", "there", "tell", "me", "give", "show", "kitna", "kitni", "hai", "a", "an", "does", "do", "has", "have", "per", "serving", "amount"}
+FOLLOW_LEAD = re.compile(r"^(?:and what about|and how about|what about|how about|what of|ok and|okay and|and)\s+(?P<x>.+)$")
+RECENT_TURNS = 3
+
+
+def canonical_nutrient(cleaned: str) -> str:
+    for pattern, name in NUTRIENT_CANON:
+        if pattern.search(cleaned.lower()):
+            return name
+    return ""
+
+
+def carry_over(text: str, state, index, word_lists: dict, dish_finder=None) -> str:
+    """Rewrite a short follow-up into a full question using what the last answer was about; anything else comes back unchanged.
+
+    "and protein?" after calories in poha -> "protein in poha"; "what about dal?" -> "protein in dal" (the same nutrient) or "can i eat dal"
+    (after a can-I-eat question); "is it good for diabetes" -> "is poha good for diabetes". Only within a few turns of the last
+    question and only for short messages that name no food of their own."""
+    subject = getattr(state, "last_subject", "")
+    if not subject or state.turn - getattr(state, "last_subject_turn", -99) > RECENT_TURNS:
+        return text
+    cleaned = clean(question_part(text), word_lists["spelling_map"])
+    words = cleaned.split()
+    if not words or len(words) > 8:
+        return text
+    nutrient = canonical_nutrient(cleaned)
+    own_foods = index.find(cleaned, already_clean=True)
+    own_dishes = dish_finder(cleaned) if dish_finder else []
+    kind = getattr(state, "last_subject_kind", "")
+    if not own_foods and not own_dishes:
+        leftover = [w for w in words if w not in ASK_FILLER and w not in PRONOUNS and not NUTRIENT_WORD_RE.fullmatch(w)]
+        if nutrient and not leftover:
+            return f"{nutrient} in {subject}"                                       # "and protein?"
+        if PRONOUNS & set(words):
+            if nutrient:
+                return " ".join(subject if w in PRONOUNS else w for w in words)          # "how many calories in it"
+            if kind in {"nutrient", "allowed"} and not NUTRIENT_WORDS.search(cleaned) and len(words) <= 7 and re.search(
+                    r"\b(good|ok|okay|safe|allowed|bad|fine|healthy|suit|suitable|eat|have|take|diabetes|diabetic|weight|sugar|bp)", cleaned):
+                return " ".join(subject if w in PRONOUNS else w for w in words)          # "is it good for diabetes"
+        return text
+    lead = FOLLOW_LEAD.match(cleaned)
+    if lead and not nutrient:
+        x = lead.group("x")
+        if kind == "nutrient" and getattr(state, "last_nutrient", ""):
+            return f"{state.last_nutrient} in {x}"                                    # "what about dal?" after a protein question
+        if kind == "allowed":
+            return f"can i eat {x}"
+    return text
+
+
+NUTRIENT_WORD_RE = re.compile(r"(?:calorie|calories|kcal|energy|carb|carbs|carbohydrate|carbohydrates|protein|proteins|fat|fats|fibre|fiber|nutrition|nutrients?)")
 
 
 def pantry_words(cleaned: str, index: FoodIndex, stop_words: list[str], judge=None) -> tuple[list[str], dict | None, set]:
@@ -297,6 +363,7 @@ def _bare_dish(focus: str, dish_finder) -> bool:
 
 def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_finder=None, allergy_reader=None,
                dish_finder=None, word_judge=None) -> Understanding:
+    text = carry_over(text, state, index, word_lists, dish_finder)
     cleaned = clean(text, word_lists["spelling_map"])
     focus = clean(question_part(text), word_lists["spelling_map"])
     excluded_dishes: list = []
@@ -376,6 +443,15 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
             u.foods = [f for f in u.foods if f not in inside]      # "calories in chilli paneer" is the dish, not the food paneer
     elif dish_finder and not u.slot_fill and not foods and question_type in {"out_of_scope", "food_choice_guidance"} and _bare_dish(focus, dish_finder):
         question_type = "neutral_nutrient_lookup"           # "poha", "what is poha?": the whole message is a dish name, so give its calories
+    last = getattr(state, "last_question", None) or {}
+    if (question_type in {"out_of_scope", "food_choice_guidance", "food_allowed"} and not u.slot_fill and not foods and len(cleaned.split()) <= 8
+            and MORE.search(cleaned) and last.get("type") in RECIPE_FLOW):
+        question_type = last["type"]                       # "what else" after a recipe answer: the same request, without what was shown
+        u.more_request = True
+        u.ingredients = list(getattr(state, "ingredients_on_hand", []) or [])
+        u.foods = list(u.ingredients)
+        u.exclude_recipes = sorted(set(u.exclude_recipes) | set(getattr(state, "recipes_shown", []) or []))
+        u.recipe_ids = []
     if question_type in {"meal_from_ingredients", "recipe_request"} and INGREDIENTS.search(cleaned):
         have_clause = cleaned[INGREDIENTS.search(cleaned).end():]
         absent = negated_foods(have_clause, index)                     # "I have paneer but no onion": onion is not in the kitchen
@@ -383,5 +459,12 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
             u.absent_foods = sorted(set(u.absent_foods) | absent)
             u.ingredients = [f for f in u.ingredients if f not in absent]
             u.foods = [f for f in u.foods if f not in absent]
+    if question_type in {"neutral_nutrient_lookup", "food_allowed", "protocol_permission", "personal_suitability"}:
+        u.subject_kind = "nutrient" if question_type == "neutral_nutrient_lookup" else "allowed"
+        u.subject = mentions[0].alias if mentions else ""
+        if not u.subject and dish_finder:
+            hits = dish_finder(focus)
+            u.subject = hits[0]["span"] if hits else ""
+        u.subject_nutrient = canonical_nutrient(cleaned)
     u.type = question_type
     return u

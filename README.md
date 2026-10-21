@@ -282,3 +282,14 @@ taken out of what the person has. Real unknown foods ("dragonfruit") are still r
 that is still unknown gets one closed question (not a food / a food / the same as one food on our list): the answer can only drop a
 non-food word or ask the person to confirm a food from OUR list. It never adds a food and no number comes from it. With no model it
 is skipped. Tests: `tests/test_semantics.py`.
+
+## Follow-ups use the last answer (21 Oct 2026)
+
+A short follow-up is now read in the light of the last answer, in the same chat:
+
+- After a recipe answer, "what else", "anything else", "another one", "something different" give a different approved dish and never
+  repeat one already shown; when none is left it says so. The chat remembers the dishes shown (`recipes_shown` in the chat state).
+- After a calories or protein question, "and protein?", "and its carbs", "how many calories in it" keep the same food or dish
+  ("poha"); "what about dal?" asks the same nutrient about dal, or "can I eat dal" after a can-I-eat question; "is it good for
+  diabetes" means the food just discussed. This applies within three turns and only to short messages that name no food of their own.
+Tests: `tests/test_followups.py`.
