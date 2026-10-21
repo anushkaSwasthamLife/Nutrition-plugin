@@ -10,6 +10,7 @@ import re
 from dataclasses import dataclass, field
 
 from .foods import FoodIndex
+from .semantics import NON_FOOD_WORDS, NEGATED, NEGATED_AFTER, meaningful_words, negated_foods, split_chunks
 from .status import parse_status
 from .textnorm import clean, has_phrase
 
@@ -81,6 +82,7 @@ class Understanding:
     unknown_food_query: str = ""                         # food-like words not in the food master
     preference: str = ""
     recipe_ids: list = field(default_factory=list)       # approved recipes named in the message
+    absent_foods: list = field(default_factory=list)     # foods the person said they do NOT have ("no onion")
     exclude_recipes: list = field(default_factory=list)  # approved recipes the person asked to leave out ("other than paneer bhurji")
     unknown_words: list = field(default_factory=list)    # pantry words we don't know (never sent to the AI)
     suggestion: dict | None = None                       # {"word", "food_id"} close match to confirm first
@@ -160,24 +162,31 @@ CLAUSE_END = re.compile(r"\b(so|what|how|which|can|could|please|tell|give|sugges
                         r"kya|bana|banau|banaun|sakta|sakti)\b")
 
 
-def pantry_words(cleaned: str, index: FoodIndex, stop_words: list[str]) -> tuple[list[str], dict | None]:
-    """R1: words after "I have ..." that aren't known foods. Returns (unknown words, close-match suggestion or None)."""
+def pantry_words(cleaned: str, index: FoodIndex, stop_words: list[str], judge=None) -> tuple[list[str], dict | None, set]:
+    """R1: words after "I have ..." that aren't known foods. Returns (unknown words, close-match suggestion or None, foods said to be absent).
+
+    Wishes, tastes, times and people ("quick", "for dinner", "my kids") are not foods; "no onion" / "without onion" / "onion nahi hai" say
+    the food is NOT on hand. What is left is checked against the food list, then (optionally) by the meaning check in semantics.py."""
     m = INGREDIENTS.search(cleaned)
     if not m:
-        return [], None
+        return [], None, set()
     clause = cleaned[m.end():]
     end = CLAUSE_END.search(clause)
     clause = clause[:end.start()] if end else clause
     clause = re.split(r"\b(?:i am|am|i m|im|allergic|allergy|allergies)\b", clause)[0]     # a statement about the person is not a food
+    absent = negated_foods(clause, index)
+    kept = []
+    for chunk in split_chunks(clause):
+        if not (NEGATED.match(chunk) or NEGATED_AFTER.search(chunk)):       # a negated statement is about what is missing, not a pantry word
+            kept.append(chunk)
+    clause = " , ".join(kept)
     found = {m.food_id for m in index.find(clause, already_clean=True)}
     aliases = {m.alias for m in index.find(clause, already_clean=True)} | {a for a, fid in index.alias_to_id.items() if fid in found}
     for alias in sorted(aliases, key=len, reverse=True):          # every spelling of a known food, not just the first one found
         clause = re.sub(r"(?<![\w])" + re.escape(alias) + r"(?![\w])", " , ", clause)
-    stops = set(stop_words)
     unknown = []
     for chunk in re.split(r",|\band\b|\bor\b|&", clause):
-        words = [w for w in chunk.split() if w not in stops and not w.isdigit()]
-        phrase = " ".join(words)
+        phrase = " ".join(meaningful_words(chunk, stop_words))
         if phrase and re.fullmatch(r"[a-z' ]{2,30}", phrase) and phrase not in unknown:   # short plain words only, never echoed raw
             unknown.append(phrase)
     unknown = unknown[:5]
@@ -187,7 +196,18 @@ def pantry_words(cleaned: str, index: FoodIndex, stop_words: list[str]) -> tuple
         if close:
             suggestion = {"word": word, "food_id": index.alias_to_id[close[0]]}
             break
-    return unknown, suggestion
+    if judge is not None:
+        for word in list(unknown)[:3]:
+            if suggestion and suggestion["word"] == word:
+                continue
+            verdict = judge(word)
+            if verdict is None:
+                continue
+            if verdict[0] == "not_food":
+                unknown.remove(word)                      # a wish or a describing word, not something to look up
+            elif verdict[0] == "same" and not suggestion:
+                suggestion = {"word": word, "food_id": verdict[1]}      # confirmed with the person first, as for a close spelling
+    return unknown, suggestion, absent
 
 
 def read_reply(cleaned: str, slot: str, foods: list[str], index: FoodIndex, word_lists: dict,
@@ -276,7 +296,7 @@ def _bare_dish(focus: str, dish_finder) -> bool:
 
 
 def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_finder=None, allergy_reader=None,
-               dish_finder=None) -> Understanding:
+               dish_finder=None, word_judge=None) -> Understanding:
     cleaned = clean(text, word_lists["spelling_map"])
     focus = clean(question_part(text), word_lists["spelling_map"])
     excluded_dishes: list = []
@@ -322,11 +342,16 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
         m = DISH_AFTER.search(cleaned)
         if m:
             dish = " ".join(w for w in m.group(1).split() if w not in {"please", "pls", "some", "a", "an", "the", "me", "for", "my"})
-            if dish and dish not in GENERIC_DISH and not u.foods:
+            if dish and dish not in GENERIC_DISH and not u.foods and any(w not in NON_FOOD_WORDS for w in dish.split()):
                 u.unknown_dish = dish
     if INGREDIENTS.search(cleaned) and question_type == "meal_from_ingredients":
         u.ingredients = foods
-        u.unknown_words, u.suggestion = pantry_words(scrub_conditions(cleaned, word_lists), index, word_lists.get("ingredient_stop_words", []))
+        u.unknown_words, u.suggestion, absent = pantry_words(scrub_conditions(cleaned, word_lists), index,
+                                                             word_lists.get("ingredient_stop_words", []), word_judge)
+        if absent:                                          # "paneer but no onion": onion is not in the kitchen
+            u.absent_foods = sorted(absent)
+            u.ingredients = [f for f in u.ingredients if f not in absent]
+            u.foods = [f for f in u.foods if f not in absent]
         if u.conditions and not u.ingredients and not u.unknown_words and not u.recipe_ids:
             question_type = "recipe_request"        # "I have obesity, what sabji would you recommend": no foods at home were named
             u.suggestion = None
@@ -351,5 +376,12 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
             u.foods = [f for f in u.foods if f not in inside]      # "calories in chilli paneer" is the dish, not the food paneer
     elif dish_finder and not u.slot_fill and not foods and question_type in {"out_of_scope", "food_choice_guidance"} and _bare_dish(focus, dish_finder):
         question_type = "neutral_nutrient_lookup"           # "poha", "what is poha?": the whole message is a dish name, so give its calories
+    if question_type in {"meal_from_ingredients", "recipe_request"} and INGREDIENTS.search(cleaned):
+        have_clause = cleaned[INGREDIENTS.search(cleaned).end():]
+        absent = negated_foods(have_clause, index)                     # "I have paneer but no onion": onion is not in the kitchen
+        if absent:
+            u.absent_foods = sorted(set(u.absent_foods) | absent)
+            u.ingredients = [f for f in u.ingredients if f not in absent]
+            u.foods = [f for f in u.foods if f not in absent]
     u.type = question_type
     return u

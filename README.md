@@ -272,3 +272,13 @@ By default the server listens on this machine only. Set `DIXIT_HOST=0.0.0.0` to 
 start-up message prints the address to share. The chat is then open to anyone who can reach it (no sign-in, plain http), so use a trusted
 network. The dietitian review pages (`/review`, `/api/review/*`) change files and answer only the computer running the server.
 Steps and troubleshooting: `docs/SETUP.md` section 4. Tests: `tests/test_host.py`.
+
+## Meaning around a food (21 Oct 2026)
+
+`dixit_answer/semantics.py` reads what sits around the foods in "I have ...". Wishes, tastes, times and people ("quick", "spicy",
+"for dinner", "my kids", "kuch light banao") are not foods, so they are no longer reported as unknown foods or sent to the dietitian
+queue. "No onion", "without onion", "don't have tomato", "tamatar nahi hai", "out of onion" mean the food is NOT on hand, so it is
+taken out of what the person has. Real unknown foods ("dragonfruit") are still reported. With the language model switched on, a word
+that is still unknown gets one closed question (not a food / a food / the same as one food on our list): the answer can only drop a
+non-food word or ask the person to confirm a food from OUR list. It never adds a food and no number comes from it. With no model it
+is skipped. Tests: `tests/test_semantics.py`.

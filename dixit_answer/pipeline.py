@@ -21,6 +21,7 @@ from .dish_lookup import build_dish_lookup, find_all_in_text
 from .lists import apply_blocked_records
 from .foods import FoodIndex
 from .hindi import translate as hindi_translate
+from .semantics import SemanticJudge
 from .llm import LLMError, make_llm
 from .emergency import EmergencyRules
 from .loader import LoadError, load_library, load_manifest, load_swastham_data
@@ -82,6 +83,7 @@ class Engine:
         self.store = StateStore(self.settings.state_db)
         self.audit = AuditLog(self.settings.audit_log)
         self.llm = llm or make_llm(self.settings)
+        self.judge = SemanticJudge(self.llm, self.index)          # what a still-unknown word means (only with a real model)
         ai_drafting = bool(manifest["environments"][self.settings.environment].get("recipe_ai_drafting"))
         self.recipes = RecipeService(self.library, self.data, self.index, self.allergy, self.llm, ai_drafting,
                                      self.services.golden)
@@ -136,7 +138,7 @@ class Engine:
 
         # 4 understand (+ apply what a reply tells us)
         u = understand(text, state, self.index, self.words, self.recipes.find_recipes_in_text, self.allergy.read_reply,
-                       self._dish_in_text if self.dishes else None)
+                       self._dish_in_text if self.dishes else None, self.judge.judge)
         if gate.emergency:
             u.type = "emergency"
         self._apply_slot_fill(u, state, text)
