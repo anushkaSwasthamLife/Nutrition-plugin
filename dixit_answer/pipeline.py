@@ -109,6 +109,7 @@ class Engine:
             "black_lists": self.data.black_lists["version"],
             "dish_rules": self.data.dish_rules["version"],
             "book_measures": self.data.book_measures["version"],
+            "decision_logic": self.data.decision_logic["version"],
         }
 
     def _dish_in_text(self, cleaned: str) -> list[dict]:
@@ -139,7 +140,7 @@ class Engine:
 
         # 4 understand (+ apply what a reply tells us)
         u = understand(text, state, self.index, self.words, self.recipes.find_recipes_in_text, self.allergy.read_reply,
-                       self._dish_in_text if self.dishes else None, self.judge.judge)
+                       self._dish_in_text if self.dishes else None, self.judge.judge, self.composer.food_exists)
         if gate.emergency:
             u.type = "emergency"
         elif gate.em.glucose_mg_dl is not None and u.type in {"food_allowed", "out_of_scope", "food_choice_guidance", "neutral_nutrient_lookup", "protocol_permission"}:
@@ -148,6 +149,8 @@ class Engine:
             u.type = "safety_ack"                          # "i am on insulin", "i have kidney disease": thanked, noted, nothing else guessed
         if u.statement:
             st = u.statement
+            if st.get("label") == "none":
+                state.allergies = []                                              # "no allergies": known, and none
             if st.get("diet"):
                 state.food_preference = st["diet"]                                # said outright, so it replaces an earlier guess
             if st.get("allergies"):
@@ -249,8 +252,9 @@ class Engine:
         else:
             state.last_followup = None
         if u.type == "target_meal_search":
-            state.last_targets = [[t.field, t.value, t.mode] for t in u.targets]
+            state.last_targets = [[t.field, t.value, t.mode, t.high] for t in u.targets]
             state.last_targets_turn, state.target_exclude = state.turn, list(u.target_exclude)
+            state.target_diet = u.target_diet
         elif u.type not in {"greeting_thanks", "out_of_scope", "explain_last"}:
             state.last_targets = []                                # a different kind of question ends the dish search
         if u.type != "explain_last":

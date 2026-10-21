@@ -29,11 +29,13 @@ SUBJECT_PATTERNS = [
     re.compile(r"\bam i allowed (?:to )?(?:eat |have |drink )?(?P<x>.+)$"),
     re.compile(r"\bis (?P<x>.+?)\s+allowed$"),
 ]
-CATEGORY_WORDS = {"fruit", "fruits", "vegetable", "vegetables", "veggies", "food", "foods", "snacks", "snack", "sweets", "sweet", "drinks", "drink", "anything",
+CATEGORY_WORDS = {"nuts", "seeds", "salad", "salads", "sprouts", "dry", "dryfruits", "water", "pulses", "fruit", "fruits", "vegetable", "vegetables", "veggies", "food", "foods", "snacks", "snack", "sweets", "sweet", "drinks", "drink", "anything",
                   "everything", "something", "meat", "nonveg", "dairy", "grains", "cereals", "pulses", "nuts", "dessert", "desserts", "junk"}
 TIME_TALK = re.compile(r"\b\d{1,2}\s*(?:am|pm)\b|\bo clock\b|\b(?:after|before|at|till|until|by)\s+\d|\b(?:late night|midnight|every day|daily|twice|thrice)\b")
+COLOR_WORDS = {"black", "white", "red", "green", "yellow", "brown", "orange", "pink", "blue", "purple", "golden", "dark", "light"}
 UNWANTED = {"cake", "cakes", "candy", "candies", "infant", "formula", "baby", "babyfood", "toddler", "bubble", "supplement", "pet", "dog", "cat"}
-DISH_NOISE = {"fewer", "fewest", "higher", "lower", "highest", "lowest", "greater", "lesser", "healthier", "healthiest", "worse", "worst", "bigger", "smaller", "reduce", "lose", "gain", "control", "manage", "improve", "increase", "avoid", "burn", "build", "cut", "stop", "start", "make", "do", "get", "feel", "am", "pm", "oclock", "clock", "hour", "hours", "minutes", "min", "late", "early", "time", "times", "a", "an", "the", "some", "any", "my", "your", "this", "that", "these", "those", "of", "for", "me", "us", "to", "in", "if", "i", "am", "is", "are",
+DISH_NOISE = {"facts", "fact", "info", "information", "details", "value", "values", "content", "contents", "first", "second", "next", "last", "then", "enough", "here",
+              "there", "cheat", "treat", "fewer", "fewest", "higher", "lower", "highest", "lowest", "greater", "lesser", "healthier", "healthiest", "worse", "worst", "bigger", "smaller", "reduce", "lose", "gain", "control", "manage", "improve", "increase", "avoid", "burn", "build", "cut", "stop", "start", "make", "do", "get", "feel", "am", "pm", "oclock", "clock", "hour", "hours", "minutes", "min", "late", "early", "time", "times", "a", "an", "the", "some", "any", "my", "your", "this", "that", "these", "those", "of", "for", "me", "us", "to", "in", "if", "i", "am", "is", "are",
               "daily", "everyday", "regularly", "often", "sometimes", "today", "tonight", "tomorrow", "now", "later", "ever", "also", "too", "please", "plz", "pls",
               "diabetic", "diabetes", "sugar", "patient", "weight", "loss", "while", "during", "after", "before", "at", "night", "morning", "evening", "lunch", "dinner",
               "breakfast", "bp", "pcos", "thyroid", "pregnant", "pregnancy"}
@@ -79,19 +81,31 @@ def food_phrase(cleaned: str, extra_stop: set | None = None) -> str:
     return " ".join(kept[:4]) if kept else ""
 
 
-def subject_of(cleaned: str) -> str:
-    """The food a "can I eat ...?" / "is ... ok?" question is about, or ""."""
+def _subject(cleaned: str) -> tuple[str, bool]:
+    """(the food phrase a "can I eat ...?" question names, whether it is only a kind of food such as "fruits" or "nuts")."""
     if TIME_TALK.search(cleaned):
-        return ""                                            # "is it ok to eat after 8 pm" is about timing, not about a food
+        return "", False                                     # "is it ok to eat after 8 pm" is about timing, not about a food
     for pattern in SUBJECT_PATTERNS:
         m = pattern.search(cleaned)
         if m:
             rest = m.group("x")
             if re.match(r"(?:to|so|if|when|what|which|how|why|that|because)\b", rest):
-                return ""                                      # "should i eat to reduce it": a purpose, not a food
+                return "", False                               # "should i eat to reduce it": a purpose, not a food
             phrase = food_phrase(rest)
-            return "" if (not phrase or set(phrase.split()) <= CATEGORY_WORDS) else phrase      # "can i eat fruits" is a question about a kind of food
-    return ""
+            if not phrase:
+                return "", False
+            return ("", True) if set(phrase.split()) <= CATEGORY_WORDS else (phrase, False)
+    return "", False
+
+
+def subject_of(cleaned: str) -> str:
+    """The food a "can I eat ...?" / "is ... ok?" question is about, or ""."""
+    return _subject(cleaned)[0]
+
+
+def kind_question(cleaned: str) -> bool:
+    """True for "can I eat fruits / nuts / vegetables?": a question about a kind of food, answered from the programme."""
+    return _subject(cleaned)[1]
 
 
 COMPARE_LEAD = re.compile(r"^(?:please\s+)?(?:compare|comparison of|difference between|which is (?:better|healthier|lower|higher)|which one is (?:better|healthier)|"
@@ -121,7 +135,7 @@ def scaled_fact(fact: Fact, grams: float) -> Fact:
     unit, label = FIELD_LABELS[fact.field]
     value = fact.value * grams / 100.0
     shown = _num(value, unit)
-    amount = f"{shown} calories" if unit == "kcal" else f"{shown} g of {label}"
+    amount = f"{shown} calorie{'' if shown == '1' else 's'}" if unit == "kcal" else f"{shown} g of {label}"
     serving = f"per {grams:g} g"
     return Fact(fact.record_id, fact.field, float(value), f"about {amount} {serving}", serving, fact.source, fact.food_name, amount)
 

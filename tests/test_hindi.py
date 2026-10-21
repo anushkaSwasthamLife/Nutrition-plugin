@@ -83,7 +83,7 @@ def test_devanagari_digits_and_the_full_stop():
 
 def test_english_and_unmatched_roman_text_come_back_unchanged():
     for text in ["calories in poha", "How much protein is in dal?", "I have aloo and tamatar, what can I make?", "can i eat rice", "hello", "dal mein hai",
-                 "What is poha?", "mujhe bhook lagi hai", "", "   ", "!!!"]:
+                 "What is poha?", "", "   ", "!!!"]:
         assert translate(text) == text, text
 
 

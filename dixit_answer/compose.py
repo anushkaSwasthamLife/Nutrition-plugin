@@ -13,6 +13,7 @@ from .dish_lookup import AMBIGUOUS, FOUND, fact_text as dish_fact_text, find_all
 from .facts import Fact, fact_sentence
 from .foods import FoodIndex
 from .golden import Status
+from .person import Person
 from .planner import AnswerPlan
 from .safety import EMERGENCY_ANSWER, safety_caution
 from .services import Services
@@ -22,7 +23,7 @@ from .foods import LibrarySearch
 from .lists import bad_mapping_pairs
 from .targets import EGG, MEAT_FISH, QUAL_NOUN, TargetSearch, wants_drinks
 from .understand import SYMPTOM as SYMPTOM_RE
-from .unknown_foods import food_phrase, grams_in, measure_in, scaled_fact, subject_of, usda_hits
+from .unknown_foods import COLOR_WORDS, food_phrase, grams_in, measure_in, scaled_fact, subject_of, usda_hits
 from .textnorm import clean
 
 PLACEHOLDER_RE = re.compile(r"\{\{([A-Z]+\d*)\}\}")
@@ -145,6 +146,8 @@ class Composer:
                     free("You're welcome! Ask me anything about food, meals or the Dixit programme.")
                 elif u.cleaned in {"ok", "okay"}:
                     free("Okay! Ask me anything about food, meals or the Dixit programme.")
+                elif re.match(r"(?:bye|goodbye|good bye|see you|take care|good night)", u.cleaned):
+                    free("Take care! Come back any time with a question about food, meals or the Dixit programme.")
                 else:
                     free("Hello! Ask me anything about food, meals or the Dixit programme.")
             elif block == "definition":
@@ -158,6 +161,16 @@ class Composer:
             elif block == "reading":
                 d.lines.append(lock("T", f"Thank you for sharing your reading of {plan.reading:g} mg/dL. I can't judge a reading or change your care. "
                                          "Please talk to your doctor or dietitian about it."))
+            elif block == "about":
+                d.lines.append(lock("T", "I'm the Dixit nutrition assistant, an automated helper, not a doctor and not a person. I can look up the nutrition of foods and dishes, "
+                                         "suggest dishes from what you have, find dishes near an amount you want, and explain how the programme works. "
+                                         "For medical advice please talk to your doctor."))
+            elif block == "body_info":
+                d.lines.append(lock("T", "Thank you. I can't work out calorie needs, a target weight or a plan from body measurements; please talk to your doctor or "
+                                         "dietitian about that. I can still look up foods and dishes for you."))
+            elif block == "special_diet":
+                d.lines.append(lock("T", "I don't have guidance for fasting or special diets such as keto yet. "
+                                         "Please ask your Dixit coach how to fit the programme with what you follow."))
             elif block == "plan_refusal":
                 d.lines.append(lock("T", "I can't write a meal plan or diet chart. The programme doesn't use fixed menus; this is how it works, and I can suggest dishes "
                                          "for a meal if you tell me what you have."))
@@ -256,7 +269,7 @@ class Composer:
                     else:
                         text, pos = self.s.position_for(fid, person.status if person else None)
                         d.lines.append(lock("T", text))
-                        if pos is not None and pos.allowed == "depends_on_status":
+                        if pos is not None and pos.allowed in ("depends_on_status", "no"):
                             d.lines.append(lock("T", "The nutrition facts below are for information only, not permission."))
             elif block == "food_facts":
                 for fid in plan.focus_foods:
@@ -437,12 +450,21 @@ class Composer:
             if mode in {"high", "low"}:
                 parts.append(f"{'high' if mode == 'high' else 'low'} {QUAL_NOUN[fld]}" if fld != "energy_kcal" else ("few calories" if mode == "low" else "many calories"))
                 continue
+            if mode == "range" and next(t.high for t in plan.targets if t.field == fld) is not None:
+                high = next(t.high for t in plan.targets if t.field == fld)
+                parts.append(f"{value:g} to {high:g} {LABEL_FOR[fld]}")
+                continue
             word = "" if every_about else {"max": "up to ", "min": "at least "}.get(mode, "about ")
             parts.append(f"{word}{value:g} {LABEL_FOR[fld]}")
         want = ("about " if every_about else "") + _join(parts)
         if u is not None and re.search(r"\bsnacks?\b", u.cleaned):
             d.lines.append(lock("T", "The programme has no snacks between meals, so these are dishes for your meals."))
         profile_diet = getattr(person, "diet_type", "unknown") if person is not None else "unknown"
+        narrower = {"non_vegetarian": {"vegetarian", "jain", "egg"}, "egg": {"vegetarian", "jain"}, "unknown": {"vegetarian", "jain", "egg"}}
+        if plan.target_diet and plan.target_diet in narrower.get(profile_diet, set()):
+            import dataclasses
+            person = dataclasses.replace(person, diet_type=plan.target_diet) if person is not None else Person(diet_type=plan.target_diet)
+            profile_diet = plan.target_diet                                  # a narrower diet asked for in this search is honoured
         if u is not None and getattr(u, "preference", "") == "non_vegetarian" and profile_diet in {"vegetarian", "jain"}:
             d.lines.append(lock("T", f"Your profile says {profile_diet}, so I only looked at {profile_diet} dishes."))
         if self.dishes is None:
@@ -672,6 +694,22 @@ class Composer:
             return
         if self._usda_fact_lines(phrase, field, d, lock, given, grams_in(u.cleaned), person=person):
             return
+        words = [w for w in phrase.split() if w not in COLOR_WORDS] or phrase.split()
+        if len(words) > 1 or words != phrase.split():
+            for word in words[:3]:                                   # "poha upma": each food; "black coffee": the main word
+                blocked_word = self._phrase_block(word, person)
+                if blocked_word:
+                    d.exclusion_texts.append(blocked_word)
+                    d.lines.append(lock("T", blocked_word))
+                    continue
+                if self.dishes is not None:
+                    result = self.dishes.resolve(word)
+                    if result.status in {FOUND, AMBIGUOUS} and word in self.dishes.exact and self._dish_lines([(word, result)], d, lock, given, person, field):
+                        continue
+                if self._usda_fact_lines(word, field, d, lock, given, grams_in(u.cleaned), 2, person):
+                    continue
+            if any(line for line in d.lines):
+                return
         d.unknown_items.append({"word": phrase[:60], "kind": "ingredient", "suggested_food_id": ""})
         d.backlog_request = True
         d.lines.append(lock("T", f"I couldn't find \"{phrase}\" in our data yet; I've passed it to our dietitian. Could you tell me its name another way?"))
@@ -720,6 +758,15 @@ class Composer:
         if said and len(hits) > most:
             d.lines.append(lock("T", f"I can look up {most} dishes at a time. Ask me about the others in a new question."))
         return said
+
+    def food_exists(self, phrase: str) -> bool:
+        """Is this a dish or a food we hold data for (so a bare "jalebi" is worth a lookup)? Used only to tell a food name from noise."""
+        for word in [phrase, *phrase.split()]:
+            if self.dishes is not None and self.dishes.candidates(word)[0]:
+                return True
+            if self._library_search().search(word, limit=1, usda_only=True) or self._library_search().search(word + "s", limit=1, usda_only=True):
+                return True
+        return False
 
     def _compare_phrases(self, plan, u, d, lock, given, person) -> None:
         """Foods side by side, each with its own stored fact for the nutrient asked (calories unless another is named); no verdict is invented."""
@@ -784,6 +831,8 @@ class Composer:
     def _profile_ack(self, statement: dict) -> list[str]:
         """The plain acknowledgement of what the person said about themselves (the change itself is made in the pipeline)."""
         lines = []
+        if statement.get("label") == "none":
+            return ["Noted: no allergies."]
         if statement.get("label") == "vegan":
             lines.append("Noted: vegan. I'll show vegetarian dishes and leave out milk and egg foods. I can't check every hidden animal product, so please read labels.")
         elif statement.get("allergies") and self.allergy is not None:

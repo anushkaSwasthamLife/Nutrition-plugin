@@ -152,6 +152,17 @@ _SHAPES = [
     # "poha mein kitni calories hai" / "dal mein protein kitna hota hai"
     (re.compile(rf"^(?P<x>.+?)\s+(?:mein|me|main)\s+{_HOW}\s+(?P<n>{_NUT}){_BE}\s*\??$"), r"how much \g<n> in \g<x>"),
     (re.compile(rf"^(?P<x>.+?)\s+(?:mein|me|main)\s+(?P<n>{_NUT})\s+{_HOW}{_BE}\s*\??$"), r"how much \g<n> in \g<x>"),
+    # "paneer mein protein zyada hota hai kya"
+    (re.compile(rf"^(?:kya\s+)?(?P<x>.+?)\s+(?:mein|me)\s+(?P<n>{_NUT})\s+(?:zyada|jyada|kaafi|bahut)\s+(?:hota|hoti|hote)(?:\s+(?:hai|hain))?(?:\s+kya)?\s*\??$"), r"is \g<x> high in \g<n>"),
+    (re.compile(rf"^(?:kya\s+)?(?P<x>.+?)\s+(?:mein|me)\s+(?P<n>{_NUT})\s+kam\s+(?:hota|hoti|hote)(?:\s+(?:hai|hain))?(?:\s+kya)?\s*\??$"), r"is \g<x> low in \g<n>"),
+    # "mujhe bhook lagi hai"
+    (re.compile(r"^(?:mujhe\s+)?bhook(?:h)?\s+(?:lagi|lag rahi|lag raha)(?:\s+hai)?\s*\??$"), "i am hungry"),
+    # "protein wala khana batao"
+    (re.compile(r"^(?:mujhe\s+)?(?P<x>.+?)\s+wala\s+khana(?:\s+(?:batao|bataiye|chahiye|dikhao))?\s*\??$"), r"i want \g<x> food, what can i have"),
+    # "wajan kam karne ke liye kya khayein"
+    (re.compile(r"^(?:weight|wazan|vajan|vajn|wajan)\s+kam\s+karne\s+ke\s+liye\s+kya\s+(?:khayein|khaye|khayen|khana|khaun|khau)(?:\s+chahiye)?\s*\??$"), "what should i eat to lose weight"),
+    # "aaj dinner mein kya banau"
+    (re.compile(r"^(?:aaj\s+)?(?P<m>breakfast|lunch|dinner|nashta)\s+(?:mein|me|ke liye)\s+kya\s+(?:banau|banaun|banaye|banayen|bana)\s*\??$"), r"what can i cook for \g<m>"),
     # "roti kitni calories ki hoti hai", "dal kitna protein hota hai"
     (re.compile(rf"^(?P<x>.+?)\s+{_HOW}\s+(?P<n>{_NUT})(?:\s+(?:ki|ka|ke))?(?:\s+(?:hoti|hota|hote))?(?:\s+(?:hai|hain))?\s*\??$"), r"how much \g<n> in \g<x>"),
     # "mujhe high protein khana batao"

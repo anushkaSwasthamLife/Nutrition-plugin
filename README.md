@@ -77,7 +77,7 @@ Paneer uses USDA queso fresco as a PROXY record until a dietitian confirms a bet
 
 ## Golden Rules (phase 6)
 
-`golden_rules.json` (GR-PARTIAL-0.2) is **PARTIAL and unsigned**: built only from the live Dixit app's answers and the amendment tests.
+`golden_rules.json` (GR-PARTIAL-0.3) is **PARTIAL and unsigned**: built from the live Dixit app's answers, the amendment tests and, for fruit in diabetic and prediabetic people only, the client's Golden Rules KB (see the last section).
 Anything not documented is answered "unknown, ask your Dixit coach", never guessed. Production refuses this file.
 Fruit position depends on diabetes status (asked once, only when a rule depends on it). Protocol amounts drop options the person
 can't have (allergy, diet, avoid list) and say "ask your Dixit coach" when none is left.
@@ -350,3 +350,15 @@ More gaps from the same review, each fixed and kept by `tests/test_prompt_review
   (bomb, poison ...) or a creative request (poem, joke) is out of scope and never queued for the dietitian.
 - **"Oats vs poha", "brown rice vs white rice"** set two foods side by side (food list, dish, or USDA), with the same diet and allergy checks.
 - More Roman Hindi and Devanagari shapes ("roti kitni calories ki hoti hai", "mujhe high protein khana batao", "aaj kya banau").
+
+## Golden Rules KB: fruit rule and decision logic (DRAFT, 21 Oct 2026)
+
+The client sent a nine-sheet Golden Rules KB. The combined table and the list of 21 problems are in `Desktop\Nutrition\Dixit_KB_Combined_Table.xlsx`, and section "Golden Rules KB" of `Desktop\Nutrition\workflow.html` explains them in plain words. Two things from it are now in the code, both **DRAFT and unsigned** (production refuses both):
+
+- **Fruit for diabetic and prediabetic people** (`golden_rules.json`, GR-PARTIAL-0.3): `allowed` is now `"no"` instead of `"unknown"`, with the wording "no fruit and no sweets ... changes only when your Dixit expert has checked your results and cleared you". Source: KB Decision Logic (Fruit/Sugar), Ratna Q&A RAG-02 and RAG-17, Core GRC-NEW-8. Recipes already left fruit out for anyone not confirmed non-diabetic. When the rule is "no", the answer now also says "the nutrition facts below are for information only, not permission" (one line in `compose.py`). The after-remission case (`currently_non_diabetic_validated`) is still "unknown".
+- **`decision_logic_draft.json`** (DL-0.1.0, registered in `manifest.json` as `decision_logic`): the sheet's four topics (salt, protein, oil and saturated fat, fruit). Each has a baseline, modifiers by condition (hypertension, CKD, hyperuricemia, dyslipidemia), which condition is the gate, the sheet's own words, and open questions (15 in all). **Nothing reads it yet and no modifier has a number**, so nothing is enforced. Readiness lists it as unsigned. The rule for combining conditions (the stricter one wins; a modifier never relaxes a Golden Rule) is our proposal and is marked as ours, not the KB's.
+- Needs from the client: the Diet KB and GRC-031 / GRC-036, a number for each lower limit, salt or sodium for the 2 g figure, a CKD rule split by stage and dialysis, whether a squeeze of lemon is allowed, and "restrict" versus "no fruit". Tests: `tests/test_decision_logic.py`.
+
+## Prompt review, round 2 (21 Oct 2026)
+
+A second pass over many more prompts. The chat now repairs common typos ("calries", "protien"), reads calorie and nutrient ranges ("between 200 and 300 kcal", "need 20 g protein"), answers "who are you" and body facts, and says honestly that fasting and special diets such as keto are not covered. It also handles goodbyes and "no allergies", adds foods said later ("i also have onion") to what is at home, lets "what about veg" narrow a dish search, and answers bare unlisted foods, "nutrition of ...", kinds of food ("are nuts allowed") and cheat days. Roman-Hindi shapes were added. A prompt snapshot (`tests/prompt_snapshot.py`, 369 prompts) and `tests/test_prompt_review2.py` guard these. Still open: "which is lower/better" after two lookups.

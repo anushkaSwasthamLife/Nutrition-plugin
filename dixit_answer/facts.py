@@ -85,7 +85,7 @@ def make_fact(library: Library, record_id: str, field: str) -> Fact | None:
             return Fact(record_id, field, None, f"about {amount} {serving}", serving, source_label(library, record_id), rec["food_name"], amount)
     if value is None:
         return None
-    amount = f"{_num(value, unit)} calories" if unit == "kcal" else f"{_num(value, unit)} g of {label}"
+    amount = (f"{_num(value, unit)} calorie{'' if _num(value, unit) == '1' else 's'}") if unit == "kcal" else f"{_num(value, unit)} g of {label}"
     text = f"about {amount} {serving}"
     return Fact(record_id, field, float(value), text, serving, source_label(library, record_id), rec["food_name"], amount)
 

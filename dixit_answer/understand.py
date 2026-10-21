@@ -9,8 +9,9 @@ import difflib
 import re
 from dataclasses import dataclass, field
 
+from .dish_lookup import SCAFFOLD as SCAFFOLD_WORDS
 from .foods import FoodIndex
-from .unknown_foods import compare_sides, subject_of
+from .unknown_foods import compare_sides, food_phrase, kind_question, subject_of
 from .targets import WANT, Target, is_target_request, parse_targets
 from .semantics import HARMFUL_WORDS, HEALTH_WORDS, NON_FOOD_WORDS, NEGATED, NEGATED_AFTER, meaningful_words, negated_foods, split_chunks
 from .status import parse_status
@@ -42,9 +43,19 @@ STATEMENT_ALLERGY = re.compile(r"\b(?:lactose intolerant|lactose intolerance|glu
 STATEMENT_VEGAN = re.compile(r"\b(?:i am|i m|im|we are)\s+(?:a\s+)?(?:vegan|plant based)\b|^(?:vegan|plant based)$")
 STATEMENT_AVOID = re.compile(r"^(?:i|we)\s+(?:do not|dont|don t|never|cannot|can t|cant)\s+(?:eat|have|take|like|touch)\s+(?P<x>.+)$|"
                              r"^(?:i|we)\s+(?:avoid|skip|stay away from)\s+(?P<y>.+)$|^no\s+(?P<z>.+?)\s+for\s+me$")
-GREETING = re.compile(r"^(hi|hello|hey|namaste|good (morning|evening|afternoon)|thanks?|thank you|thank you so much|ok|okay|"
-                      r"ok thanks|okay thanks|thx|ty)( (dixit|coach|so much|a lot))?$")
-INGREDIENTS = re.compile(r"\b((?:cook|make|prepare|recipes?|dishes?|meals?|ideas?)\s+(?:with|using|from)|i have|i've got|i got|we have|at home (i|we) have|there is|there's|have only|only have|my paas)\b")
+GREETING = re.compile(r"^(hi|hello|hey|namaste|good (morning|evening|afternoon|night)|thanks?|thank you|thank you so much|ok|okay|"
+                      r"ok thanks|okay thanks|thx|ty|bye|goodbye|good bye|see you|see you later|take care|bye bye)( (dixit|coach|so much|a lot|there))?"
+                      r"( how are you| how r u| how are you doing| kaise ho| kya haal hai)?$")
+ABOUT_ME = re.compile(r"^(?:who|what) (?:are|r) (?:you|u)$|^what can (?:you|u) do$|^(?:can you |could you |please )?help(?: me)?$|^what (?:is|s) your name$|^your name$|"
+                      r"^are you (?:a |an )?(?:real |human |robot|bot|ai|doctor|dietitian|dietician|person|nutritionist|machine|chatbot)\b.*|^how can you help.*|^what do you do$|"
+                      r"^who made you$|^who built you$|^are you (?:there|listening)$")
+BODY_INFO = re.compile(r"\b(?:my )?(?:weight|height|age|bmi) (?:is|=)\s*\d|\b\d{1,3}(?:\.\d)?\s*(?:kg|kgs|kilos?|cm|feet|ft|inches|inch)\b|"
+                       r"^i (?:am|m) (?:a )?(?:man|woman|male|female|boy|girl|lady|guy)$|\bi (?:am|m) \d{1,3} (?:years? old|yrs?|yo)\b|\bi (?:am|m) \d{1,3}$|\bmy bmi\b")
+SPECIAL_DIET = re.compile(r"\b(?:keto|ketogenic|paleo|atkins|carnivore|raw food diet|intermittent fasting|fasting|fast|fasts|vrat|upvas|upavas|navratri|ekadashi|ramadan|ramzan|"
+                          r"roza|iftar|suhoor|sehri|mahashivratri|janmashtami|diwali fast|karwa chauth|detox|juice cleanse|water fast|dry fast)\b")
+NO_ALLERGY = re.compile(r"^(?:i have |i got |we have )?(?:no|zero|none|nil)(?: known)?(?: food)? allerg(?:y|ies)(?: at all)?$|^no allergies$|^not allergic to anything$|"
+                        r"^i am not allergic to anything$")
+INGREDIENTS = re.compile(r"\b((?:cook|make|prepare|recipes?|dishes?|meals?|ideas?)\s+(?:with|using|from)|(?<!can )(?<!could )(?<!may )(?<!should )(?<!do )(?<!shall )(?<!must )(?<!would )(?<!will )i have|i've got|i got|we have|at home (i|we) have|there is|there's|have only|only have|my paas|ingredients?\s+(?:are\s+)?(?!of\b|in\b|for\b|used\b|needed\b|required\b|list\b))\b")
 HINDI_MAKE = re.compile(r"\b(bana|banau|banaun|banaye|pakau|pakaun|pakana|pakaye|kya bana)\b")   # not "banana": that's a fruit
 DISH_AFTER = re.compile(r"(?:recipe (?:for|of)|how (?:do|to|can|should) (?:i |you |we )?(?:make|cook|prepare)|make|cook|prepare)\s+(.+)$")
 DISH_FILLER = {"please", "pls", "show", "me", "the", "a", "an", "recipe", "recipes", "for", "i", "want", "give", "ka", "ki", "ke", "ko", "dikhao", "batao",
@@ -52,15 +63,19 @@ DISH_FILLER = {"please", "pls", "show", "me", "the", "a", "an", "recipe", "recip
 GENERIC_DISH = {"recipes", "recipe", "some recipes", "a recipe", "something", "food", "a dish", "dish", "dishes", "some dishes",
                 "me recipes", "it", "this", "that", "meal", "meals", "lunch", "dinner"}
 MAKE = re.compile(r"\b(make|prepare|cook|dish|meal|recipe|what can i (make|cook|prepare))\b")
-RECIPE = re.compile(r"\b(recipe|how (do|to|can) (i |you )?(make|cook|prepare)|how is .* made|method to (make|cook))\b")
+RECIPE = re.compile(r"\b(recipe|how (do|to|can) (i |you )?(make|cook|prepare)|how is .* made|method to (make|cook)|want to (?:make|cook|prepare)|let s (?:make|cook)|how about making)\b")
 SOURCE = re.compile(r"\b(source|where (does|do|did) (this|that|these|the) .*(come|from)|where is (this|that) from|reference)\b")
-LOOKUP_MORE = re.compile(r"\b(?:sugar|sugars|sodium)\s+(?:in|of|content)\b|\bhow (?:much|many) (?:sugar|sodium)\b")
+LOOKUP_MORE = re.compile(r"\b(?:sugar|sugars|sodium)\s+(?:in|of|content)\b|\bhow (?:much|many) (?:sugar|sodium)\b|\b(?:nutrition|nutrients?|macros?)\s+(?:facts?\s+)?(?:of|in|for)\b|"
+                         r"\b(?:nutrition|nutritional) (?:facts|value|values|info|information|details)\b")
 LOOKUP = re.compile(r"\b(how (many|much)|what is the|what's the|amount of)\b.*\b(calorie|carb|protein|fat|fiber|sugar|energy|"
                     r"nutrition|nutrients?)\b|\b(calorie|carb|protein|fat|fiber)s? (in|of)\b")
 COMPARE = re.compile(r"\b(compare|comparison|vs|versus|difference between|better than|which is better|healthier)\b")
 STATUS = re.compile(r"\b(non diabetic|no longer diabetic|not diabetic anymore|reversed|reversal|now normal|sugar is normal)\b")
-PERSONAL = re.compile(r"\b(safe for me|good for me|ok for me|okay for me|suitable for me|right for me|bad for me|harmful for me)\b")
-MEAL_PROTOCOL = re.compile(r"\b(\d{1,2}\s*(?:am|pm)|after \d{1,2}|before \d{1,2}|late night|midnight|55 minute|between meals|in between|snack|snacks|snacking|skip (breakfast|lunch|dinner|a meal)|two meals|"
+PERSONAL = re.compile(r"\b(safe for me|good for me|ok for me|okay for me|suitable for me|right for me|bad for me|harmful for me|"
+                      r"(?:good|bad|ok|okay|safe|fine|healthy|harmful|suitable|allowed) for (?:diabetics?|diabetes|weight loss|losing weight|bp|blood pressure|thyroid|pcos|pregnancy|pregnant women|kids|children|elders))\b")
+MEAL_PROTOCOL = re.compile(r"\b(\d{1,2}\s*(?:am|pm)|after \d{1,2}|before \d{1,2}|late night|midnight|55 minute|eat first|what comes first|what to eat first|steps? of (?:a |the )?meal|"
+                           r"order of (?:the |a )?meal|meal order|meal sequence|nuts before|before salad|what time|which time|how long|three times|thrice|3 times|four times|how often|"
+                           r"eat late|eating late|late dinner|if i eat late|water with meals|drink water|water between|water during|water after|water before|between meals|in between|snack|snacks|snacking|skip (breakfast|lunch|dinner|a meal)|two meals|"
                            r"2 meals|55 min|55 minutes|meal timing|when should i eat|how many meals|third meal|three meals|"
                            r"every (two|three|2|3|4|four|few) hours|small meals|frequent meals|small frequent|five meals|six meals|"
                            r"eat more often|eating more often|more meals)\b")
@@ -68,7 +83,7 @@ FREQUENCY = re.compile(r"\b(every (two|three|2|3|4|four|few) hours|small meals|f
                        r"eat more often|eating more often|more meals|three meals|how many meals)\b")
 PERMISSION = re.compile(r"\b(allowed|permitted|in the program|in the protocol|as per the program|does the program allow)\b")
 ALLOWED = re.compile(r"\b(can i (eat|have|take|drink)|should i (eat|have)|is it ok to (eat|have)|may i (eat|have))\b")
-CHOICE = re.compile(r"\b(what (should|can|do) i (eat|have|cook)|what to eat|which (sabji|vegetable|food|foods|dal|fruit)|"
+CHOICE = re.compile(r"\b(cheat (?:day|meal)|treat day|binge|what (should|can|do) i (eat|have|cook)|what to eat|which (sabji|vegetable|food|foods|dal|fruit)|"
                     r"what (sabji|vegetable|food|foods)|what (kind of|type of) food|instead of|eat to (reduce|lose|control)|"
                     r"diet (for|to)|foods? (for|to) (reduce|lose|control)|what is good to eat|suggest (some )?(food|sabji|vegetable))\b")
 EXPLAIN = re.compile(r"\b(how does (the |this |dixit )?(program|diet|plan|lifestyle) work|what is (the )?dixit|explain (the )?"
@@ -96,6 +111,8 @@ EXPLAIN_FOLLOW = re.compile(r"^(?:ok |okay |but |and |so )?(?:why|why so|why is 
 # "is dal high in protein", "does paneer have much fibre": a question about one nutrient of a food
 NUTRIENT_QUESTION = re.compile(r"\b(?:is|are|does|do|has|have)\b.*\b(?:high|low|rich|good source|much|enough|any|lot of|lots of)\b.*"
                                r"\b(?:calorie|calories|carb|carbs|carbohydrate|carbohydrates|protein|proteins|fat|fats|fibre|fiber)\b")
+ADD_FOODS = re.compile(r"^(?:and also|also|and|plus|with|i also have|we also have|also have|i have also|there is also|and i have|and we have)\s+\w+")
+WHAT_CAN_MAKE = re.compile(r"\b(?:what|which) (?:can|could|shall|should) (?:i|we) (?:make|cook|prepare)\b|\bwhat to (?:make|cook)\b|\banything (?:i can|to) (?:make|cook)\b")
 RECIPE_FLOW = {"recipe_request", "meal_from_ingredients"}
 TOPIC_SABJI = re.compile(r"\b(sabji|vegetable|curry)\b")
 
@@ -117,6 +134,7 @@ class Understanding:
     preference: str = ""
     recipe_ids: list = field(default_factory=list)       # approved recipes named in the message
     target_exclude: list = field(default_factory=list)   # words to leave out of a dish search ("paneer")
+    target_diet: str = ""                                # vegetarian | jain | egg when the person asked for a narrower diet in this search
     target_mode: str = "new"                             # new | refine (changed amounts or something left out) | more (what else)
     targets: list = field(default_factory=list)          # nutrient amounts asked for ("326 kcal", "26 g protein"): a dish search
     compare_sides: list = field(default_factory=list)    # the foods an "X vs Y" question sets side by side, as phrases
@@ -162,6 +180,12 @@ def _preference(cleaned: str, word_lists: dict) -> str:
 def classify(cleaned: str, foods: list[str], index: FoodIndex) -> str:
     if GREETING.match(cleaned):
         return "greeting_thanks"
+    if ABOUT_ME.match(cleaned):
+        return "about_assistant"
+    if NO_ALLERGY.match(cleaned):
+        return "out_of_scope"                              # read as a statement below
+    if BODY_INFO.search(cleaned) and not LOOKUP.search(cleaned) and not NUTRIENT_WORDS.search(cleaned):
+        return "body_info"
     if CREATIVE.search(cleaned) or set(cleaned.split()) & HARMFUL_WORDS:
         return "out_of_scope"                              # a poem, a joke, something harmful: not a food question
     if DEFINITION.match(cleaned):
@@ -194,6 +218,10 @@ def classify(cleaned: str, foods: list[str], index: FoodIndex) -> str:
         return "support_struggle"        # "I feel hungry between meals" is a struggle, not a timing question
     if MEAL_PROTOCOL.search(cleaned):
         return "meal_protocol_application"
+    if SPECIAL_DIET.search(cleaned) and not LOOKUP.search(cleaned) and not ALLOWED.search(cleaned):
+        return "special_diet"
+    if foods and len(cleaned.split()) <= 4 and NUTRIENT_WORDS.search(cleaned) and not COMPARE.search(cleaned):
+        return "neutral_nutrient_lookup"                   # "dal protein", "idli kcal"
     if CHOICE.search(cleaned) or ((GOAL.search(cleaned) or PLAN_REQUEST.search(cleaned)) and not (INGREDIENTS.search(cleaned) and foods)):
         return "food_choice_guidance"
     if PERMISSION.search(cleaned) and foods:
@@ -275,6 +303,8 @@ NUTRIENT_WORD_RE = re.compile(r"(?:calorie|calories|kcal|energy|carb|carbs|carbo
 
 
 # ---- a follow-up to a dish search: "except paneer", "without onion", "make it 30 g protein", "what else" ----
+DIET_SWITCH = re.compile(r"^(?:(?:and|but|ok|okay|now|then|please)\s+)*(?:what about|how about|only|just|show|give me|i want|i eat|make it|i am|im)?\s*(?:pure |only |just )?"
+                         r"(?:veg|vegetarian|non veg|nonveg|non vegetarian|egg|eggetarian|jain)(?:\s+(?:food|dishes|dish|options|please|only|one|ones))*$")
 TARGET_EXCLUDE = re.compile(r"^(?:(?:but|and|also|ok|okay|please|now|then)\s+)*(?:except(?: for)?|excluding|without|no|not|other than|apart from|besides|skip|"
                             r"avoid|leave out|remove|minus)\s+(?P<x>.+?)(?:\s+(?:please|pls))?$")
 EXCLUDE_FILLER = {"the", "any", "anything", "and", "or", "of", "a", "an", "all", "dishes", "dish", "with", "in", "it", "that", "those", "food", "foods", "thanks", "thank", "you", "need", "more", "ok", "okay", "yes", "now", "today", "worries", "problem"}
@@ -294,7 +324,10 @@ def target_refinement(text: str, state, index: FoodIndex, word_lists: dict):
     mode = None
     cut = TARGET_EXCLUDE.match(cleaned)
     new = parse_targets(cleaned)
-    if cut:
+    diet = _preference(cleaned, word_lists) if len(words) <= 5 and not new else ""
+    if diet and DIET_SWITCH.match(cleaned):
+        mode = "refine"                                      # "what about veg", "only vegetarian", "non veg please": the same search for another diet
+    elif cut:
         tokens = [w for w in cut.group("x").split() if w not in EXCLUDE_FILLER]
         if tokens:
             names = set(tokens)
@@ -313,6 +346,10 @@ def target_refinement(text: str, state, index: FoodIndex, word_lists: dict):
         return None
     u = Understanding(cleaned=cleaned, type="target_meal_search", focus=cleaned)
     u.targets, u.target_exclude, u.target_mode = targets, exclude, mode
+    u.target_diet = getattr(state, "target_diet", "") or ""
+    if diet and DIET_SWITCH.match(cleaned):
+        u.preference, u.statement = diet, {"diet": diet, "label": "diet"}
+        u.target_diet = diet if diet in {"vegetarian", "jain", "egg"} else ""
     return u
 
 
@@ -321,6 +358,8 @@ def _statement(cleaned: str, index: FoodIndex, allergy_reader, word_lists=None) 
     if "?" in cleaned or len(cleaned.split()) > 14:
         return {}
     out: dict = {}
+    if NO_ALLERGY.match(cleaned):
+        return {"allergies": [], "label": "none"}
     if STATEMENT_VEGAN.search(cleaned):
         return {"diet": "vegetarian", "allergies": ["milk", "egg"], "label": "vegan"}
     if STATEMENT_ALLERGY.search(cleaned) and allergy_reader:
@@ -474,14 +513,42 @@ def _bare_dish(focus: str, dish_finder) -> bool:
     return all(w in BARE_FILLER for w in rest.split())
 
 
+TYPO_VOCAB = ("calories", "calorie", "protein", "proteins", "carbs", "carbohydrate", "carbohydrates", "nutrition", "vegetarian", "breakfast", "recipe", "allergic",
+              "allergy", "diabetes", "diabetic", "dinner", "lunch", "fibre", "fiber", "vegetable", "vegetables", "chapati", "potato", "tomato", "banana")
+
+
+def _typo_vocab(index: FoodIndex) -> tuple[set, list]:
+    """The words a mistyped word may be repaired to: nutrient and question words and the single-word food names (cached on the food index)."""
+    cached = getattr(index, "_typo_cache", None)
+    if cached is None:
+        words = set(TYPO_VOCAB) | {a for a in index.alias_to_id if " " not in a and len(a) >= 5}
+        cached = (words, sorted(words))
+        index._typo_cache = cached
+    return cached
+
+
+def fix_typos(cleaned: str, index: FoodIndex) -> str:
+    """"calries in poha" -> "calories in poha": a long word that is not a known word but is one letter or two from a nutrient or food word."""
+    known, vocab = _typo_vocab(index)
+    skip = SCAFFOLD_WORDS | NON_FOOD_WORDS
+    out = []
+    for word in cleaned.split():
+        if len(word) >= 5 and word not in known and word not in skip and not word.isdigit():
+            close = difflib.get_close_matches(word, vocab, n=1, cutoff=0.84)
+            if close and close[0][0] == word[0] and close[0].rstrip("s") != word.rstrip("s") and not close[0].startswith(word) and not word.startswith(close[0]):
+                word = close[0]
+        out.append(word)
+    return " ".join(out)
+
+
 def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_finder=None, allergy_reader=None,
-               dish_finder=None, word_judge=None) -> Understanding:
+               dish_finder=None, word_judge=None, food_probe=None) -> Understanding:
     again = target_refinement(text, state, index, word_lists)
     if again is not None:
         return again
     text = carry_over(text, state, index, word_lists, dish_finder)
-    cleaned = clean(text, word_lists["spelling_map"])
-    focus = clean(question_part(text), word_lists["spelling_map"])
+    cleaned = fix_typos(clean(text, word_lists["spelling_map"]), index)
+    focus = fix_typos(clean(question_part(text), word_lists["spelling_map"]), index)
     excluded_dishes: list = []
     whole = cleaned
     cut = EXCLUDE.search(cleaned)
@@ -564,6 +631,7 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
         targets = is_target_request(cleaned)
         if targets and not (dish_finder and any(h["exact"] for h in dish_finder(focus))):       # a loose word match ("drink") is not a dish named
             question_type, u.targets = "target_meal_search", targets      # "a meal with 326 kcal and 26 g protein": dishes near those values
+            u.target_diet = u.preference if u.preference in {"vegetarian", "jain", "egg"} else ""
             u.type = question_type
             return u
     if ((question_type in {"out_of_scope", "food_choice_guidance"} or (question_type == "source_fact_lookup" and (getattr(state, "last_explain", None) or {}).get("kind") == "recipe"))
@@ -590,10 +658,17 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
         sides = compare_sides(cleaned)
         if len(sides) >= 2 and len(foods) < 2:
             question_type, u.compare_sides = "phrase_comparison", sides         # "oats vs poha", "brown rice vs white rice"
+    if question_type == "out_of_scope" and not u.slot_fill and kind_question(cleaned):
+        question_type = "food_choice_guidance"            # "are nuts allowed", "can i eat fruits": a kind of food, answered from the programme
     if question_type in {"out_of_scope", "food_choice_guidance"} and not u.slot_fill and not foods and not u.recipe_ids:
         subject = subject_of(cleaned)                       # "can i eat pizza", "is coffee ok": a food that is not on the approved list
         if subject:
             question_type, u.unknown_food_query = "unknown_food_question", subject
+    if question_type == "out_of_scope" and not u.slot_fill and food_probe and 1 <= len(cleaned.split()) <= 4 and not (HARMFUL_WORDS | HEALTH_WORDS) & set(cleaned.split()):
+        phrase = food_phrase(cleaned)
+        verdict = word_judge(phrase) if phrase and word_judge and not food_probe(phrase) else None
+        if phrase and set(cleaned.split()) - set(phrase.split()) <= {"and", "in", "of", "for", "the", "a", "an", "on", "about", "what", "is"} and re.fullmatch(r"[A-Za-z' -]+", whole.strip()) and not {"ignore", "instructions", "previous", "system", "prompt"} & set(cleaned.split()) and (food_probe(phrase) or (verdict and verdict[0] in {"food", "same"})):
+            question_type = "neutral_nutrient_lookup"        # "jalebi", "momos", "poha upma": a food or dish asked in a word or two (we hold data, or the meaning check says it is a food)
     last = getattr(state, "last_question", None) or {}
     if (question_type in {"out_of_scope", "food_choice_guidance", "food_allowed"} and not u.slot_fill and not foods and len(cleaned.split()) <= 8
             and MORE.search(cleaned) and last.get("type") in RECIPE_FLOW):
@@ -604,6 +679,17 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
         u.exclude_recipes = sorted(set(u.exclude_recipes) | set(getattr(state, "recipes_shown", []) or []))
         u.recipe_ids = []
     last_type = (getattr(state, "last_question", None) or {}).get("type")
+    on_hand = list(getattr(state, "ingredients_on_hand", []) or [])
+    if last_type in RECIPE_FLOW and on_hand and not u.slot_fill and len(whole.split()) <= 8:
+        if foods and ADD_FOODS.match(whole) and question_type in {"out_of_scope", "food_allowed", "food_choice_guidance", "meal_from_ingredients"}:
+            u.ingredients = list(dict.fromkeys([*on_hand, *foods]))              # "i also have onion", "and tomato": added to what was said before
+            u.foods = list(u.ingredients)
+            u.recipe_ids = []
+            question_type = "meal_from_ingredients"
+        elif question_type == "recipe_request" and not foods and not u.recipe_ids and (COOK_ASK.search(whole) or WHAT_CAN_MAKE.search(whole)):
+            u.ingredients = on_hand                                               # "what can i make" after saying what is at home
+            u.foods = list(on_hand)
+            question_type = "meal_from_ingredients"
     if question_type in {"out_of_scope", "food_choice_guidance", "food_allowed"} and not u.slot_fill and last_type in RECIPE_FLOW and len(whole.split()) <= 8:
         leave = TARGET_EXCLUDE.match(whole)               # "except onion" / "without onion" after a recipe answer: the same request, no recipe with onion
         left_out = [m.food_id for m in index.find(leave.group("x"), already_clean=True)] if leave else []

@@ -20,7 +20,7 @@ FIELD = {"protein": "protein_g", "proteins": "protein_g", "carb": "carb_g", "car
 LIMITS = {"energy_kcal": (20, 3000), "protein_g": (1, 300), "carb_g": (1, 400), "fat_g": (1, 250), "fibre_g": (1, 100)}
 LABEL = {"energy_kcal": "calories", "protein_g": "g of protein", "carb_g": "g of carbohydrate", "fat_g": "g of fat", "fibre_g": "g of fibre"}
 WANT = re.compile(r"\b(meal|meals|dish|dishes|food|foods|something|anything|recipe|recipes|options?|what can i (?:have|eat|cook|make)|can i have|"
-                  r"i want|i need|give me|suggest|show me|looking for)\b")
+                  r"i want|i need|need|want|require|requires|give me|suggest|show me|looking for)\b")
 MAX = re.compile(r"\b(?:under|below|less than|upto|up to|at most|max|maximum|not more than|within)\s*$")
 MIN = re.compile(r"\b(?:over|above|more than|at least|min|minimum|atleast|not less than)\s*$")
 # non-veg words: a dish with one of them in its name or an ingredient is not offered to anyone who has not said they eat it
@@ -47,7 +47,8 @@ DRINK_WORDS = {"drink", "drinks", "juice", "juices", "beverage", "beverages", "s
 class Target:
     field: str
     value: float
-    mode: str = "about"            # about | max | min | high | low  (high and low carry no number)
+    mode: str = "about"            # about | max | min | range | high | low  (high and low carry no number; a range runs from value to high)
+    high: float | None = None
 
 
 @dataclass
@@ -62,6 +63,14 @@ class Match:
 def parse_targets(cleaned: str) -> list[Target]:
     """The nutrient amounts a message asks for. Only a number with a unit (kcal, calories, g) or a nutrient counts."""
     found: dict[str, Target] = {}
+    for m in re.finditer(rf"{NUM}\s*(?:and|to|upto|up to)\s*{NUM}\s*(?:kcal|calories|calorie|cals|cal)\b|\b{NUM}\s+{NUM}\s*(?:kcal|calories|calorie|cals|cal)\b", cleaned):
+        low, high = (float(x) for x in [g for g in m.groups() if g is not None][:2])
+        if low < high and LIMITS["energy_kcal"][0] <= low and high <= LIMITS["energy_kcal"][1] and "energy_kcal" not in found:
+            found["energy_kcal"] = Target("energy_kcal", low, "range", high)
+    for m in re.finditer(rf"{NUM}\s*(?:and|to|upto|up to)\s*{NUM}\s*{G}\s*(?:of\s+)?{NUTRIENT}\b", cleaned):
+        low, high, fld = float(m.group(1)), float(m.group(2)), FIELD[m.group(3)]
+        if low < high and LIMITS[fld][0] <= low and high <= LIMITS[fld][1] and fld not in found:
+            found[fld] = Target(fld, low, "range", high)
 
     def add(fld: str, raw: str, before: str) -> None:
         value = float(raw)
@@ -99,7 +108,7 @@ def parse_qualifiers(cleaned: str) -> list[Target]:
 def is_target_request(cleaned: str) -> list[Target]:
     """The amounts and wishes in a request for dishes ("a meal with 26 g protein", "high protein non veg food"), or []."""
     numeric = parse_targets(cleaned)
-    if numeric and WANT.search(cleaned):
+    if numeric and (WANT.search(cleaned) or parse_qualifiers(cleaned) or len(cleaned.split()) <= 6):
         return numeric + [t for t in parse_qualifiers(cleaned) if t.field not in {n.field for n in numeric}]
     wishes = parse_qualifiers(cleaned)
     if wishes and (QUAL_WANT.search(cleaned) or len(cleaned.split()) <= 6):
@@ -191,6 +200,8 @@ class TargetSearch:
                     break
                 if t.mode in {"high", "low"}:
                     errors.append(0.0 if self._passes(t, ps) else 9.0)
+                elif t.mode == "range" and t.high is not None:
+                    errors.append(0.0 if t.value <= v <= t.high else (t.value - v) / t.value if v < t.value else (v - t.high) / t.high)
                 elif t.mode == "max":
                     errors.append(0.0 if v <= t.value else (v - t.value) / t.value)
                 elif t.mode == "min":

@@ -57,6 +57,7 @@ class AnswerPlan:
     refuse_plan: bool = False
     target_exclude: list = field(default_factory=list)
     target_mode: str = "new"
+    target_diet: str = ""
     wants_list: bool = False
     needs_status: bool = False            # the programme's answer depends on diabetes status (fruit)
     frequency_note: bool = False          # add the "no approved evidence on other eating patterns" line
@@ -139,8 +140,9 @@ def make_plan(u: Understanding, state: ChatState, emergency: bool = False, aller
     if u.type == "out_of_scope":
         plan.blocks = ["out_of_scope"]
         return plan
-    if u.type in {"definition_question", "portion_question", "reading_ack"}:
-        plan.blocks = [{"definition_question": "definition", "portion_question": "portion", "reading_ack": "reading"}[u.type]]
+    if u.type in {"definition_question", "portion_question", "reading_ack", "about_assistant", "body_info", "special_diet"}:
+        plan.blocks = [{"definition_question": "definition", "portion_question": "portion", "reading_ack": "reading", "about_assistant": "about",
+                        "body_info": "body_info", "special_diet": "special_diet"}[u.type]]
         plan.reading = getattr(u, "reading", None)
         return plan
     if u.type == "profile_statement":
@@ -152,7 +154,7 @@ def make_plan(u: Understanding, state: ChatState, emergency: bool = False, aller
     if u.type == "target_meal_search":
         plan.blocks, plan.max_words = ["target_meals", "profile_note"], 200
         plan.targets = list(u.targets)
-        plan.target_exclude, plan.target_mode = list(u.target_exclude), u.target_mode
+        plan.target_exclude, plan.target_mode, plan.target_diet = list(u.target_exclude), u.target_mode, u.target_diet
         return plan
     if u.type == "explain_last":
         plan.blocks = ["explain_last"]
@@ -240,7 +242,7 @@ def make_plan(u: Understanding, state: ChatState, emergency: bool = False, aller
             else:
                 blocks += ["choices", "tip"]
     elif plan.type in {"food_allowed", "protocol_permission", "personal_suitability"}:
-        plan.focus_foods = [f for f in u.foods if f not in u.pairs_with][:1] or u.foods[:1]
+        plan.focus_foods = [f for f in u.foods if f not in u.pairs_with][:2] or u.foods[:2]
         plan.needs_status = bool(set(plan.focus_foods) & set(u.fruit_foods))
         if plan.needs_status:
             plan.rules.append("R12")
