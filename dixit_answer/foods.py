@@ -82,21 +82,27 @@ class LibrarySearch:
         self.library = library
         self.bad_mappings = bad_mappings or []    # (query word, record-name word): never return that record (black list)
         self._names: list[tuple[str, set[str], str]] = []   # (record_id, words, cleaned name)
+        self._by_word: dict[str, list[int]] = {}             # word -> positions in _names, so a search only looks at names that hold its rarest word
         for rid, rec in library.records.items():
             names = {clean(rec.get("food_name", ""))}
             names.update(clean(a) for a in rec.get("aliases") or [])
             for name in names:
                 if name:
-                    self._names.append((rid, set(name.split()), name))
+                    words = set(name.split())
+                    self._names.append((rid, words, name))
+                    for word in words:
+                        self._by_word.setdefault(word, []).append(len(self._names) - 1)
 
-    def search(self, query: str, limit: int = 5) -> list[dict]:
+    def search(self, query: str, limit: int = 5, usda_only: bool = False) -> list[dict]:
         q = clean(query)
         q_words = set(q.split())
         if not q_words:
             return []
         best: dict[str, tuple] = {}
-        for rid, words, name in self._names:
-            if not q_words <= words:
+        rarest = min((self._by_word.get(w, []) for w in q_words), key=len)
+        for position in rarest:
+            rid, words, name = self._names[position]
+            if not q_words <= words or (usda_only and self.library.is_indian(rid)):
                 continue
             if any(qw in q_words and nw in words for qw, nw in self.bad_mappings):
                 continue
@@ -119,7 +125,7 @@ class LibrarySearch:
             if rid not in best or score > best[rid][0]:
                 best[rid] = (score, name)
         ranked = sorted(best.items(), key=lambda kv: kv[1][0], reverse=True)[:limit]
-        return [{"record_id": rid, "food_name": self.library.records[rid]["food_name"], "score": s} for rid, (s, _) in ranked]
+        return [{"record_id": rid, "food_name": self.library.records[rid]["food_name"], "score": s, "prepared": s[2]} for rid, (s, _) in ranked]
 
     def resolve(self, query: str) -> dict:
         """Best record for a query, or an ambiguity (two different dishes scoring the same) to ask about."""

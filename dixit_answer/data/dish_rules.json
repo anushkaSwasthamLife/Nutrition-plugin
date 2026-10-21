@@ -1,5 +1,5 @@
 {
-  "version": "DR-0.1.0",
+  "version": "DR-0.2.0",
   "status": "PROPOSED",
   "note": "Rules for the dish lookup (INDB plan, phase 3). Every number here is my proposal from the phase 2 comparison with INDB (indb_phase2/PHASE2_REPORT.md); a dietitian confirms or changes them before production.",
   "calculated_dishes": {
@@ -12,21 +12,185 @@
     "meat_fish": 25,
     "note": "15% covered 96% of the 847 fully calculated INDB recipes, 25% covered 99%. Meat and fish dishes drifted most (chicken -23%, mutton -20% median)."
   },
-  "meat_fish_categories": ["N", "O", "P"],
+  "meat_fish_categories": [
+    "N",
+    "O",
+    "P"
+  ],
   "meat_fish_note": "First letter of the INDB ingredient code. N = poultry, O = meat, P = fish, as seen in codes N003 chicken, O064 mutton, P057 pomfret.",
   "plausibility": {
     "max_kcal_per_100g": 900,
     "max_kcal_per_serving": 1500,
     "max_kcal_per_serving_calculated": 1000,
     "max_kcal_per_count_unit": 400,
-    "vessel_units": ["bowl", "small bowl", "curry bowl", "soup bowl", "plate", "small plate", "cup", "tea cup", "glass", "tall glass", "katori",
-                     "jar", "box", "cake", "portion", "serving", "tablespoon", "teaspoon"],
+    "vessel_units": [
+      "bowl",
+      "small bowl",
+      "curry bowl",
+      "soup bowl",
+      "plate",
+      "small plate",
+      "cup",
+      "tea cup",
+      "glass",
+      "tall glass",
+      "katori",
+      "jar",
+      "box",
+      "cake",
+      "portion",
+      "serving",
+      "tablespoon",
+      "teaspoon"
+    ],
     "note": "A value above a limit is never shown. 900 kcal per 100 g is pure fat; 1,500 kcal is more than most people eat in a whole meal. Dishes calculated from ingredients (path B) use 1,000 because INDB's own serving data is least reliable there, and a serving counted in pieces (a piece of mathri, a slice of cake) is limited to 400 kcal per piece: INDB has 'one piece' of mathri at 1,182 kcal and 'two uttapam' at 1,295 kcal, which are data errors. INDB has 108 recipes above 1,000 kcal per serving."
   },
-  "generic_words": ["vegetarian", "veg", "non", "dry", "wet", "curry", "gravy", "fried", "baked", "steamed", "boiled", "plain", "sweet", "spicy",
-                    "mixed", "special", "fresh", "hot", "cold", "with", "without", "style", "homemade", "quick", "easy", "healthy", "light",
-                    "small", "big", "large", "medium", "ka", "ki", "ke"],
+  "generic_words": [
+    "anything",
+    "baked",
+    "best",
+    "better",
+    "big",
+    "boiled",
+    "breakfast",
+    "calorie",
+    "calories",
+    "carb",
+    "carbs",
+    "cold",
+    "curry",
+    "diet",
+    "dinner",
+    "dish",
+    "dishes",
+    "dry",
+    "easy",
+    "eat",
+    "eating",
+    "fat",
+    "fiber",
+    "fibre",
+    "food",
+    "foods",
+    "fresh",
+    "fried",
+    "good",
+    "gravy",
+    "healthy",
+    "high",
+    "highest",
+    "homemade",
+    "hot",
+    "idea",
+    "ideas",
+    "ka",
+    "ke",
+    "ki",
+    "large",
+    "less",
+    "light",
+    "low",
+    "lowest",
+    "lunch",
+    "meal",
+    "meals",
+    "medium",
+    "mixed",
+    "more",
+    "most",
+    "non",
+    "nonveg",
+    "option",
+    "options",
+    "plain",
+    "protein",
+    "quick",
+    "recipe",
+    "recipes",
+    "rich",
+    "small",
+    "snack",
+    "snacks",
+    "something",
+    "special",
+    "spicy",
+    "steamed",
+    "style",
+    "sweet",
+    "veg",
+    "vegetarian",
+    "wet",
+    "with",
+    "without"
+  ],
   "generic_words_note": "A word that only describes a dish, never names one. INDB writes '(vegetarian)' or '(dry)' after dish names, so the alias table has 'vegetarian' as an alias of two different dishes; 'calories in vegetarian biryani' was answered with 'Shepherd's pie or Dhansak'. A run of words made only of these is never taken as a dish name.",
   "max_candidates_asked": 4,
-  "max_dishes_answered": 3
+  "max_dishes_answered": 3,
+  "qualifiers": {
+    "note": "What 'high protein', 'low carb', 'low calorie', 'low fat' and 'high fibre' mean when someone asks for such dishes. PROPOSED: the protein line follows the EU rule for a 'high protein' claim (20% of energy from protein); the rest are my proposals for a dietitian to confirm. Energy shares use 4 kcal per g for protein and carbohydrate, 9 kcal per g for fat. A dish must pass its line to be listed; the list is ordered by the amount asked for.",
+    "protein_g": {
+      "high": {
+        "min_value": 15,
+        "min_energy_share": 0.2
+      },
+      "low": {
+        "max_value": 5
+      }
+    },
+    "carb_g": {
+      "low": {
+        "max_energy_share": 0.25,
+        "min_energy": 80
+      },
+      "high": {
+        "min_energy_share": 0.6
+      }
+    },
+    "energy_kcal": {
+      "low": {
+        "max_value": 150,
+        "min_value": 40
+      },
+      "high": {
+        "min_value": 450
+      }
+    },
+    "fat_g": {
+      "low": {
+        "max_value": 5,
+        "min_energy": 60
+      },
+      "high": {
+        "min_energy_share": 0.45
+      }
+    },
+    "fibre_g": {
+      "high": {
+        "min_value": 5
+      },
+      "low": {
+        "max_value": 1,
+        "min_energy": 60
+      }
+    }
+  },
+  "meal_search": {
+    "note": "What a request for dishes ('high protein food', 'a meal with 300 kcal') leaves out unless the person asks for drinks: servings that are a drink or a spoonful, and the infant-food records. PROPOSED; a dietitian confirms.",
+    "exclude_units": [
+      "glass",
+      "tall glass",
+      "cup",
+      "tea cup",
+      "tablespoon",
+      "teaspoon",
+      "jar",
+      "biscuit",
+      "cookie",
+      "triangle"
+    ],
+    "exclude_categories": [
+      "beverage",
+      "infant_weaning"
+    ]
+  }
 }

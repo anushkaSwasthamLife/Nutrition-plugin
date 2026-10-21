@@ -30,11 +30,24 @@ MEAT_FISH = {"chicken", "mutton", "lamb", "goat", "beef", "pork", "ham", "bacon"
 EGG = {"egg", "eggs", "anda", "omelette", "omelet", "bhurji"}
 
 
+# "high protein", "low carb", "less fat", "most protein", "protein rich", "light": a wish for a lot or a little of something, with no number
+HIGH_WORDS = r"(?:high|higher|highest|rich|richer|more|most|plenty of|lots of|good source of|full of|loaded with)"
+LOW_WORDS = r"(?:low|lower|lowest|less|least|fewer|reduced|minimal)"
+QUAL_NUTRIENT = r"(protein|proteins|carb|carbs|carbohydrate|carbohydrates|fat|fats|fibre|fiber|calories|calorie|kcal|energy)"
+QUAL_FIELD = {**FIELD, "calories": "energy_kcal", "calorie": "energy_kcal", "kcal": "energy_kcal", "energy": "energy_kcal"}
+QUAL_NOUN = {"energy_kcal": "calories", "protein_g": "protein", "carb_g": "carbohydrate", "fat_g": "fat", "fibre_g": "fibre"}
+# a short message that is only a wish ("high protein food", "low carb dinner ideas") is a request too
+QUAL_WANT = re.compile(r"\b(meal|meals|dish|dishes|food|foods|something|anything|recipe|recipes|options?|ideas?|suggest|suggestions?|recommend|list|which|what|"
+                       r"breakfast|lunch|dinner|snacks?|i have to eat|to eat|can i have|can i eat|i want|i need|give me|show me|looking for)\b")
+DRINK_WORDS = {"drink", "drinks", "juice", "juices", "beverage", "beverages", "shake", "shakes", "smoothie", "smoothies", "tea", "coffee", "milk", "lassi", "buttermilk",
+               "soup", "soups"}
+
+
 @dataclass
 class Target:
     field: str
     value: float
-    mode: str = "about"            # about | max | min
+    mode: str = "about"            # about | max | min | high | low  (high and low carry no number)
 
 
 @dataclass
@@ -69,9 +82,33 @@ def parse_targets(cleaned: str) -> list[Target]:
     return list(found.values())
 
 
+def parse_qualifiers(cleaned: str) -> list[Target]:
+    """"high protein", "low carb", "less fat", "protein rich", "light": what the person wants a lot or a little of. No number is read."""
+    found: dict[str, Target] = {}
+    for m in re.finditer(rf"\b({HIGH_WORDS}|{LOW_WORDS})\s+(?:in\s+|on\s+)?{QUAL_NUTRIENT}\b", cleaned):
+        fld = QUAL_FIELD[m.group(2)]
+        word = m.group(1)
+        found.setdefault(fld, Target(fld, 0.0, "low" if re.fullmatch(LOW_WORDS, word) else "high"))
+    for m in re.finditer(rf"\b{QUAL_NUTRIENT}\s+(?:rich|heavy)\b", cleaned):
+        found.setdefault(QUAL_FIELD[m.group(1)], Target(QUAL_FIELD[m.group(1)], 0.0, "high"))
+    if not found and re.search(r"\b(?:light|lighter)\b", cleaned):
+        found["energy_kcal"] = Target("energy_kcal", 0.0, "low")
+    return list(found.values())
+
+
 def is_target_request(cleaned: str) -> list[Target]:
-    targets = parse_targets(cleaned)
-    return targets if targets and WANT.search(cleaned) else []
+    """The amounts and wishes in a request for dishes ("a meal with 26 g protein", "high protein non veg food"), or []."""
+    numeric = parse_targets(cleaned)
+    if numeric and WANT.search(cleaned):
+        return numeric + [t for t in parse_qualifiers(cleaned) if t.field not in {n.field for n in numeric}]
+    wishes = parse_qualifiers(cleaned)
+    if wishes and (QUAL_WANT.search(cleaned) or len(cleaned.split()) <= 6):
+        return wishes
+    return []
+
+
+def wants_drinks(cleaned: str) -> bool:
+    return bool(set(cleaned.split()) & DRINK_WORDS)
 
 
 def _words(texts) -> set[str]:
@@ -105,7 +142,28 @@ class TargetSearch:
                 return False
         return True
 
-    def search(self, targets: list[Target], person, blocked: set[str], limit: int = 3, leave_out=(), skip_codes=()) -> tuple[list[Match], bool]:
+    def _not_a_meal(self, code: str, result) -> bool:
+        """A drink, a spoonful or an infant food: left out of a request for dishes unless drinks were asked for."""
+        rules = self.dishes.rules.get("meal_search", {})
+        unit = result.serving_text.partition(" ")[2].lower()
+        category = str(self.dishes.library.records.get(self.dishes.by_code.get(code, ""), {}).get("category", "")).lower()
+        return unit in set(rules.get("exclude_units", [])) or category in set(rules.get("exclude_categories", []))
+
+    def _passes(self, target: Target, ps: dict) -> bool:
+        """A wish ("high protein") is met when the dish passes the line the rules draw for it (dish_rules.json, qualifiers)."""
+        rule = (self.dishes.rules.get("qualifiers", {}).get(target.field) or {}).get(target.mode) or {}
+        value, energy = ps.get(target.field), ps.get("energy_kcal") or 0.0
+        if value is None:
+            return False
+        kcal_per_g = {"protein_g": 4.0, "carb_g": 4.0, "fat_g": 9.0}.get(target.field)
+        share = value * kcal_per_g / energy if kcal_per_g and energy > 0 else None
+        checks = [("min_value", value >= rule.get("min_value", float("-inf"))), ("max_value", value <= rule.get("max_value", float("inf"))),
+                  ("min_energy", energy >= rule.get("min_energy", 0)),
+                  ("min_energy_share", share is not None and share >= rule.get("min_energy_share", 0) if "min_energy_share" in rule else True),
+                  ("max_energy_share", share is not None and share <= rule.get("max_energy_share", 1) if "max_energy_share" in rule else True)]
+        return bool(rule) and all(ok for _name, ok in checks)
+
+    def search(self, targets: list[Target], person, blocked: set[str], limit: int = 3, leave_out=(), skip_codes=(), drinks: bool = False) -> tuple[list[Match], bool]:
         """(best matches, whether they are within the normal tolerance). Dishes with no clear serving or only an estimate are left out."""
         rules = self.dishes.rules.get("range_percent", {})
         tight = float(rules.get("default", 15)) / 100.0
@@ -123,13 +181,17 @@ class TargetSearch:
             if result.status != FOUND or result.estimate or result.per_serving is None or not result.serving_text:
                 continue
             ps = result.per_serving
+            if not drinks and self._not_a_meal(code, result):
+                continue
             errors = []
             for t in targets:
                 v = ps.get(t.field)
                 if v is None:
                     errors = None
                     break
-                if t.mode == "max":
+                if t.mode in {"high", "low"}:
+                    errors.append(0.0 if self._passes(t, ps) else 9.0)
+                elif t.mode == "max":
                     errors.append(0.0 if v <= t.value else (v - t.value) / t.value)
                 elif t.mode == "min":
                     errors.append(0.0 if v >= t.value else (t.value - v) / t.value)
@@ -138,7 +200,13 @@ class TargetSearch:
             if errors is None:
                 continue
             scored.append(Match(code, self.dishes.label(code), result, max(errors), {t.field: ps[t.field] for t in targets}))
-        scored.sort(key=lambda m: (m.error, m.name))
+
+        def rank(m: Match) -> tuple:                                      # for wishes: the most (or least) of the first nutrient asked for
+            for t in targets:
+                if t.mode in {"high", "low"}:
+                    return (-m.values[t.field] if t.mode == "high" else m.values[t.field],)
+            return (0,)
+        scored.sort(key=lambda m: (m.error, rank(m), m.name))
         for tol in (tight, wide):
             picked: list[Match] = []
             seen: set[str] = set()

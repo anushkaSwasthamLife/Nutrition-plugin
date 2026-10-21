@@ -238,6 +238,8 @@ def make_plan(u: Understanding, state: ChatState, emergency: bool = False, aller
     elif plan.type == "neutral_nutrient_lookup":
         plan.focus_foods = u.foods
         blocks += ["lookup_facts"]
+    elif plan.type == "unknown_food_question":
+        blocks += ["unknown_food"]
     elif plan.type == "neutral_food_comparison":
         plan.focus_foods = u.foods[:3]
         blocks += ["direct", "focus_compare"]
@@ -277,7 +279,7 @@ def make_plan(u: Understanding, state: ChatState, emergency: bool = False, aller
         blocks[blocks.index("protocol_full")] = "protocol_reminder"
     if u.wellbeing:
         blocks.insert(0, "support_opening")       # a kind line and where to get help, before the food answer
-    if plan.type in RECIPE_TYPES or plan.type in {"food_choice_guidance", "food_allowed", "protocol_permission", "personal_suitability"}:
+    if plan.type in RECIPE_TYPES or plan.type in {"food_choice_guidance", "food_allowed", "protocol_permission", "personal_suitability", "unknown_food_question"}:
         blocks.append("profile_note")        # says which allergies, conditions and diet the answer was checked against
     blocks.append("followup")
     plan.blocks = blocks

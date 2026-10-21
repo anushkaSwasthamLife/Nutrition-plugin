@@ -17,7 +17,11 @@ from .planner import AnswerPlan
 from .safety import EMERGENCY_ANSWER, safety_caution
 from .services import Services
 from .state import ChatState
-from .targets import TargetSearch
+from .facts import make_fact
+from .foods import LibrarySearch
+from .lists import bad_mapping_pairs
+from .targets import EGG, MEAT_FISH, QUAL_NOUN, TargetSearch, wants_drinks
+from .unknown_foods import food_phrase, grams_in, measure_in, scaled_fact, subject_of, usda_hits
 from .textnorm import clean
 
 PLACEHOLDER_RE = re.compile(r"\{\{([A-Z]+\d*)\}\}")
@@ -154,7 +158,7 @@ class Composer:
                 d.lines.append(lock("T", topic["bridge"]))
                 d.support_sources = [f["id"] for f in topic["facts"]]
             elif block == "target_meals":
-                self._target_meals(plan, d, lock, person, state)
+                self._target_meals(plan, d, lock, person, state, u)
             elif block == "explain_last":
                 for line in (state.last_explain or {}).get("lines", []):
                     d.lines.append(lock("T", line))
@@ -244,7 +248,7 @@ class Composer:
             elif block == "lookup_facts":
                 self._lookup_lines(plan, u, d, given, fact_line, name, person, lock)
             elif block == "unknown_food":
-                d.lines.append(lock("T", "I couldn't find that food in our data yet. Could you tell me its name another way?"))
+                self._unknown_food_block(u, plan, d, lock, given, person)
             elif block == "tip":
                 keys = list(plan.focus_foods) + ([plan.topic] if plan.topic == "sabji" else [])
                 for text, facts, _tip_id in self.s.tips(keys, given, blocked=blocked):
@@ -399,14 +403,22 @@ class Composer:
             d.lines.append(lock("T", "We don't have a checked recipe for this yet, so here is what helps most:"))
         self._tips_lines(plan, state, d, lock, given)
 
-    def _target_meals(self, plan, d: Draft, lock, person, state=None) -> None:
+    def _target_meals(self, plan, d: Draft, lock, person, state=None, u=None) -> None:
         asked = [(t.field, t.value, t.mode) for t in plan.targets]
         parts = []
         every_about = all(mode == "about" for _f, _v, mode in asked)
         for fld, value, mode in asked:
+            if mode in {"high", "low"}:
+                parts.append(f"{'high' if mode == 'high' else 'low'} {QUAL_NOUN[fld]}" if fld != "energy_kcal" else ("few calories" if mode == "low" else "many calories"))
+                continue
             word = "" if every_about else {"max": "up to ", "min": "at least "}.get(mode, "about ")
             parts.append(f"{word}{value:g} {LABEL_FOR[fld]}")
         want = ("about " if every_about else "") + _join(parts)
+        if u is not None and re.search(r"\bsnacks?\b", u.cleaned):
+            d.lines.append(lock("T", "The programme has no snacks between meals, so these are dishes for your meals."))
+        profile_diet = getattr(person, "diet_type", "unknown") if person is not None else "unknown"
+        if u is not None and getattr(u, "preference", "") == "non_vegetarian" and profile_diet in {"vegetarian", "jain"}:
+            d.lines.append(lock("T", f"Your profile says {profile_diet}, so I only looked at {profile_diet} dishes."))
         if self.dishes is None:
             d.lines.append(lock("T", "I can't look dishes up by their nutrients here yet."))
             return
@@ -414,7 +426,8 @@ class Composer:
             state.target_shown = []                                # a changed search starts again; "what else" keeps going
         shown_before = list(state.target_shown) if state is not None else []
         left = [w for w in plan.target_exclude]
-        matches, close = TargetSearch(self.dishes, self.allergy, self.index).search(plan.targets, person, d.blocked_foods, leave_out=left, skip_codes=shown_before)
+        matches, close = TargetSearch(self.dishes, self.allergy, self.index).search(plan.targets, person, d.blocked_foods, leave_out=left, skip_codes=shown_before,
+                                                                                    drinks=wants_drinks(u.cleaned if u is not None else ""))
         without = f", without {_join(sorted({w for w in left if len(w) > 2})[:4])}" if left else ""
         if not matches:
             if plan.target_mode == "more" and shown_before:
@@ -430,7 +443,10 @@ class Composer:
             quantity, _, unit = res.serving_text.partition(" ")
             serving = f"per {unit}" if quantity in {"1", "1.0"} and unit else f"per {res.serving_text}"
             pieces = []
-            for fld in [t.field for t in plan.targets]:
+            fields = [t.field for t in plan.targets]
+            if all(t.mode in {"high", "low"} for t in plan.targets) and "energy_kcal" not in fields:
+                fields.append("energy_kcal")                                   # a wish for protein also shows what the dish costs in calories
+            for fld in fields:
                 value = res.per_serving[fld]
                 text = f"{value:.0f} {LABEL_FOR[fld]}" if fld == "energy_kcal" else f"{value:.1f}".rstrip("0").rstrip(".") + f" {LABEL_FOR[fld]}"
                 pieces.append(text)
@@ -522,9 +538,13 @@ class Composer:
 
     def _lookup_lines(self, plan, u, d, given, fact_line, name, person=None, lock=None) -> None:
         field = "energy_kcal"
-        for word, fld in (("carb", "carbohydrate_g"), ("protein", "protein_g"), ("fat", "fat_g"), ("fiber", "fiber_g")):
-            if re.search(rf"\b{word}\b", u.cleaned):
+        for word, fld in (("carb", "carbohydrate_g"), ("protein", "protein_g"), ("fat", "fat_g"), ("fiber", "fiber_g"), ("sugar", "sugars_g"),
+                          ("sodium", "sodium_mg")):
+            if re.search(rf"\b{word}s?\b", u.cleaned):
                 field = fld
+        if field in {"sugars_g", "sodium_mg"} and len(plan.focus_foods) > 1:           # "sugar in mango": sugar is what is asked, not a second food
+            word = "sugar" if field == "sugars_g" else "sodium"
+            plan.focus_foods = [f for f in plan.focus_foods if word not in clean(self.index.foods[f]["name"]).split()] or plan.focus_foods
         hits = self._dish_hits(u, plan) if self.dishes is not None else []
         if plan.focus_foods:
             for fid in plan.focus_foods:
@@ -533,17 +553,122 @@ class Composer:
                     continue
                 fact = self.s.pick_fact(fid, set(), fields=(field,))
                 if fact:
-                    d.lines.append(fact_line(fact, fid))
+                    grams = grams_in(u.cleaned)
+                    d.lines.append(fact_line(scaled_fact(fact, grams) if grams else fact, fid))
                 else:
                     d.lines.append(f"We don't have a reliable {field.split('_')[0]} value for {name(fid)} yet.")
-            if self.index.foods[plan.focus_foods[0]].get("unit_weight_g") is None and re.search(r"\b(one|1|a|per)\b", u.cleaned):
-                d.lines.append("We don't have a reliable weight for one piece yet, so I can't give a per-piece number.")
+            first = self.index.foods[plan.focus_foods[0]]
+            per100 = getattr(d.facts[-1], "serving", "") == "per 100 g" if d.facts else False
+            if per100 and first.get("unit_weight_g") is None and not grams_in(u.cleaned) and not hits:
+                aliases = "|".join(re.escape(clean(a)) for a in [first["name"], *first.get("aliases", [])])
+                if re.search(rf"\b(?:\d+|one|two|three|four|five|six|a|an)\s+(?:small |medium |large |big )?(?:{aliases})s?\b", u.cleaned):
+                    d.lines.append(lock("T", "We don't have a reliable weight for one piece yet, so I can't give a per-piece number; the figure above is per 100 g."))
+                elif measure_in(u.cleaned):
+                    d.lines.append(lock("T", f"We don't have a reliable weight for a {measure_in(u.cleaned)} of {first['name']} yet, so the figure above is per 100 g."))
             if hits:
                 self._dish_lines(hits, d, lock, given, person, field)   # a dish named next to foods is answered too, never dropped
             return
         if hits and self._dish_lines(hits, d, lock, given, person, field):
             return
-        d.lines.append("I couldn't find that food in our data yet. Could you tell me its name another way?")
+        self._unknown_phrase_lines(u, field, d, lock, given, person)
+
+    # ---------- foods that are not on the approved list: USDA facts for information, never a guess ----------
+    def _library_search(self) -> LibrarySearch:
+        if getattr(self, "_lib_search", None) is None:
+            self._lib_search = LibrarySearch(self.s.library, bad_mapping_pairs(self.s.data.black_lists))
+        return self._lib_search
+
+    def _usda_exact(self, span: str) -> bool:
+        """Does the USDA library have a plain record for this word (so "oats" is the grain, not "oats burfi", and "apple" is the fruit)?"""
+        search = self._library_search()
+        queries = {span, span + "s", span.rstrip("s")}
+        for query in queries:
+            for hit in search.search(query, limit=12, usda_only=True):
+                name = clean(hit["food_name"])
+                words = name.split()
+                if name and words[0] in queries and set(words) & {"raw", "whole", "plain", "fresh"}:      # the plain food: "Apples, raw", "Oats, raw", "Milk, whole"
+                    return True
+        return False
+
+    def _phrase_block(self, phrase: str, person) -> str | None:
+        """Why a food named only in words cannot be offered to this person (diet or allergy), or None."""
+        words = set(clean(phrase).split())
+        diet = getattr(person, "diet_type", "unknown") if person is not None else "unknown"
+        if (words & MEAT_FISH and diet in {"vegetarian", "jain", "egg"}) or (words & EGG and diet in {"vegetarian", "jain"}):
+            return f"{_cap(phrase)} won't suit you because of your {'vegetarian' if diet != 'jain' else 'jain'} diet. Please check with your doctor or dietitian."
+        if person is not None and self.allergy is not None:
+            wanted = set(person.allergies or [])
+            if person.unmapped_allergies:
+                wanted |= set(self.allergy.map["major"])
+            hit = sorted(set(self.allergy.read_reply(phrase) or []) & wanted)
+            if hit:
+                return f"{_cap(phrase)} won't suit you because of your {self.allergy.label(hit[0])} allergy. Please check with your doctor or dietitian."
+        return None
+
+    def _name_ok(self, person):
+        """A test for USDA record names: False when the name holds meat, fish or egg the diet excludes, or an allergen the person has."""
+        diet = getattr(person, "diet_type", "unknown") if person is not None else "unknown"
+        banned = (MEAT_FISH | EGG if diet in {"vegetarian", "jain"} else MEAT_FISH if diet == "egg" else set())
+        wanted = set(person.allergies or []) if person is not None else set()
+        if person is not None and person.unmapped_allergies and self.allergy is not None:
+            wanted |= set(self.allergy.map["major"])
+
+        def ok(name: str) -> bool:
+            if banned & set(clean(name).split()):
+                return False
+            return not (wanted and self.allergy is not None and set(self.allergy.read_reply(name) or []) & wanted)
+        return ok
+
+    def _usda_fact_lines(self, phrase: str, field: str, d, lock, given, grams, limit: int = 3, person=None) -> bool:
+        facts = usda_hits(self._library_search(), self.s.library, phrase, field, make_fact, limit, self._name_ok(person))
+        for fact in facts:
+            fact = scaled_fact(fact, grams) if grams else fact
+            d.facts.append(fact)
+            given.add(f"{fact.record_id}:{fact.field}")
+            d.lines.append(lock("F", f"{fact_sentence(fact)} ({_short_source(fact)})"))
+        if len(facts) > 1:
+            d.lines.append(lock("T", f"There are several kinds of {phrase}; tell me which one you mean for a closer answer."))
+        return bool(facts)
+
+    def _unknown_phrase_lines(self, u, field: str, d, lock, given, person) -> None:
+        phrase = food_phrase(u.focus or u.cleaned)
+        if not phrase:
+            d.lines.append("I couldn't find that food in our data yet. Could you tell me its name another way?")
+            return
+        blocked = self._phrase_block(phrase, person)
+        if blocked:
+            d.exclusion_texts.append(blocked)
+            d.lines.append(lock("T", blocked))
+            return
+        if self._usda_fact_lines(phrase, field, d, lock, given, grams_in(u.cleaned), person=person):
+            return
+        d.unknown_items.append({"word": phrase[:60], "kind": "ingredient", "suggested_food_id": ""})
+        d.backlog_request = True
+        d.lines.append(lock("T", f"I couldn't find \"{phrase}\" in our data yet; I've passed it to our dietitian. Could you tell me its name another way?"))
+
+    def _unknown_food_block(self, u, plan, d, lock, given, person) -> None:
+        """"Can I eat pizza?", "is coffee ok?": a food that is not on the approved list. Said plainly, queued, with facts for information only."""
+        phrase = u.unknown_food_query or subject_of(u.cleaned) or food_phrase(u.cleaned)
+        if not phrase:
+            d.lines.append(lock("T", "I couldn't find that food in our data yet. Could you tell me its name another way?"))
+            return
+        blocked = self._phrase_block(phrase, person)
+        if blocked:
+            d.exclusion_texts.append(blocked)
+            d.lines.append(lock("T", blocked))
+            return
+        d.unknown_items.append({"word": phrase[:60], "kind": "ingredient", "suggested_food_id": ""})
+        d.backlog_request = True
+        d.lines.append(lock("T", f"I can't say whether {phrase} fits the programme yet: it isn't on our approved food list. I've passed it to our dietitian."))
+        shown = False
+        if self.dishes is not None:
+            result = self.dishes.resolve(phrase)
+            if result.status == FOUND and phrase in self.dishes.exact:           # only a dish with exactly this name; never a loose match
+                shown = self._dish_lines([(phrase, result)], d, lock, given, person, "energy_kcal")
+        if not shown:
+            shown = self._usda_fact_lines(phrase, "energy_kcal", d, lock, given, None, 2, person)
+        if shown:
+            d.lines.append(lock("T", "These are facts for information only, not permission."))
 
     DISH_FIELDS = {"energy_kcal": "energy_kcal", "carbohydrate_g": "carb_g", "protein_g": "protein_g", "fat_g": "fat_g", "fiber_g": "fibre_g"}
 
@@ -552,7 +677,9 @@ class Composer:
         hits = find_all_in_text(self.dishes, u.focus or u.cleaned)
         aliases = [set(clean(a).split()) for fid in plan.focus_foods
                    for a in [self.index.foods[fid]["name"], *self.index.foods[fid].get("aliases", [])]]
-        return [(span, result) for span, result in hits if not any(set(span.split()) <= words for words in aliases)]
+        kept = [(span, result) for span, result in hits if not any(set(span.split()) <= words for words in aliases)]
+        # one loose word ("oats", "apple") that is a plain food in USDA is that food, not the first dish that happens to contain the word
+        return [(span, result) for span, result in kept if not (len(span.split()) == 1 and span not in self.dishes.exact and self._usda_exact(span))]
 
     def _dish_lines(self, hits: list, d, lock, given, person, field: str) -> bool:
         """Lines for every dish a nutrient question names. Returns False when there is nothing to say about any of them."""
@@ -564,6 +691,21 @@ class Composer:
             d.lines.append(lock("T", f"I can look up {most} dishes at a time. Ask me about the others in a new question."))
         return said
 
+    @staticmethod
+    def _banned_words(person) -> set:
+        """Meat, fish and egg words this person's diet leaves out (a vegetarian, a jain; an egg-eater leaves out meat and fish)."""
+        diet = getattr(person, "diet_type", "unknown") if person is not None else "unknown"
+        return (MEAT_FISH | EGG) if diet in {"vegetarian", "jain"} else MEAT_FISH if diet == "egg" else set()
+
+    def _diet_blocks_dish(self, code: str, name: str, person) -> bool:
+        banned = self._banned_words(person)
+        if not banned:
+            return False
+        words = set(clean(name).split())
+        for ingredient in (self.dishes.ingredient_names(code) if self.dishes is not None and code else []):
+            words |= set(clean(ingredient).split())
+        return bool(words & banned)
+
     def _one_dish(self, span: str, result, d, lock, given, person, field: str) -> bool:
         blocked = d.blocked_foods
 
@@ -572,10 +714,16 @@ class Composer:
             return hit[0] if hit else None
 
         if result.status == AMBIGUOUS:
-            shown = [c["name"] for c in result.candidates if not blocked_in(c["name"])]
+            shown = [c["name"] for c in result.candidates if not blocked_in(c["name"]) and not self._diet_blocks_dish(c.get("code", ""), c["name"], person)]
             names = [_short_dish(n, shown) for n in shown]
             if names:
                 d.lines.append(lock("T", f"I found a few dishes with that name: {_join(names)}. Which one do you mean?"))
+                return True
+            blocked_text = self._phrase_block(span, person)
+            if blocked_text or self._banned_words(person):
+                text = blocked_text or f"{_cap(span)} won't suit you because of your {person.diet_type} diet. Please check with your doctor or dietitian."
+                d.exclusion_texts.append(text)
+                d.lines.append(lock("T", text))
                 return True
             return False
         name = (result.name or span).split(" (")[0]
@@ -583,6 +731,11 @@ class Composer:
             food = blocked_in(result.name or "")
             if food:
                 self._blocked_line(food, person, d, lock)
+                return True
+            if self._diet_blocks_dish(result.code or "", result.name or span, person):
+                text = f"{_cap(name)} won't suit you because of your {person.diet_type} diet. Please check with your doctor or dietitian."
+                d.exclusion_texts.append(text)
+                d.lines.append(lock("T", text))
                 return True
             allergens = set(person.allergies or []) if person else set()
             if person and person.unmapped_allergies and self.allergy:

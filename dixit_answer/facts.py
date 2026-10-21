@@ -15,6 +15,8 @@ FIELD_LABELS = {
     "fiber_g": ("g", "fibre"),
     "protein_g": ("g", "protein"),
     "fat_g": ("g", "fat"),
+    "sugars_g": ("g", "sugar"),            # USDA records only (library v1.0.4 and later); an Indian dish has none
+    "sodium_mg": ("mg", "sodium"),
 }
 
 
@@ -94,7 +96,7 @@ def fact_sentence(fact: Fact, name: str = "") -> str:
     A USDA record's descriptors ("Cabbage, green, raw") follow the name in brackets, so raw and cooked stay visible.
     """
     record = fact.food_name.split(" (")[0].split("/")[0].strip().lower()
-    base = (name or record).strip().lower()
+    base = (name or (record.split(", ", 1)[0] if fact.source == "USDA" else record)).strip().lower()
     if fact.source == "USDA" and ", " in fact.food_name:
         base = f"{base} ({fact.food_name.split(', ', 1)[1].lower()})"
     elif fact.source != "USDA" and record and record != base and record not in base:

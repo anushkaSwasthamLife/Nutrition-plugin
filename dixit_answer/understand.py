@@ -10,6 +10,7 @@ import re
 from dataclasses import dataclass, field
 
 from .foods import FoodIndex
+from .unknown_foods import subject_of
 from .targets import WANT, Target, is_target_request, parse_targets
 from .semantics import NON_FOOD_WORDS, NEGATED, NEGATED_AFTER, meaningful_words, negated_foods, split_chunks
 from .status import parse_status
@@ -34,12 +35,13 @@ GENERIC_DISH = {"recipes", "recipe", "some recipes", "a recipe", "something", "f
 MAKE = re.compile(r"\b(make|prepare|cook|dish|meal|recipe|what can i (make|cook|prepare))\b")
 RECIPE = re.compile(r"\b(recipe|how (do|to|can) (i |you )?(make|cook|prepare)|how is .* made|method to (make|cook))\b")
 SOURCE = re.compile(r"\b(source|where (does|do|did) (this|that|these|the) .*(come|from)|where is (this|that) from|reference)\b")
+LOOKUP_MORE = re.compile(r"\b(?:sugar|sugars|sodium)\s+(?:in|of|content)\b|\bhow (?:much|many) (?:sugar|sodium)\b")
 LOOKUP = re.compile(r"\b(how (many|much)|what is the|what's the|amount of)\b.*\b(calorie|carb|protein|fat|fiber|sugar|energy|"
                     r"nutrition|nutrients?)\b|\b(calorie|carb|protein|fat|fiber)s? (in|of)\b")
 COMPARE = re.compile(r"\b(compare|comparison|vs|versus|difference between|better than|which is better|healthier)\b")
 STATUS = re.compile(r"\b(non diabetic|no longer diabetic|not diabetic anymore|reversed|reversal|now normal|sugar is normal)\b")
 PERSONAL = re.compile(r"\b(safe for me|good for me|ok for me|okay for me|suitable for me|right for me|bad for me|harmful for me)\b")
-MEAL_PROTOCOL = re.compile(r"\b(between meals|in between|snack|snacks|snacking|skip (breakfast|lunch|dinner|a meal)|two meals|"
+MEAL_PROTOCOL = re.compile(r"\b(\d{1,2}\s*(?:am|pm)|after \d{1,2}|before \d{1,2}|late night|midnight|between meals|in between|snack|snacks|snacking|skip (breakfast|lunch|dinner|a meal)|two meals|"
                            r"2 meals|55 min|55 minutes|meal timing|when should i eat|how many meals|third meal|three meals|"
                            r"every (two|three|2|3|4|four|few) hours|small meals|frequent meals|small frequent|five meals|six meals|"
                            r"eat more often|eating more often|more meals)\b")
@@ -72,6 +74,9 @@ EXPLAIN_FOLLOW = re.compile(r"^(?:ok |okay |but |and |so )?(?:why|why so|why is 
                             r"more information|explain|explain that|explain it|explain more|explain please|what do you mean|how so|where is that from|"
                             r"where is this from|where does that come from|where does this come from|source|sources|how do you know|reason|the reason|"
                             r"what is the reason|why please|why is this)$")
+# "is dal high in protein", "does paneer have much fibre": a question about one nutrient of a food
+NUTRIENT_QUESTION = re.compile(r"\b(?:is|are|does|do|has|have)\b.*\b(?:high|low|rich|good source|much|enough|any|lot of|lots of)\b.*"
+                               r"\b(?:calorie|calories|carb|carbs|carbohydrate|carbohydrates|protein|proteins|fat|fats|fibre|fiber)\b")
 RECIPE_FLOW = {"recipe_request", "meal_from_ingredients"}
 TOPIC_SABJI = re.compile(r"\b(sabji|vegetable|curry)\b")
 
@@ -144,7 +149,7 @@ def classify(cleaned: str, foods: list[str], index: FoodIndex) -> str:
         return "recipe_request"
     if SOURCE.search(cleaned):
         return "source_fact_lookup"
-    if LOOKUP.search(cleaned):
+    if LOOKUP.search(cleaned) or NUTRIENT_QUESTION.search(cleaned) or LOOKUP_MORE.search(cleaned):
         return "neutral_nutrient_lookup"
     if COMPARE.search(cleaned) and len(foods) >= 2:
         return "neutral_food_comparison"
@@ -501,7 +506,7 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
         question_type = "neutral_nutrient_lookup"           # "poha", "what is poha?": the whole message is a dish name, so give its calories
     if question_type not in {"support_wellbeing", "greeting_thanks", "followup_reply"} and not u.slot_fill and not foods and not u.recipe_ids:
         targets = is_target_request(cleaned)
-        if targets and not (dish_finder and dish_finder(focus)):
+        if targets and not (dish_finder and any(h["exact"] for h in dish_finder(focus))):       # a loose word match ("drink") is not a dish named
             question_type, u.targets = "target_meal_search", targets      # "a meal with 326 kcal and 26 g protein": dishes near those values
             u.type = question_type
             return u
@@ -510,6 +515,10 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
             and getattr(state, "last_explain", None) and state.turn - getattr(state, "last_explain_turn", -99) <= RECENT_TURNS):
         u.type = "explain_last"
         return u
+    if question_type in {"out_of_scope", "food_choice_guidance"} and not u.slot_fill and not foods and not u.recipe_ids:
+        subject = subject_of(cleaned)                       # "can i eat pizza", "is coffee ok": a food that is not on the approved list
+        if subject:
+            question_type, u.unknown_food_query = "unknown_food_question", subject
     last = getattr(state, "last_question", None) or {}
     if (question_type in {"out_of_scope", "food_choice_guidance", "food_allowed"} and not u.slot_fill and not foods and len(cleaned.split()) <= 8
             and MORE.search(cleaned) and last.get("type") in RECIPE_FLOW):

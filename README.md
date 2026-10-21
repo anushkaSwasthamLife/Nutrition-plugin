@@ -318,3 +318,18 @@ After a dish search ("a meal with 326 kcal and 26 g protein"), short follow-ups 
 "and 400 kcal" change the amounts and keep what was left out; "what else" / "another one" give other dishes and never repeat one.
 A full new request starts a new search; a different kind of question, or three quiet turns, ends it. After a recipe answer,
 "except onion" / "no paneer" give the same request without dishes that use that food. Tests: `tests/test_refinements.py`.
+
+## Wishes, unlisted foods and amounts (21 Oct 2026)
+
+A prompt-by-prompt review (about 200 realistic questions, English, Roman Hindi and Devanagari) found these gaps; each is fixed and tested:
+
+- **"High protein non veg food, what can I have"** (also low carb, low calorie, low fat, high fibre, "light", "the most protein") lists dishes that
+  meet a line set in `dish_rules.json` (`qualifiers`, PROPOSED), most first, vegetarian or non-veg as the person is. A dish named only by a
+  describing word ("food", "high", "protein") is no longer matched.
+- **Foods not on the approved list** ("protein in 50 g chicken", "calories in apple", "sugar in mango") get USDA facts, scaled to the grams asked
+  (a plain proportion, locked as a fact), plain forms first (raw, whole). "Can I eat pizza / is coffee ok" says the chat cannot judge it for the
+  programme yet, passes it to the dietitian and gives the facts for information only. A food that does not suit the diet or allergies never gets
+  a number, and neither does a USDA record or dish whose name holds meat, fish or egg for a vegetarian.
+- Kinds of food ("fruits") and times ("after 8 pm") are not unknown foods; a piece or a cup gets an honest "no reliable weight" line only when
+  one was asked for. Sugar and sodium can be asked for (USDA records only).
+Tests: `tests/test_qualitative.py`, `tests/test_unknown_foods.py`.
