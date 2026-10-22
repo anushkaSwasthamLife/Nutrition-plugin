@@ -28,6 +28,28 @@ MEAT_FISH = {"chicken", "mutton", "lamb", "goat", "beef", "pork", "ham", "bacon"
              "prawns", "shrimp", "crab", "squid", "salmon", "tuna", "pomfret", "rohu", "hilsa", "seafood", "meat", "turkey", "duck", "liver", "mince", "minced",
              "anchovy", "sardine", "mackerel", "lobster", "oyster", "clam", "mussel"}
 EGG = {"egg", "eggs", "anda", "omelette", "omelet", "bhurji"}
+# a meat or fish named as the wish itself ("i want chicken", "fish khana hai"): the search keeps to dishes with it. Eggs are a known food
+# with their own answer, and "liver", "ham", "mince" and the like are not things people ask for by name.
+WISH_WORDS = {"chicken", "mutton", "lamb", "goat", "beef", "pork", "keema", "kheema", "fish", "prawn", "prawns", "shrimp", "crab", "squid", "salmon",
+              "tuna", "pomfret", "rohu", "turkey", "duck", "seafood", "meat"}
+ASK_WORDS = re.compile(r"\b(?:want|need|craving|crave|mood|feel like|feeling like|wish|chahiye|khana|what can i|what should i|what do i|have|eat|something|"
+                       r"dishes?|options?|ideas?|suggest|show|give|batao|dikhao)\b")
+PERMISSION = re.compile(r"\b(?:can|may|should|is|are|does|do|allowed|safe|good|bad|healthy|harmful|ok|okay)\b")
+NEGATED = re.compile(r"\b(?:dont|don't|do not|doesnt|not|never|no|without|except|avoid|allergic|allergy|intolerant|nahi|nahin|mat)\b")
+NOT_A_WISH = re.compile(r"\b(?:what can i|what should i|what do i|want|need|craving|crave|mood|feel like|feeling like|chahiye|khana)\b")
+
+
+def ingredient_wish(cleaned: str, follow_up: bool = False) -> list[str]:
+    """The meat or fish a message asks for ("i want chicken, what can i have"), or []. A permission question ("is chicken healthy",
+    "can i eat fish") is not a wish: it keeps its own answer."""
+    found = sorted({w for w in cleaned.split() if w in WISH_WORDS})
+    if not found or NEGATED.search(cleaned):             # "i dont eat chicken", "no fish", "allergic to prawns" say what to keep out, not what is wanted
+        return []
+    if not (follow_up or ASK_WORDS.search(cleaned)):        # a follow-up to a search can be just "and prawns"
+        return []
+    if PERMISSION.search(cleaned) and not NOT_A_WISH.search(cleaned):
+        return []
+    return found
 
 
 # "high protein", "low carb", "less fat", "most protein", "protein rich", "light": a wish for a lot or a little of something, with no number
@@ -100,6 +122,8 @@ def parse_qualifiers(cleaned: str) -> list[Target]:
         found.setdefault(fld, Target(fld, 0.0, "low" if re.fullmatch(LOW_WORDS, word) else "high"))
     for m in re.finditer(rf"\b{QUAL_NUTRIENT}\s+(?:rich|heavy)\b", cleaned):
         found.setdefault(QUAL_FIELD[m.group(1)], Target(QUAL_FIELD[m.group(1)], 0.0, "high"))
+    for m in re.finditer(r"\b(?:want|need|needs|require|craving|chahiye)\s+(?:some\s+|a\s+lot\s+of\s+)?(protein|proteins|fibre|fiber)\b", cleaned):
+        found.setdefault(QUAL_FIELD[m.group(1)], Target(QUAL_FIELD[m.group(1)], 0.0, "high"))        # "i want protein": a wish for a lot of it
     if not found and re.search(r"\b(?:light|lighter)\b", cleaned):
         found["energy_kcal"] = Target("energy_kcal", 0.0, "low")
     return list(found.values())
@@ -129,13 +153,15 @@ class TargetSearch:
         self.dishes, self.allergy, self.index = dishes, allergy, index
 
     def _allowed(self, code: str, person, blocked: set[str], allergens: set[str], leave_out: set[str] = frozenset(),
-                 only_nonveg: bool = False) -> bool:
+                 only_nonveg: bool = False, include: set[str] = frozenset()) -> bool:
         names = [self.dishes.label(code), *self.dishes.ingredient_names(code)]
         words = _words(names)
         if leave_out and (words & leave_out or {w.rstrip("s") for w in words} & {w.rstrip("s") for w in leave_out}):
             return False
         if only_nonveg and not self.is_nonveg(code, words):
             return False
+        if include and not ({w.rstrip("s") for w in words} & {w.rstrip("s") for w in include}):
+            return False                                   # the dish must name one of the meats or fish asked for
         diet = getattr(person, "diet_type", "unknown") if person is not None else "unknown"
         if words & MEAT_FISH and diet != "non_vegetarian":
             return False
@@ -183,7 +209,7 @@ class TargetSearch:
         return bool(rule) and all(ok for _name, ok in checks)
 
     def search(self, targets: list[Target], person, blocked: set[str], limit: int = 3, leave_out=(), skip_codes=(), drinks: bool = False,
-               only_nonveg: bool = False) -> tuple[list[Match], bool]:
+               only_nonveg: bool = False, include=(), relax: bool = False) -> tuple[list[Match], bool]:
         """(best matches, whether they are within the normal tolerance). Dishes with no clear serving or only an estimate are left out."""
         rules = self.dishes.rules.get("range_percent", {})
         tight = float(rules.get("default", 15)) / 100.0
@@ -192,6 +218,7 @@ class TargetSearch:
         if person is None or person.allergies is None or person.unmapped_allergies:
             allergens |= set(self.allergy.map["major"])          # allergies unknown or not understood: stay clear of every common one
         leave = {str(w).lower() for w in leave_out}
+        want = {str(w).lower() for w in include}
         skip = set(skip_codes)
         scored: list[Match] = []
         for code in self.dishes.by_code:
@@ -210,7 +237,7 @@ class TargetSearch:
                     errors = None
                     break
                 if t.mode in {"high", "low"}:
-                    errors.append(0.0 if self._passes(t, ps) else 9.0)
+                    errors.append(0.0 if relax or self._passes(t, ps) else 9.0)       # relax: rank by the wish, whether or not it passes the line
                 elif t.mode == "range" and t.high is not None:
                     errors.append(0.0 if t.value <= v <= t.high else (t.value - v) / t.value if v < t.value else (v - t.high) / t.high)
                 elif t.mode == "max":
@@ -221,13 +248,13 @@ class TargetSearch:
                     errors.append(abs(v - t.value) / t.value)
             if errors is None:
                 continue
-            scored.append(Match(code, self.dishes.label(code), result, max(errors), {t.field: ps[t.field] for t in targets}))
+            scored.append(Match(code, self.dishes.label(code), result, max(errors, default=0.0), {t.field: ps[t.field] for t in targets}))
 
         def rank(m: Match) -> tuple:                                      # for wishes: the most (or least) of the first nutrient asked for
             for t in targets:
                 if t.mode in {"high", "low"}:
                     return (-m.values[t.field] if t.mode == "high" else m.values[t.field],)
-            return (0,)
+            return (m.result.per_serving.get("energy_kcal") or 0.0,) if not targets else (0,)      # no wish for a nutrient: the lightest first
         scored.sort(key=lambda m: (m.error, rank(m), m.name))
         for tol in (tight, wide):
             picked: list[Match] = []
@@ -236,7 +263,7 @@ class TargetSearch:
                 if m.error > tol:
                     break
                 key = m.name.split(" (")[0].lower()
-                if key in seen or not self._allowed(m.code, person, blocked, allergens, leave, only_nonveg):
+                if key in seen or not self._allowed(m.code, person, blocked, allergens, leave, only_nonveg, want):
                     continue
                 seen.add(key)
                 picked.append(m)

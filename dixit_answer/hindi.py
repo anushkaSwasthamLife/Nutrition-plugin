@@ -17,6 +17,8 @@ from __future__ import annotations
 import re
 import unicodedata
 
+from . import hinglish
+
 DEVANAGARI = re.compile(r"[ऀ-ॿ]")
 _DEVANAGARI_WORD = re.compile(r"[ऀ-ॿ]+")
 _DIGITS = str.maketrans("०१२३४५६७८९", "0123456789")
@@ -208,7 +210,10 @@ def translate(text: str) -> str:
         m = pattern.match(simple)
         if m:
             simple = pattern.sub(template, simple)
-            return " ".join(simple.split())
+            return hinglish.polish(" ".join(simple.split()))
+    mixed = hinglish.rewrite(rewritten)                      # Roman Hindi clauses, alone or mixed with English ones
+    if mixed is not None:
+        return mixed
     if rewritten == original:
         return original
     return " ".join(rewritten.split())

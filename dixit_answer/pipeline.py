@@ -108,6 +108,7 @@ class Engine:
             "cooking_factors": self.data.cooking_factors["version"],
             "emergency_rules": self.data.emergency_rules["version"],
             "harmful_intent_rules": self.data.harmful_intent_rules["version"],
+            "hinglish_glossary": self.data.hinglish_glossary["version"],
             "white_lists": self.data.white_lists["version"],
             "black_lists": self.data.black_lists["version"],
             "dish_rules": self.data.dish_rules["version"],
@@ -259,9 +260,9 @@ class Engine:
         if u.type == "target_meal_search":
             state.last_targets = [[t.field, t.value, t.mode, t.high] for t in u.targets]
             state.last_targets_turn, state.target_exclude = state.turn, list(u.target_exclude)
-            state.target_diet = u.target_diet
+            state.target_diet, state.target_include = u.target_diet, list(u.target_include)
         elif u.type not in {"greeting_thanks", "out_of_scope", "explain_last"}:
-            state.last_targets = []                                # a different kind of question ends the dish search
+            state.last_targets, state.target_include = [], []      # a different kind of question ends the dish search
         if u.type != "explain_last":
             explain = explain_lines(draft, plan, self.library)
             if explain:

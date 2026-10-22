@@ -455,10 +455,11 @@
     if (!r || KEEPS_SEARCH[r.type]) return;                       // these leave the search as it was (as the server does)
     var p = r.type === 'target_meal_search' ? (r.plan || {}) : {}, parts = [];
     (p.targets || []).forEach(function (t) { parts.push([targetLabel(t), 'forget ' + (t.field === 'energy_kcal' ? 'calories' : NOUN[t.field])]); });
+    (p.target_include || []).forEach(function (w) { parts.push(['🍗 ' + w, 'forget ' + w]); });
     if (p.target_diet && SEARCH_DIET[p.target_diet]) parts.push([SEARCH_DIET[p.target_diet][0], 'forget ' + SEARCH_DIET[p.target_diet][1]]);
     var gone = (p.target_exclude || []).slice(0, 4);
     gone.forEach(function (w) { parts.push(['without ' + w, 'forget without ' + w]); });
-    if (!(p.targets || []).length) { box.hidden = true; box.innerHTML = ''; return; }
+    if (!(p.targets || []).length && !(p.target_include || []).length) { box.hidden = true; box.innerHTML = ''; return; }
     box.innerHTML = '<span>Searching for:</span>' + parts.map(function (c) {
       return '<button type="button" class="s" data-say="' + esc(c[1]) + '" aria-label="Remove ' + esc(c[0]) + ' from the search">' + esc(c[0]) + '<b aria-hidden="true">✕</b></button>';
     }).join('') + '<button type="button" class="clear" data-say="start over">clear search</button>';

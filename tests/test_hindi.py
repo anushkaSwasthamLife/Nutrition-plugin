@@ -77,7 +77,7 @@ def test_sentence_shapes(text, expected):
 
 
 def test_devanagari_digits_and_the_full_stop():
-    assert translate("मेरी शुगर ५२ है।") == "meri sugar 52 hai ."
+    assert translate("मेरी शुगर ५२ है।") == "my sugar 52."      # since 22 Oct the Hinglish layer reads "meri" and "hai" too
     assert translate("१०० ग्राम") .startswith("100 ")
 
 

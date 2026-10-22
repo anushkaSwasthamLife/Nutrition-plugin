@@ -47,6 +47,7 @@ class EmergencyResult:
 class EmergencyRules:
     def __init__(self, rules: dict):
         self.version = rules["version"]
+        self._patterns: dict = {}
         self.window = int(rules.get("negation_window_words", 3))
         self.negated_note = rules.get("negated_note", "")
         self.glucose = rules.get("glucose")                # None: no blood-sugar readings (the harmful-intent rules)
@@ -111,7 +112,7 @@ class EmergencyRules:
         Both are judged inside one clause (clauses end at . , ; : ! ? and at "but"). A category that is not negatable (self-harm)
         is never set aside."""
         positive = set_aside = False
-        pattern = re.compile(r"(?<![\w])" + re.escape(phrase) + r"(?![\w])")
+        pattern = self._pattern(phrase)
         for clause in clauses:
             for match in pattern.finditer(clause):
                 aside = negatable and (self._negated_before(clause[:match.start()].split(), negations)
@@ -119,6 +120,14 @@ class EmergencyRules:
                 positive |= not aside
                 set_aside |= aside
         return positive, set_aside
+
+    def _pattern(self, phrase: str):
+        """The whole-word pattern for a phrase, compiled once. (Compiling it on every message overflowed Python's 512-pattern cache once
+        the emergency and harmful-intent lists together passed 450 phrases, and slowed every answer.)"""
+        pattern = self._patterns.get(phrase)
+        if pattern is None:
+            pattern = self._patterns[phrase] = re.compile(r"(?<![\w])" + re.escape(phrase) + r"(?![\w])")
+        return pattern
 
     def reading(self, text: str) -> float | None:
         """The lowest or highest blood-sugar reading in the message, in mg/dL (the one furthest from normal)."""

@@ -174,3 +174,56 @@ def test_more_after_a_recipe_list_still_skips_what_was_shown(full_engine):
 def test_a_wish_for_more_of_a_nutrient_is_not_a_request_for_other_dishes(eng):
     r = chat(eng, "low calorie food", "more protein")[1]
     assert wishes(r) == {("energy_kcal", "low"), ("protein_g", "high")} and r.plan["target_mode"] == "refine"
+
+
+# ---------------------------------------------------------------- "i want chicken": a meat or fish wish is a dish search
+@needs_data
+@pytest.mark.parametrize("message, words", [("i want chicken, what can i have", {"chicken"}), ("i want to eat chicken", {"chicken"}),
+                                            ("what can i have with chicken", {"chicken"}), ("i want mutton or fish", {"fish", "mutton"}),
+                                            ("fish khana hai kya khau", {"fish"})])
+def test_a_meat_or_fish_wish_lists_dishes_with_it(eng, message, words):
+    from dixit_answer.hindi import translate
+    r = chat(eng, translate(message))[0]
+    assert r.type == "target_meal_search" and set(r.plan["target_include"]) == words, (message, r.type)
+    assert dishes(r), message                          # the dishes themselves are checked for the meat in test_dishes_for_a_meat_wish_really_contain_it
+
+
+@needs_data
+def test_dishes_for_a_meat_wish_really_contain_it(eng):
+    from dixit_answer.targets import TargetSearch
+    r = chat(eng, "i want chicken, what can i have")[0]
+    ts = TargetSearch(eng.composer.dishes, eng.composer.allergy, eng.index)
+    codes = {eng.composer.dishes.label(c).split(" (")[0]: c for c in eng.composer.dishes.by_code}
+    for d in dishes(r):
+        code = codes[d]
+        words = {w.rstrip("s") for w in re.findall(r"[a-z]+", " ".join([eng.composer.dishes.label(code), *eng.composer.dishes.ingredient_names(code)]).lower())}
+        assert "chicken" in words, d
+        assert ts.is_nonveg(code)
+
+
+@needs_data
+@pytest.mark.parametrize("message", ["can i eat chicken", "is chicken healthy", "should i eat fish", "chicken calories", "is fish good for me"])
+def test_a_question_about_a_meat_keeps_its_own_answer(eng, message):
+    assert chat(eng, message)[0].type != "target_meal_search"
+
+
+@needs_data
+def test_the_meat_wish_is_part_of_the_search_and_can_be_changed(eng):
+    r = chat(eng, "i want chicken, what can i have", "and fish", "except chicken", "forget fish")
+    assert set(r[1].plan["target_include"]) == {"chicken", "fish"}
+    assert r[2].plan["target_include"] == ["fish"] and "chicken" in r[2].plan["target_exclude"]
+    assert r[3].plan["target_include"] == [] and r[3].plan["target_mode"] in {"cleared", "refine"}
+
+
+@needs_data
+def test_a_meat_wish_with_a_calorie_wish_says_when_nothing_counts_as_light(eng):
+    r = chat(eng, "i want chicken, what can i have", "but less calories")[1]
+    assert wishes(r) == {("energy_kcal", "low")} and r.plan["target_include"] == ["chicken"] and dishes(r)
+    first_line = r.answer.split(chr(10))[0]
+    assert "counts as few calories" in first_line or "few calories and chicken" in first_line, first_line
+
+
+@needs_data
+def test_a_vegetarian_asking_for_chicken_is_told_why_nothing_is_shown(eng):
+    r = chat(eng, "i want chicken, what can i have", profile=VEG)[0]
+    assert r.type == "target_meal_search" and not dishes(r) and "vegetarian" in r.answer

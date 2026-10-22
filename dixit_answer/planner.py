@@ -58,6 +58,7 @@ class AnswerPlan:
     target_exclude: list = field(default_factory=list)
     target_mode: str = "new"
     target_diet: str = ""
+    target_include: list = field(default_factory=list)
     wants_list: bool = False
     needs_status: bool = False            # the programme's answer depends on diabetes status (fruit)
     frequency_note: bool = False          # add the "no approved evidence on other eating patterns" line
@@ -162,6 +163,7 @@ def make_plan(u: Understanding, state: ChatState, emergency: bool = False, aller
         plan.blocks, plan.max_words = ["target_meals", "profile_note"], 200
         plan.targets = list(u.targets)
         plan.target_exclude, plan.target_mode, plan.target_diet = list(u.target_exclude), u.target_mode, u.target_diet
+        plan.target_include = list(u.target_include)
         return plan
     if u.type == "explain_last":
         plan.blocks = ["explain_last"]

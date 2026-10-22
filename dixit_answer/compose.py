@@ -447,14 +447,14 @@ class Composer:
         self._tips_lines(plan, state, d, lock, given)
 
     def _target_meals(self, plan, d: Draft, lock, person, state=None, u=None) -> None:
-        if not plan.targets:                                       # "start over", or the last wish taken off (chips on the chat page)
+        if not plan.targets and not plan.target_include:           # "start over", or the last wish taken off (chips on the chat page)
             if state is not None:
                 state.target_shown = []
             d.lines.append(lock("T", "Okay, I've cleared that search. Tell me what you'd like, for example high protein or fewer calories."))
             return
         asked = [(t.field, t.value, t.mode) for t in plan.targets]
         parts = []
-        every_about = all(mode == "about" for _f, _v, mode in asked)
+        every_about = bool(asked) and all(mode == "about" for _f, _v, mode in asked)
         for fld, value, mode in asked:
             if mode in {"high", "low"}:
                 parts.append(f"{'high' if mode == 'high' else 'low'} {QUAL_NOUN[fld]}" if fld != "energy_kcal" else ("few calories" if mode == "low" else "many calories"))
@@ -465,6 +465,7 @@ class Composer:
                 continue
             word = "" if every_about else {"max": "up to ", "min": "at least "}.get(mode, "about ")
             parts.append(f"{word}{value:g} {LABEL_FOR[fld]}")
+        parts.extend(sorted(plan.target_include))                  # "dishes with chicken", "dishes with high protein and chicken"
         want = ("about " if every_about else "") + _join(parts)
         if u is not None and re.search(r"\bsnacks?\b", u.cleaned):
             d.lines.append(lock("T", "The programme has no snacks between meals, so these are dishes for your meals."))
@@ -474,7 +475,7 @@ class Composer:
             import dataclasses
             person = dataclasses.replace(person, diet_type=plan.target_diet) if person is not None else Person(diet_type=plan.target_diet)
             profile_diet = plan.target_diet                                  # a narrower diet asked for in this search is honoured
-        if u is not None and getattr(u, "preference", "") == "non_vegetarian" and profile_diet in {"vegetarian", "jain"}:
+        if u is not None and (getattr(u, "preference", "") == "non_vegetarian" or plan.target_include) and profile_diet in {"vegetarian", "jain"}:
             d.lines.append(lock("T", f"Your profile says {profile_diet}, so I only looked at {profile_diet} dishes."))
         only_nonveg = plan.target_diet == "non_vegetarian" and profile_diet == "non_vegetarian"
         kind = "non-veg dish" if only_nonveg else "dish"            # "Non-veg dishes with high protein and few calories:"
@@ -486,8 +487,16 @@ class Composer:
         shown_before = list(state.target_shown) if state is not None else []
         left = [w for w in plan.target_exclude]
         matches, close = TargetSearch(self.dishes, self.allergy, self.index).search(plan.targets, person, d.blocked_foods, leave_out=left, skip_codes=shown_before,
-                                                                                    drinks=wants_drinks(u.cleaned if u is not None else ""), only_nonveg=only_nonveg)
+                                                                                    drinks=wants_drinks(u.cleaned if u is not None else ""), only_nonveg=only_nonveg,
+                                                                                    include=plan.target_include)
         without = f", without {_join(sorted({w for w in left if len(w) > 2})[:4])}" if left else ""
+        relaxed = False
+        if not matches and plan.target_include and plan.target_mode != "more" and plan.targets and all(t.mode in {"high", "low"} for t in plan.targets):
+            # "few calories" with chicken: no chicken dish passes the line the rules draw, so show the nearest and say so
+            matches, close = TargetSearch(self.dishes, self.allergy, self.index).search(plan.targets, person, d.blocked_foods, leave_out=left, skip_codes=shown_before,
+                                                                                        drinks=wants_drinks(u.cleaned if u is not None else ""), only_nonveg=only_nonveg,
+                                                                                        include=plan.target_include, relax=True)
+            relaxed = bool(matches)
         if not matches:
             if plan.target_mode == "more" and shown_before:
                 d.lines.append(lock("T", f"Those are all the dishes I have near {want}{without}. Try a different amount, or ask me about a dish by name."))
@@ -498,7 +507,10 @@ class Composer:
             return
         if state is not None:
             state.target_shown = (state.target_shown + [m.code for m in matches])[-60:]
-        d.lines.append(lock("T", f"{kind.capitalize()}es with {want}{without}:" if close else f"No {kind} matches {want}{without} closely. These are the nearest:"))
+        if relaxed:
+            d.lines.append(lock("T", f"No {kind} with {_join(sorted(plan.target_include))} counts as {_join(parts[:len(plan.targets)])} by our checks. These come closest:"))
+        else:
+            d.lines.append(lock("T", f"{kind.capitalize()}es with {want}{without}:" if close else f"No {kind} matches {want}{without} closely. These are the nearest:"))
         for m in matches:
             res = m.result
             quantity, _, unit = res.serving_text.partition(" ")
