@@ -203,6 +203,8 @@ class Composer:
             elif block == "explain_last":
                 for line in (state.last_explain or {}).get("lines", []):
                     d.lines.append(lock("T", line))
+            elif block == "more_unclear":
+                d.lines.append(lock("T", "I'm not sure what to show more of. Tell me what you'd like, for example high protein dishes, fewer calories, or what you have at home."))
             elif block == "out_of_scope":
                 free("I can only help with food, meals and the Dixit programme. Is there something about your meals I can help with?")
             elif block == "opening":

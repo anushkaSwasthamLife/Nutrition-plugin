@@ -144,6 +144,9 @@ def make_plan(u: Understanding, state: ChatState, emergency: bool = False, aller
     if u.type == "out_of_scope":
         plan.blocks = ["out_of_scope"]
         return plan
+    if u.type == "more_unclear":
+        plan.blocks = ["more_unclear"]
+        return plan
     if u.type in {"definition_question", "portion_question", "reading_ack", "about_assistant", "body_info", "special_diet"}:
         plan.blocks = [{"definition_question": "definition", "portion_question": "portion", "reading_ack": "reading", "about_assistant": "about",
                         "body_info": "body_info", "special_diet": "special_diet"}[u.type]]

@@ -61,9 +61,10 @@ def test_more_after_a_list_skips_the_dishes_in_the_list(full_engine):
 
 
 def test_more_with_no_earlier_recipe_is_not_made_up(full_engine):
-    assert "I can only help" in chat(full_engine, "what else")[0].answer
+    first = chat(full_engine, "what else")[0]                      # since 22 Oct: a plain question back, not "I can only help"
+    assert first.type == "more_unclear" and "not sure what to show more of" in first.answer and "With " not in first.answer
     after_hello = chat(full_engine, "hello", "what else")[1]
-    assert "I can only help" in after_hello.answer
+    assert after_hello.type == "more_unclear" and "With " not in after_hello.answer
 
 
 def test_more_after_a_nutrient_question_is_not_a_recipe(full_engine):

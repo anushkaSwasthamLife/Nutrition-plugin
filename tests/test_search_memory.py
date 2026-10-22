@@ -133,3 +133,44 @@ def test_the_search_lasts_longer_than_three_turns_but_ends_on_a_new_topic(eng):
 def test_chat_page_has_the_search_chips():
     page = (Path(__file__).resolve().parents[1] / "dixit_answer" / "static" / "chat.html").read_text(encoding="utf-8")
     assert 'id="search"' in page and "renderSearch(r)" in page and "'forget without ' + w" in page and 'data-say="start over"' in page
+
+
+# ---------------------------------------------------------------- "other than this": different ones, never the programme explanation
+MORE_PHRASES = ["what can i have other than this", "other than these", "something else", "what other options do i have", "anything other than this",
+                "show me different ones", "something different please", "other options", "not these", "different from these"]
+
+
+@needs_data
+@pytest.mark.parametrize("follow", MORE_PHRASES)
+def test_a_request_for_different_dishes_continues_the_search(eng, follow):
+    r = chat(eng, "high protein non veg food", follow)[1]
+    assert r.type == "target_meal_search" and r.plan["target_mode"] == "more" and r.plan["target_exclude"] == [], (follow, r.type)
+    assert "programme" not in r.answer.lower().split("\n")[0] and ("protein_g", "high") in wishes(r)
+
+
+@needs_data
+def test_a_bare_what_can_i_have_right_after_a_search_asks_for_more(eng):
+    r = chat(eng, "high protein food", "so what can i have")[1]
+    assert r.type == "target_meal_search" and r.plan["target_mode"] == "more"
+    r = chat(eng, "high protein food", "hello", "hello", "hello", "hello", "what can i have")[-1]     # four turns later it is a new question
+    assert r.type != "target_meal_search"
+
+
+@needs_data
+@pytest.mark.parametrize("follow", ["something else", "other than these", "what can i have other than this", "what other options do i have"])
+def test_nothing_to_continue_asks_what_the_person_wants(eng, follow):
+    r = chat(eng, "hello", follow)[1]
+    assert r.type == "more_unclear" and "not sure what to show more of" in r.answer and "I can only help" not in r.answer
+    assert chat(eng, follow)[0].type == "more_unclear"
+
+
+@needs_data
+def test_more_after_a_recipe_list_still_skips_what_was_shown(full_engine):
+    r = chat(full_engine, "i have aloo and paneer", "what can i have other than this", profile=VEG)
+    assert r[1].type == "meal_from_ingredients" and r[1].plan["protocol_level"] != "full"
+
+
+@needs_data
+def test_a_wish_for_more_of_a_nutrient_is_not_a_request_for_other_dishes(eng):
+    r = chat(eng, "low calorie food", "more protein")[1]
+    assert wishes(r) == {("energy_kcal", "low"), ("protein_g", "high")} and r.plan["target_mode"] == "refine"

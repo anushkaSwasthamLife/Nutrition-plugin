@@ -103,6 +103,12 @@ EXCLUDE = re.compile(r"\b(?:other than|apart from|aside from|except for|except|b
 # "what else", "any other", "something different": a follow-up that only makes sense after the last answer
 MORE = re.compile(r"\b(what else|anything else|something else|any other|any more|more options|other options|another one|another|one more|"
                   r"something different|show more|different one|other ones?|else|more)\b")
+# "other than this", "something else", "what other options do i have": a request for different ones, said in up to nine words.
+# (No bare "more" or "else": "more protein" is a wish, not a request for other dishes.)
+MORE_ASK = re.compile(r"\b(?:what else|anything else|something else|anything different|something different|any other|more options|other options|another one|one more|"
+                      r"show more|different ones?|other ones?|what other|which other|other than (?:this|these|that|those|them|the above|above|what you (?:showed|said|gave|listed))|"
+                      r"different from (?:this|these|that|those|them)|not (?:this|these|those))\b")
+BARE_WHAT = re.compile(r"^(?:(?:ok|okay|so|and|then|but|hmm)\s+)*what (?:can|should|do|could) i (?:have|eat|take)(?:\s+(?:then|now|instead|today|else))?$")
 # "why?", "tell me more", "where is that from": only the written reason or source of the last answer is given, never a new claim
 EXPLAIN_FOLLOW = re.compile(r"^(?:ok |okay |but |and |so )?(?:why|why so|why is that|why is it|why is that so|how come|tell me more|more details|more info|"
                             r"more information|explain|explain that|explain it|explain more|explain please|what do you mean|how so|where is that from|"
@@ -334,6 +340,7 @@ def target_refinement(text: str, state, index: FoodIndex, word_lists: dict):
     words = cleaned.split()
     if not words or len(words) > 14:
         return None
+    recent = state.turn - getattr(state, "last_targets_turn", -99) <= RECENT_TURNS
     targets = [Target(*t) for t in last]
     exclude = list(getattr(state, "target_exclude", []) or [])
     diet_now = getattr(state, "target_diet", "") or ""
@@ -352,7 +359,7 @@ def target_refinement(text: str, state, index: FoodIndex, word_lists: dict):
         fresh = MEAL_NOUN.search(cleaned) and new and not CONTINUE_LEAD.match(cleaned) and not CONTINUE_ANY.search(cleaned)
         if diet and DIET_SWITCH.match(cleaned):
             mode, new_diet = "refine", diet                  # "what about veg", "only vegetarian", "non veg please": the same search for another diet
-        elif cut and not new:
+        elif cut and not new and not MORE_ASK.search(cleaned):        # "other than these" asks for different dishes, it leaves out no food
             tokens = [w for w in cut.group("x").split() if w not in EXCLUDE_FILLER]
             if tokens:
                 names = set(tokens)
@@ -367,7 +374,8 @@ def target_refinement(text: str, state, index: FoodIndex, word_lists: dict):
             targets, mode = list(merged.values()), "refine"
             if diet:
                 new_diet = diet                              # "i need non veg with less calories": both changes at once
-        elif MORE.search(cleaned) and len(words) <= 5 and not index.find(cleaned, already_clean=True):
+        elif ((MORE.search(cleaned) and len(words) <= 5) or (MORE_ASK.search(cleaned) and len(words) <= 10)
+              or (BARE_WHAT.match(cleaned) and recent)) and not index.find(cleaned, already_clean=True):
             mode = "more"
     if mode is None:
         return None
@@ -604,6 +612,8 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
     excluded_dishes: list = []
     whole = cleaned
     cut = EXCLUDE.search(cleaned)
+    if cut and cut.group("x").split()[0] in PRONOUNS | {"above"}:
+        cut = None                                              # "other than this / these": different ones, not a food to leave out
     if cut:
         if recipe_finder:
             excluded_dishes = recipe_finder(cut.group("x"))
@@ -723,13 +733,16 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
             question_type = "neutral_nutrient_lookup"        # "jalebi", "momos", "poha upma": a food or dish asked in a word or two (we hold data, or the meaning check says it is a food)
     last = getattr(state, "last_question", None) or {}
     if (question_type in {"out_of_scope", "food_choice_guidance", "food_allowed"} and not u.slot_fill and not foods and len(cleaned.split()) <= 8
-            and MORE.search(cleaned) and last.get("type") in RECIPE_FLOW):
+            and (MORE.search(cleaned) or MORE_ASK.search(cleaned)) and last.get("type") in RECIPE_FLOW):
         question_type = last["type"]                       # "what else" after a recipe answer: the same request, without what was shown
         u.more_request = True
         u.ingredients = list(getattr(state, "ingredients_on_hand", []) or [])
         u.foods = list(u.ingredients)
         u.exclude_recipes = sorted(set(u.exclude_recipes) | set(getattr(state, "recipes_shown", []) or []))
         u.recipe_ids = []
+    if (question_type in {"out_of_scope", "food_choice_guidance"} and not u.slot_fill and not foods and not u.more_request
+            and len(cleaned.split()) <= 10 and MORE_ASK.search(cleaned)):
+        question_type = "more_unclear"                     # "something else" with nothing before it to continue: ask, never explain the programme
     last_type = (getattr(state, "last_question", None) or {}).get("type")
     on_hand = list(getattr(state, "ingredients_on_hand", []) or [])
     if last_type in RECIPE_FLOW and on_hand and not u.slot_fill and len(whole.split()) <= 8:
