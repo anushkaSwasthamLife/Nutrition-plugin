@@ -25,6 +25,7 @@ from .explain import explain_lines
 from .semantics import SemanticJudge
 from .llm import LLMError, make_llm
 from .emergency import EmergencyRules
+from .harmful import HarmfulRules
 from .loader import LoadError, load_library, load_manifest, load_swastham_data
 from .person import AllergyFilter, apply_profile_safety, build_person, sanitize_profile
 from .planner import make_plan
@@ -74,6 +75,7 @@ class Engine:
         self.data = load_swastham_data(self.settings, manifest)
         self.words = self.data.word_lists
         self.emergency = EmergencyRules(self.data.emergency_rules)
+        self.harmful = HarmfulRules(self.data.harmful_intent_rules)
         self.index = FoodIndex(self.data.food_master, self.words["spelling_map"])
         problems = find_problems(self.data, self.library, self.index, self.settings.environment)
         if problems:
@@ -105,6 +107,7 @@ class Engine:
             "rules_registry": self.data.rules_registry["version"],
             "cooking_factors": self.data.cooking_factors["version"],
             "emergency_rules": self.data.emergency_rules["version"],
+            "harmful_intent_rules": self.data.harmful_intent_rules["version"],
             "white_lists": self.data.white_lists["version"],
             "black_lists": self.data.black_lists["version"],
             "dish_rules": self.data.dish_rules["version"],
@@ -135,7 +138,7 @@ class Engine:
         original = text
         text = hindi_translate(text)                      # Devanagari and Roman-Hindi question shapes, read as plain words
         gate_text = original if text == original else f"{original} . {text}"      # the emergency phrases include Devanagari ones
-        gate = safety_gate.check(gate_text, state, self.words, self.emergency)
+        gate = safety_gate.check(gate_text, state, self.words, self.emergency, self.harmful)
         state.safety_status.update(gate.updates)
 
         # 4 understand (+ apply what a reply tells us)
@@ -143,6 +146,8 @@ class Engine:
                        self._dish_in_text if self.dishes else None, self.judge.judge, self.composer.food_exists)
         if gate.emergency:
             u.type = "emergency"
+        elif gate.harm.is_emergency:
+            u.type = "harmful_intent"
         elif gate.em.glucose_mg_dl is not None and u.type in {"food_allowed", "out_of_scope", "food_choice_guidance", "neutral_nutrient_lookup", "protocol_permission"}:
             u.type, u.reading = "reading_ack", float(gate.em.glucose_mg_dl)      # "my sugar is 250": a reading, not a question about sugar
         elif u.type == "out_of_scope" and gate.updates and not u.slot_fill and "?" not in text:
@@ -182,7 +187,7 @@ class Engine:
 
         # 5 plan
         plan = make_plan(u, state, emergency=gate.emergency, allergies_known=person.allergies_known, status=person.status,
-                         em=gate.em)
+                         em=gate.em, harm=gate.harm)
         self._emergency_lines(plan, state, gate)
 
         # 6-7 fetch + compose (allergy / avoid / diet filter runs inside every service that names a food)
@@ -192,7 +197,7 @@ class Engine:
         # 8 check: AI reword (if any), retried once with the failed checks, then the template answer
         ai_used, fallback, ai_results = False, False, []
         final = draft.fill(template)
-        if not isinstance(self.llm, type(None)) and getattr(self.llm, "name", "mock") != "mock" and plan.type not in {"emergency", "support_wellbeing"}:
+        if not isinstance(self.llm, type(None)) and getattr(self.llm, "name", "mock") != "mock" and plan.type not in {"emergency", "harmful_intent", "support_wellbeing"}:
             failed_ids: list = []
             for attempt in range(2):
                 try:
@@ -214,13 +219,13 @@ class Engine:
         if blocking(final_results) and ai_used:
             final, ai_used, fallback = draft.fill(template), False, True
             final_results = check_final(final, draft, plan, state, self.words, self.index, self.services.golden)
-        if any(r.level == "critical" and not r.passed for r in final_results) and plan.type != "emergency":
+        if any(r.level == "critical" and not r.passed for r in final_results) and plan.type not in {"emergency", "harmful_intent"}:
             # Even the template broke a critical check: nothing unchecked is shown.
             final, ai_used, fallback = SAFE_FALLBACK, False, True
 
         # 9 deliver + log + save state
         state.turn += 1
-        if plan.type == "emergency":
+        if plan.type in {"emergency", "harmful_intent"}:          # both get the one check-in line on a later turn
             state.emergency_turn, state.emergency_category = state.turn, plan.emergency_category
             state.emergency_checkin_done = False
         elif "emergency_checkin" in plan.blocks:
@@ -285,6 +290,8 @@ class Engine:
             "emergency": ({"category": gate.em.category, "matched": gate.em.matched, "negated": gate.em.negated,
                            "glucose_mg_dl": gate.em.glucose_mg_dl, "checkin": "emergency_checkin" in plan.blocks}
                           if (gate.em.matched or gate.em.negated or "emergency_checkin" in plan.blocks) else None),
+            "harmful": ({"category": gate.harm.category, "matched": gate.harm.matched, "set_aside": gate.harm.negated}
+                        if (gate.harm.matched or gate.harm.negated) else None),
             "recipe": ({"id": draft.recipe.recipe_id, "origin": draft.recipe.origin, "name": draft.recipe.name,
                         "ingredients": draft.recipe.ingredients, "totals": {k: str(v) for k, v in draft.recipe.totals.items()},
                         "gate_passed": bool(draft.recipe.gate and draft.recipe.gate.passed), "repairs": draft.recipe.repairs}
@@ -315,11 +322,11 @@ class Engine:
     def _emergency_lines(self, plan, state, gate) -> None:
         """After an emergency reply, the next normal answer starts with one check-in line (once, within 3 turns). A symptom
         mentioned with a negation ("no chest pain") gets one short line instead of an emergency stop."""
-        if plan.type == "emergency":
+        if plan.type in {"emergency", "harmful_intent"}:
             return
         if not state.emergency_checkin_done and state.emergency_turn is not None and state.turn + 1 - state.emergency_turn <= 3:
-            cat = self.emergency.by_id.get(state.emergency_category)
-            if cat:
+            cat = self.emergency.by_id.get(state.emergency_category) or self.harmful.by_id.get(state.emergency_category)
+            if cat and cat.get("checkin"):
                 plan.blocks.insert(0, "emergency_checkin")
                 plan.emergency_lines["emergency_checkin"] = cat["checkin"]
                 plan.rules.append("R1-CHECKIN")

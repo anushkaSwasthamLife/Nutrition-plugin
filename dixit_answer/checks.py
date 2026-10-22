@@ -129,6 +129,10 @@ def check_final(final_text: str, draft: Draft, plan: AnswerPlan, state: ChatStat
         reply = plan.emergency_lines.get("emergency")
         if (reply and final_text.strip() != reply.strip()) or plan.followup or "112" not in final_text:
             results.append(_fail("N28", "critical", "an emergency answer must be the fixed reply only, with 112, no food and no question"))
+    if plan.type == "harmful_intent":
+        reply = plan.emergency_lines.get("harmful")
+        if not reply or final_text.strip() != reply.strip() or plan.followup:
+            results.append(_fail("N29", "critical", "a harmful-intent answer must be the fixed reply only, with no food and no question"))
     for block in ("emergency_checkin", "emergency_note"):
         line = plan.emergency_lines.get(block)
         if block in plan.blocks and (not line or line not in final_text):

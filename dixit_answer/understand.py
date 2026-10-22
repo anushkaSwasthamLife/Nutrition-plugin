@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from .dish_lookup import SCAFFOLD as SCAFFOLD_WORDS
 from .foods import FoodIndex
 from .unknown_foods import compare_sides, food_phrase, kind_question, subject_of
-from .targets import WANT, Target, is_target_request, parse_targets
+from .targets import QUAL_FIELD, WANT, Target, is_target_request, parse_qualifiers, parse_targets
 from .semantics import HARMFUL_WORDS, HEALTH_WORDS, NON_FOOD_WORDS, NEGATED, NEGATED_AFTER, meaningful_words, negated_foods, split_chunks
 from .status import parse_status
 from .textnorm import clean, has_phrase
@@ -134,8 +134,8 @@ class Understanding:
     preference: str = ""
     recipe_ids: list = field(default_factory=list)       # approved recipes named in the message
     target_exclude: list = field(default_factory=list)   # words to leave out of a dish search ("paneer")
-    target_diet: str = ""                                # vegetarian | jain | egg when the person asked for a narrower diet in this search
-    target_mode: str = "new"                             # new | refine (changed amounts or something left out) | more (what else)
+    target_diet: str = ""                                # vegetarian | jain | egg (narrower) or non_vegetarian (dishes with meat, fish or egg) for this search
+    target_mode: str = "new"                             # new | refine (changed amounts or something left out) | more (what else) | cleared
     targets: list = field(default_factory=list)          # nutrient amounts asked for ("326 kcal", "26 g protein"): a dish search
     compare_sides: list = field(default_factory=list)    # the foods an "X vs Y" question sets side by side, as phrases
     statement: dict = field(default_factory=dict)        # what the person said about themselves: {"allergies", "diet", "avoid", "label"}
@@ -307,50 +307,102 @@ DIET_SWITCH = re.compile(r"^(?:(?:and|but|ok|okay|now|then|please)\s+)*(?:what a
                          r"(?:veg|vegetarian|non veg|nonveg|non vegetarian|egg|eggetarian|jain)(?:\s+(?:food|dishes|dish|options|please|only|one|ones))*$")
 TARGET_EXCLUDE = re.compile(r"^(?:(?:but|and|also|ok|okay|please|now|then)\s+)*(?:except(?: for)?|excluding|without|no|not|other than|apart from|besides|skip|"
                             r"avoid|leave out|remove|minus)\s+(?P<x>.+?)(?:\s+(?:please|pls))?$")
+# A follow-up that starts like this adds to the search ("but i need less calories"); a full request without it starts a new one.
+CONTINUE_LEAD = re.compile(r"^(?:but|and|also|plus|now|then|ok|okay|so|still|what about|how about|and also|but also|same|same but|same with)\b")
+CONTINUE_ANY = re.compile(r"\b(?:also|too|as well|along with|on top|in addition|still)\b")
+MEAL_NOUN = re.compile(r"\b(?:meal|meals|dish|dishes|food|foods|recipe|recipes|options?|what can i (?:have|eat|cook|make))\b")
+START_OVER = re.compile(r"^(?:(?:ok|okay|please|now)\s+)*(?:start over|start again|new search|clear (?:the |my )?search|clear (?:it|that|everything|all)|"
+                        r"forget (?:it|that|this|everything|all of it|the search|my search)|reset|never mind (?:that|it|the search))(?:\s+(?:please|pls))?$")
+# B: taking one part out of the search. The chips on the chat page send these ("forget high protein", "forget non veg", "forget without paneer").
+FORGET = re.compile(r"^(?:(?:ok|okay|and|but|also|now|then|please)\s+)*(?:forget|drop|remove|clear|cancel|undo|no need for|dont need|don't need|do not need|"
+                    r"never mind)\s+(?:about\s+)?(?:the\s+)?(?P<x>.+?)(?:\s+(?:please|pls|filter|wish|part|one))?$")
+TARGET_FIELD_WORDS = re.compile(r"\b(protein|proteins|carb|carbs|carbohydrate|carbohydrates|fat|fats|fibre|fiber|calories|calorie|kcal|energy)\b")
+SEARCH_TURNS = 8                     # a search stays open this long, unless another kind of question ends it first (pipeline)
 EXCLUDE_FILLER = {"the", "any", "anything", "and", "or", "of", "a", "an", "all", "dishes", "dish", "with", "in", "it", "that", "those", "food", "foods", "thanks", "thank", "you", "need", "more", "ok", "okay", "yes", "now", "today", "worries", "problem"}
 
 
 def target_refinement(text: str, state, index: FoodIndex, word_lists: dict):
-    """A short follow-up to the last dish search, read as the same search with a change; None when it is not one."""
+    """A follow-up to the last dish search, read as the same search with a change; None when it is not one.
+
+    The search is one frame that follows-ups change: new nutrient wishes are added ("but i need less calories" keeps "high
+    protein"), a wish for the same nutrient replaces the old one, a diet narrows it ("non veg"), leave-outs pile up. Only a full
+    request that names a meal or dish, with no "but" / "and" / "also" in front, starts a new search; "start over" clears it."""
     last = getattr(state, "last_targets", None)
-    if not last or state.turn - getattr(state, "last_targets_turn", -99) > RECENT_TURNS:
+    if not last or state.turn - getattr(state, "last_targets_turn", -99) > SEARCH_TURNS:
         return None
     cleaned = clean(question_part(text), word_lists["spelling_map"])
     words = cleaned.split()
-    if not words or len(words) > 10:
+    if not words or len(words) > 14:
         return None
     targets = [Target(*t) for t in last]
     exclude = list(getattr(state, "target_exclude", []) or [])
+    diet_now = getattr(state, "target_diet", "") or ""
     mode = None
-    cut = TARGET_EXCLUDE.match(cleaned)
-    new = parse_targets(cleaned)
-    diet = _preference(cleaned, word_lists) if len(words) <= 5 and not new else ""
-    if diet and DIET_SWITCH.match(cleaned):
-        mode = "refine"                                      # "what about veg", "only vegetarian", "non veg please": the same search for another diet
-    elif cut:
-        tokens = [w for w in cut.group("x").split() if w not in EXCLUDE_FILLER]
-        if tokens:
-            names = set(tokens)
-            for mention in index.find(" ".join(tokens), already_clean=True):      # "curd" also leaves out dahi, "potato" also aloo
-                food = index.foods[mention.food_id]
-                names |= {a for a in [food["name"], *food.get("aliases", [])] if " " not in a}
-            exclude += sorted(n for n in names if n not in exclude)
-            mode = "refine"
-    elif new and not WANT.search(cleaned):          # a full new request ("i want a meal with ...") starts a new search
-        merged = {t.field: t for t in targets}
-        merged.update({t.field: t for t in new})
-        targets, mode = list(merged.values()), "refine"
-    elif MORE.search(cleaned) and len(words) <= 5 and not index.find(cleaned, already_clean=True):
-        mode = "more"
+    new_diet = None
+    if START_OVER.match(cleaned):
+        targets, exclude, new_diet, mode = [], [], "", "cleared"
+    elif FORGET.match(cleaned) and _forget(FORGET.match(cleaned).group("x"), targets, exclude, word_lists, index) is not None:
+        targets, exclude, new_diet = _forget(FORGET.match(cleaned).group("x"), targets, exclude, word_lists, index)
+        mode = "refine" if targets else "cleared"
+    else:
+        cut = TARGET_EXCLUDE.match(cleaned)
+        new = parse_targets(cleaned)
+        new += [t for t in parse_qualifiers(cleaned) if t.field not in {n.field for n in new}]
+        diet = _preference(cleaned, word_lists)
+        fresh = MEAL_NOUN.search(cleaned) and new and not CONTINUE_LEAD.match(cleaned) and not CONTINUE_ANY.search(cleaned)
+        if diet and DIET_SWITCH.match(cleaned):
+            mode, new_diet = "refine", diet                  # "what about veg", "only vegetarian", "non veg please": the same search for another diet
+        elif cut and not new:
+            tokens = [w for w in cut.group("x").split() if w not in EXCLUDE_FILLER]
+            if tokens:
+                names = set(tokens)
+                for mention in index.find(" ".join(tokens), already_clean=True):      # "curd" also leaves out dahi, "potato" also aloo
+                    food = index.foods[mention.food_id]
+                    names |= {a for a in [food["name"], *food.get("aliases", [])] if " " not in a}
+                exclude += sorted(n for n in names if n not in exclude)
+                mode = "refine"
+        elif new and not fresh:
+            merged = {t.field: t for t in targets}
+            merged.update({t.field: t for t in new})         # the same nutrient again replaces it ("make it 30 g protein instead")
+            targets, mode = list(merged.values()), "refine"
+            if diet:
+                new_diet = diet                              # "i need non veg with less calories": both changes at once
+        elif MORE.search(cleaned) and len(words) <= 5 and not index.find(cleaned, already_clean=True):
+            mode = "more"
     if mode is None:
         return None
     u = Understanding(cleaned=cleaned, type="target_meal_search", focus=cleaned)
     u.targets, u.target_exclude, u.target_mode = targets, exclude, mode
-    u.target_diet = getattr(state, "target_diet", "") or ""
-    if diet and DIET_SWITCH.match(cleaned):
-        u.preference, u.statement = diet, {"diet": diet, "label": "diet"}
-        u.target_diet = diet if diet in {"vegetarian", "jain", "egg"} else ""
+    u.target_diet = diet_now if new_diet is None else _search_diet(new_diet)
+    if new_diet:
+        u.preference, u.statement = new_diet, {"diet": new_diet, "label": "diet"}
     return u
+
+
+def _search_diet(diet: str) -> str:
+    """The diet a search keeps to: a narrower one, or non-veg meaning dishes with meat, fish or egg in them."""
+    return diet if diet in {"vegetarian", "jain", "egg", "non_vegetarian"} else ""
+
+
+def _forget(x: str, targets: list, exclude: list, word_lists: dict, index: FoodIndex):
+    """Take one part out of the search: a nutrient wish, the diet, or a leave-out. (targets, exclude, diet or None) or None
+    when the words name none of them (then "remove paneer" is read as leaving paneer out, as before)."""
+    x = x.strip()
+    fields = {QUAL_FIELD.get(m.group(1), "") for m in TARGET_FIELD_WORDS.finditer(x)} - {""}
+    left_out = re.match(r"^(?:without|except|no)\s+(?P<w>.+)$", x)
+    if left_out:
+        gone = set(left_out.group("w").split())
+        for mention in index.find(left_out.group("w"), already_clean=True):     # leaving out curd also left out dahi: both come back
+            food = index.foods[mention.food_id]
+            gone |= {a for a in [food["name"], *food.get("aliases", [])] if " " not in a}
+        kept = [w for w in exclude if w not in gone]
+        return (targets, kept, None) if len(kept) < len(exclude) else None
+    if fields:
+        kept = [t for t in targets if t.field not in fields]
+        return (kept, exclude, None) if len(kept) < len(targets) else None
+    if _preference(x, word_lists) or x in {"diet", "veg filter", "diet filter"}:
+        return targets, exclude, ""
+    return None
 
 
 def _statement(cleaned: str, index: FoodIndex, allergy_reader, word_lists=None) -> dict:
@@ -631,7 +683,7 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
         targets = is_target_request(cleaned)
         if targets and not (dish_finder and any(h["exact"] for h in dish_finder(focus))):       # a loose word match ("drink") is not a dish named
             question_type, u.targets = "target_meal_search", targets      # "a meal with 326 kcal and 26 g protein": dishes near those values
-            u.target_diet = u.preference if u.preference in {"vegetarian", "jain", "egg"} else ""
+            u.target_diet = _search_diet(u.preference)
             u.type = question_type
             return u
     if ((question_type in {"out_of_scope", "food_choice_guidance"} or (question_type == "source_fact_lookup" and (getattr(state, "last_explain", None) or {}).get("kind") == "recipe"))

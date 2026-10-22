@@ -55,6 +55,7 @@
     "cooking_factors": "cooking_factors.json",
     "rules_registry": "rules_registry.json",
     "emergency_rules": "emergency_rules.json",
+    "harmful_intent_rules": "harmful_intent_rules.json",
     "support_content": "support_content.json",
     "white_lists": "white_lists.json",
     "black_lists": "black_lists.json",

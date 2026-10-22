@@ -63,6 +63,7 @@ class SwasthamData:
     cooking_factors: dict
     rules_registry: dict
     emergency_rules: dict
+    harmful_intent_rules: dict
     support_content: dict
     white_lists: dict
     black_lists: dict

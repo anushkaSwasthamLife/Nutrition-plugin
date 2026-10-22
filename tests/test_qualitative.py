@@ -45,7 +45,7 @@ def test_wishes_are_read(text, expected):
 @needs_data
 def test_the_screenshot_question_lists_non_veg_high_protein_dishes(eng):
     r = ask(eng, "i have to eat high protein non veg food , what can i have", NONVEG)
-    assert r.type == "target_meal_search" and "Pearl millet" not in r.answer and r.answer.startswith("Dishes with high protein")
+    assert r.type == "target_meal_search" and "Pearl millet" not in r.answer and r.answer.startswith("Non-veg dishes with high protein")
     lines = dish_lines(r.answer)
     assert 1 <= len(lines) <= 3 and any(w in " ".join(lines).lower() for w in MEAT_FISH)
     assert not [c for c in r.checks if not c["passed"]]

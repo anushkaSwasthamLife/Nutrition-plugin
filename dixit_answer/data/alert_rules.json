@@ -23,6 +23,12 @@
       "severity": "notice",
       "min_count": 1
     },
+    "harmful_intent_seen": {
+      "what": "At least one starving or purging reply (H1, H2) was sent. A person should review it.",
+      "severity": "notice",
+      "min_count": 1,
+      "categories": ["H1", "H2"]
+    },
     "fallbacks_rose": {
       "what": "More recipe requests than usual ended with no checked recipe.",
       "severity": "warning",

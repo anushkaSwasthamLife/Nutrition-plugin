@@ -140,6 +140,13 @@
   .using { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; border: 0; background: transparent; padding: 0 4px 6px; font-size: .78rem; color: var(--muted); text-align: left; }
   .using .u { background: var(--green-soft); color: var(--green-dark); border-radius: 999px; padding: 2px 9px; font-weight: 700; }
   .using.empty .u { background: var(--amber-soft); color: var(--amber); }
+  .search { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 0 4px 6px; font-size: .78rem; color: var(--muted); }
+  .search[hidden] { display: none; }
+  .search .s { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--green); background: var(--surface, #fff); color: var(--green-dark);
+               border-radius: 999px; padding: 2px 4px 2px 9px; font: inherit; font-weight: 700; cursor: pointer; }
+  .search .s:hover, .search .s:focus-visible { background: var(--green-soft); }
+  .search .s b { font-weight: 700; opacity: .7; padding: 0 4px; }
+  .search .clear { border: 0; background: transparent; color: var(--muted); text-decoration: underline; font: inherit; cursor: pointer; padding: 2px 4px; }
   .hint { display: flex; justify-content: space-between; gap: 10px; font-size: .74rem; color: var(--muted); padding: 5px 8px 0; }
   .hint .count.warn { color: var(--red); font-weight: 700; }
 
@@ -200,6 +207,7 @@
     <button class="jump" id="jump" type="button" aria-label="Scroll to the latest message">⬇️</button>
     <div class="composer">
       <div class="composer-in">
+        <div class="search" id="search" role="group" aria-label="What this dish search is looking for" hidden></div>
         <button class="using" id="using" type="button" aria-label="Your profile in use. Open to change"></button>
         <form id="form" autocomplete="off">
           <textarea id="input" rows="1" maxlength="2000" placeholder="Ask about food or meals… 🍛" aria-label="Your message"></textarea>
@@ -382,7 +390,7 @@
 
   function suggestions(r) {
     var t = r.type || '', a = r.answer || '', asksAllergy = /do you have any food allergies/i.test(a);
-    if (t === 'emergency') return [];
+    if (t === 'emergency' || t === 'harmful_intent') return [];      // no food chips after a fixed safety reply
     if (/Which one should I show\?/.test(a)) {          // a list of dishes: one tap per dish
       var dishes = [];
       a.split(/\r?\n/).forEach(function (line) {
@@ -430,11 +438,45 @@
     row.querySelector('.bubble').appendChild(det);
   }
 
+  /* ---------- the dish search being refined: one chip per part, ✕ sends a plain message the chat understands ---------- */
+  var NOUN = {energy_kcal: 'calories', protein_g: 'protein', carb_g: 'carbs', fat_g: 'fat', fibre_g: 'fibre'};
+  var UNIT = {energy_kcal: ' kcal', protein_g: ' g protein', carb_g: ' g carbs', fat_g: ' g fat', fibre_g: ' g fibre'};
+  var SEARCH_DIET = {non_vegetarian: ['🍗 non-veg only', 'non veg'], vegetarian: ['🥦 veg only', 'veg'], egg: ['🥚 veg + egg', 'egg'], jain: ['🪷 Jain', 'jain']};
+  var KEEPS_SEARCH = {greeting_thanks: 1, out_of_scope: 1, explain_last: 1};
+  function targetLabel(t) {
+    var n = NOUN[t.field] || t.field, kcal = t.field === 'energy_kcal';
+    if (t.mode === 'high') return kcal ? 'many calories' : 'high ' + n;
+    if (t.mode === 'low') return kcal ? 'few calories' : 'low ' + n;
+    if (t.mode === 'range') return t.value + '–' + t.high + UNIT[t.field];
+    return ({max: 'up to ', min: 'at least '}[t.mode] || 'about ') + t.value + UNIT[t.field];
+  }
+  function renderSearch(r) {
+    var box = $('search');
+    if (!r || KEEPS_SEARCH[r.type]) return;                       // these leave the search as it was (as the server does)
+    var p = r.type === 'target_meal_search' ? (r.plan || {}) : {}, parts = [];
+    (p.targets || []).forEach(function (t) { parts.push([targetLabel(t), 'forget ' + (t.field === 'energy_kcal' ? 'calories' : NOUN[t.field])]); });
+    if (p.target_diet && SEARCH_DIET[p.target_diet]) parts.push([SEARCH_DIET[p.target_diet][0], 'forget ' + SEARCH_DIET[p.target_diet][1]]);
+    var gone = (p.target_exclude || []).slice(0, 4);
+    gone.forEach(function (w) { parts.push(['without ' + w, 'forget without ' + w]); });
+    if (!(p.targets || []).length) { box.hidden = true; box.innerHTML = ''; return; }
+    box.innerHTML = '<span>Searching for:</span>' + parts.map(function (c) {
+      return '<button type="button" class="s" data-say="' + esc(c[1]) + '" aria-label="Remove ' + esc(c[0]) + ' from the search">' + esc(c[0]) + '<b aria-hidden="true">✕</b></button>';
+    }).join('') + '<button type="button" class="clear" data-say="start over">clear search</button>';
+    box.hidden = false;
+  }
+  $('search').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-say]');
+    if (b) send(b.getAttribute('data-say'));
+  });
+
   function showAnswer(waitRow, r) {
+    renderSearch(r);
     var bubble = waitRow.querySelector('.bubble'), text = r.answer || '';
     if (r.type === 'emergency') {
       var kind = /tele-manas|14416|really sorry/i.test(text) ? 'care' : (/blood sugar/i.test(text) ? 'sugar' : 'urgent');
       bubble.innerHTML = alertHtml(text, kind); bubble.classList.add('plain');
+    } else if (r.type === 'harmful_intent' && /14416/.test(text)) {     // starving or purging (H1, H2): the caring card with the call button
+      bubble.innerHTML = alertHtml(text, 'support'); bubble.classList.add('plain');
     } else if (r.type === 'support_wellbeing') {
       bubble.innerHTML = alertHtml(text, 'support'); bubble.classList.add('plain');
     } else if (r.type === 'out_of_scope') {
@@ -581,6 +623,7 @@
   }
   $('newchat').addEventListener('click', function () {
     if (conversationId) { fetch('/api/reset/' + encodeURIComponent(conversationId), {method: 'POST'}).catch(function () {}); }
+    $('search').hidden = true; $('search').innerHTML = '';
     conversationId = null; store.del('dixit_cid'); store.del('dixit_history'); history = [];
     stream.innerHTML = ''; welcome(); input.focus();
   });

@@ -88,7 +88,9 @@ def test_the_search_is_forgotten_when_the_topic_changes(eng):
     r = chat(eng, "i want a meal with 40 g protein", "calories in dal", "except paneer")
     assert r[2].type != "target_meal_search"
     again = chat(eng, "i want a meal with 40 g protein", "hello", "hello", "hello", "hello", "except chicken")
-    assert again[-1].type != "target_meal_search"
+    assert again[-1].type == "target_meal_search"            # small talk keeps the search open (22 Oct: search memory, B) ...
+    again = chat(eng, "i want a meal with 40 g protein", *["hello"] * 9, "except chicken")
+    assert again[-1].type != "target_meal_search"            # ... for 8 turns, then it is forgotten
 
 
 @needs_data

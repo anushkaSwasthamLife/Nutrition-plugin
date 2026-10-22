@@ -23,7 +23,7 @@ RULES_PATH = DATA_DIR / "alert_rules.json"
 SEVERITY_ORDER = {"critical": 0, "warning": 1, "notice": 2}
 COUNT_FIELDS = ("turns", "recipe_turns", "gate_checks", "gate_rejections", "repairs", "ai_attempts", "ai_retries",
                 "ai_draft_failures", "recipe_fallbacks", "partial_matches", "ai_wording_turns", "wording_fallbacks",
-                "critical_check_failures", "emergency_replies", "negated_mentions", "unknown_words", "feedback_helpful",
+                "critical_check_failures", "emergency_replies", "harmful_replies", "negated_mentions", "unknown_words", "feedback_helpful",
                 "feedback_problem")
 
 
@@ -45,6 +45,8 @@ class DayStats:
     critical_check_failures: int = 0      # turns where even the template failed a critical check
     emergency_replies: int = 0
     emergency_by_category: Counter = field(default_factory=Counter)
+    harmful_replies: int = 0              # guardrail A3: starving, purging, diet pills, unsafe speed
+    harmful_by_category: Counter = field(default_factory=Counter)
     negated_mentions: int = 0             # a symptom was mentioned with "no" in front
     unknown_words: int = 0                # food words we did not recognise
     feedback_helpful: int = 0
@@ -53,6 +55,7 @@ class DayStats:
     def as_dict(self) -> dict:
         out = {k: getattr(self, k) for k in ("day", *COUNT_FIELDS)}
         out["emergency_by_category"] = dict(sorted(self.emergency_by_category.items()))
+        out["harmful_by_category"] = dict(sorted(self.harmful_by_category.items()))
         return out
 
 
@@ -151,13 +154,13 @@ def summarise(records) -> dict[str, DayStats]:
             stats.recipe_turns += 1
             _count_trace(stats, trace)
         ai = record.get("ai") if isinstance(record.get("ai"), dict) else {}
-        if ai.get("provider") not in (None, "", "mock") and record.get("type") != "emergency":
+        if ai.get("provider") not in (None, "", "mock") and record.get("type") not in {"emergency", "harmful_intent"}:
             stats.ai_wording_turns += 1
             if ai.get("fallback"):
                 stats.wording_fallbacks += 1
         checks = record.get("checks") if isinstance(record.get("checks"), list) else []
         if any(isinstance(c, dict) and c.get("level") == "critical" and c.get("passed") is False for c in checks) \
-                and record.get("type") != "emergency":
+                and record.get("type") not in {"emergency", "harmful_intent"}:
             stats.critical_check_failures += 1
         em = record.get("emergency") if isinstance(record.get("emergency"), dict) else None
         if record.get("type") == "emergency":
@@ -165,6 +168,10 @@ def summarise(records) -> dict[str, DayStats]:
             stats.emergency_by_category[str((em or {}).get("category") or "unknown")] += 1
         elif em and em.get("negated"):
             stats.negated_mentions += 1
+        if record.get("type") == "harmful_intent":
+            harm = record.get("harmful") if isinstance(record.get("harmful"), dict) else {}
+            stats.harmful_replies += 1
+            stats.harmful_by_category[str(harm.get("category") or "unknown")] += 1
     return days
 
 
@@ -214,6 +221,15 @@ def evaluate(days: dict[str, DayStats], day: str, rules: dict) -> list[Alert]:
             f"{today.emergency_by_category['E5']} self-harm reply(ies) were sent today. A trained person should read these "
             "turns in the audit log and decide whether any follow-up is needed.",
             count=today.emergency_by_category["E5"])
+
+    # 3b Starving or purging reply sent (H1, H2): always shown, like self-harm. Older rule files without the rule skip it.
+    rule = r.get("harmful_intent_seen")
+    if rule:
+        count = sum(today.harmful_by_category.get(c, 0) for c in rule["categories"])
+        if count >= rule["min_count"]:
+            add("harmful_intent_seen",
+                f"{count} starving or purging reply(ies) were sent today. A trained person should read these turns in the "
+                "audit log and decide whether any follow-up is needed.", count=count)
 
     # 4 More recipe requests end with no checked recipe.
     rule = r["fallbacks_rose"]
@@ -277,6 +293,8 @@ def format_report(days: dict[str, DayStats], day: str, alerts: list[Alert], show
               f"  Critical check failures       {today.critical_check_failures}",
               f"  Emergency replies             {today.emergency_replies}  " +
               (", ".join(f"{k} {v}" for k, v in sorted(today.emergency_by_category.items())) or "-"),
+              f"  Harmful-intent replies        {today.harmful_replies}  " +
+              (", ".join(f"{k} {v}" for k, v in sorted(today.harmful_by_category.items())) or "-"),
               f"  Symptom mentioned with 'no'   {today.negated_mentions}",
               f"  Unknown food words            {today.unknown_words}",
               f"  Feedback                      helpful {today.feedback_helpful}, problem {today.feedback_problem}", ""]

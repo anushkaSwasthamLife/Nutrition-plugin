@@ -128,10 +128,13 @@ class TargetSearch:
     def __init__(self, dishes: DishLookup, allergy, index):
         self.dishes, self.allergy, self.index = dishes, allergy, index
 
-    def _allowed(self, code: str, person, blocked: set[str], allergens: set[str], leave_out: set[str] = frozenset()) -> bool:
+    def _allowed(self, code: str, person, blocked: set[str], allergens: set[str], leave_out: set[str] = frozenset(),
+                 only_nonveg: bool = False) -> bool:
         names = [self.dishes.label(code), *self.dishes.ingredient_names(code)]
         words = _words(names)
         if leave_out and (words & leave_out or {w.rstrip("s") for w in words} & {w.rstrip("s") for w in leave_out}):
+            return False
+        if only_nonveg and not self.is_nonveg(code, words):
             return False
         diet = getattr(person, "diet_type", "unknown") if person is not None else "unknown"
         if words & MEAT_FISH and diet != "non_vegetarian":
@@ -150,6 +153,13 @@ class TargetSearch:
             if set(self.allergy.read_reply(text) or []) & allergens:
                 return False
         return True
+
+    def is_nonveg(self, code: str, words: set[str] | None = None) -> bool:
+        """Meat, fish or egg in the dish's name or ingredients, or a non-veg category in the library."""
+        if words is None:
+            words = _words([self.dishes.label(code), *self.dishes.ingredient_names(code)])
+        rec = self.dishes.library.records.get(self.dishes.by_code.get(code, ""), {})
+        return bool(words & (MEAT_FISH | EGG)) or "nonveg" in str(rec.get("category", "")).replace("_", "").lower()
 
     def _not_a_meal(self, code: str, result) -> bool:
         """A drink, a spoonful or an infant food: left out of a request for dishes unless drinks were asked for."""
@@ -172,7 +182,8 @@ class TargetSearch:
                   ("max_energy_share", share is not None and share <= rule.get("max_energy_share", 1) if "max_energy_share" in rule else True)]
         return bool(rule) and all(ok for _name, ok in checks)
 
-    def search(self, targets: list[Target], person, blocked: set[str], limit: int = 3, leave_out=(), skip_codes=(), drinks: bool = False) -> tuple[list[Match], bool]:
+    def search(self, targets: list[Target], person, blocked: set[str], limit: int = 3, leave_out=(), skip_codes=(), drinks: bool = False,
+               only_nonveg: bool = False) -> tuple[list[Match], bool]:
         """(best matches, whether they are within the normal tolerance). Dishes with no clear serving or only an estimate are left out."""
         rules = self.dishes.rules.get("range_percent", {})
         tight = float(rules.get("default", 15)) / 100.0
@@ -225,7 +236,7 @@ class TargetSearch:
                 if m.error > tol:
                     break
                 key = m.name.split(" (")[0].lower()
-                if key in seen or not self._allowed(m.code, person, blocked, allergens, leave):
+                if key in seen or not self._allowed(m.code, person, blocked, allergens, leave, only_nonveg):
                     continue
                 seen.add(key)
                 picked.append(m)

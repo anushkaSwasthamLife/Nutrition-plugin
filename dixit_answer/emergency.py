@@ -48,8 +48,8 @@ class EmergencyRules:
     def __init__(self, rules: dict):
         self.version = rules["version"]
         self.window = int(rules.get("negation_window_words", 3))
-        self.negated_note = rules["negated_note"]
-        self.glucose = rules["glucose"]
+        self.negated_note = rules.get("negated_note", "")
+        self.glucose = rules.get("glucose")                # None: no blood-sugar readings (the harmful-intent rules)
         self.categories = sorted(rules["categories"], key=lambda c: c["priority"])
         self.by_id = {c["id"]: c for c in self.categories}
         info = rules.get("informational", {})
@@ -57,11 +57,13 @@ class EmergencyRules:
         self.food_words = {clean(x) for x in info.get("food_words", [])}
         self.urgent_words = {clean(x) for x in info.get("urgent_words", [])}
         self.fillers = {clean(x) for x in rules.get("negation_fillers", [])}
-        self.past_re = re.compile(r"(?<![\w])(?:" + "|".join(re.escape(clean(x)) for x in info.get("past_markers", ["\0"])) + r")(?![\w])")
+        def alts(key: str) -> str:                         # an empty list must match nothing, never everything
+            return "|".join(re.escape(clean(x)) for x in (info.get(key) or ["\0"]))
+        self.past_re = re.compile(r"(?<![\w])(?:" + alts("past_markers") + r")(?![\w])")
         art = r"(?: (?:a|an|the|my|his|her|your))?"
-        self.before_re = re.compile(r"(?<![\w])(?:" + "|".join(re.escape(clean(x)) for x in info.get("before_markers", ["\0"])) + r")" + art + r"$")
-        self.after_re = re.compile(r"^ (?:" + "|".join(re.escape(clean(x)) for x in info.get("after_markers", ["\0"])) + r")(?![\w])")
-        self.hazard_re = re.compile(r"^ (?:" + "|".join(re.escape(clean(x)) for x in info.get("hazard_markers", ["\0"])) + r")(?![\w])")
+        self.before_re = re.compile(r"(?<![\w])(?:" + alts("before_markers") + r")" + art + r"$")
+        self.after_re = re.compile(r"^ (?:" + alts("after_markers") + r")(?![\w])")
+        self.hazard_re = re.compile(r"^ (?:" + alts("hazard_markers") + r")(?![\w])")
         for cat in self.categories:
             cat["_phrases"] = [clean(p) for p in cat["phrases"]]
             cat["_combos"] = [[[clean(w) for w in group] for group in combo] for combo in cat.get("combos", [])]
@@ -157,7 +159,7 @@ class EmergencyRules:
                     hits.append(hit)
                 else:
                     out.matched.append({"category": cat["id"], "how": "combo", "what": " + ".join(hits)})
-        value = self.reading(text)
+        value = self.reading(text) if self.glucose else None
         if value is not None:
             out.glucose_mg_dl = value
             if value < self.glucose["low_mg_dl"]:

@@ -132,5 +132,6 @@ def test_a_real_engine_turn_is_counted(engine, chat):
 
 def test_alert_rules_file_is_complete():
     assert RULES["status"] == "PROPOSED" and set(RULES["rules"]) == {
-        "rejections_fell", "emergency_spike", "self_harm_seen", "fallbacks_rose", "wording_fallbacks_rose", "critical_check_failed"}
+        "rejections_fell", "emergency_spike", "self_harm_seen", "harmful_intent_seen", "fallbacks_rose", "wording_fallbacks_rose",
+        "critical_check_failed"}
     assert all(r["severity"] in ar.SEVERITY_ORDER and r["what"] for r in RULES["rules"].values())

@@ -139,6 +139,8 @@ class Composer:
                 continue
             if block == "emergency":
                 d.lines.append(lock("T", plan.emergency_lines.get("emergency") or EMERGENCY_ANSWER))
+            elif block == "harmful":
+                d.lines.append(lock("T", plan.emergency_lines["harmful"]))
             elif block in {"emergency_checkin", "emergency_note"}:
                 d.lines.append(lock("S", plan.emergency_lines[block]))
             elif block == "greeting":
@@ -443,6 +445,11 @@ class Composer:
         self._tips_lines(plan, state, d, lock, given)
 
     def _target_meals(self, plan, d: Draft, lock, person, state=None, u=None) -> None:
+        if not plan.targets:                                       # "start over", or the last wish taken off (chips on the chat page)
+            if state is not None:
+                state.target_shown = []
+            d.lines.append(lock("T", "Okay, I've cleared that search. Tell me what you'd like, for example high protein or fewer calories."))
+            return
         asked = [(t.field, t.value, t.mode) for t in plan.targets]
         parts = []
         every_about = all(mode == "about" for _f, _v, mode in asked)
@@ -467,6 +474,8 @@ class Composer:
             profile_diet = plan.target_diet                                  # a narrower diet asked for in this search is honoured
         if u is not None and getattr(u, "preference", "") == "non_vegetarian" and profile_diet in {"vegetarian", "jain"}:
             d.lines.append(lock("T", f"Your profile says {profile_diet}, so I only looked at {profile_diet} dishes."))
+        only_nonveg = plan.target_diet == "non_vegetarian" and profile_diet == "non_vegetarian"
+        kind = "non-veg dish" if only_nonveg else "dish"            # "Non-veg dishes with high protein and few calories:"
         if self.dishes is None:
             d.lines.append(lock("T", "I can't look dishes up by their nutrients here yet."))
             return
@@ -475,19 +484,19 @@ class Composer:
         shown_before = list(state.target_shown) if state is not None else []
         left = [w for w in plan.target_exclude]
         matches, close = TargetSearch(self.dishes, self.allergy, self.index).search(plan.targets, person, d.blocked_foods, leave_out=left, skip_codes=shown_before,
-                                                                                    drinks=wants_drinks(u.cleaned if u is not None else ""))
+                                                                                    drinks=wants_drinks(u.cleaned if u is not None else ""), only_nonveg=only_nonveg)
         without = f", without {_join(sorted({w for w in left if len(w) > 2})[:4])}" if left else ""
         if not matches:
             if plan.target_mode == "more" and shown_before:
                 d.lines.append(lock("T", f"Those are all the dishes I have near {want}{without}. Try a different amount, or ask me about a dish by name."))
             else:
-                d.lines.append(lock("T", f"I couldn't find a checked dish with {want}{without} that suits you. Try a different amount, or ask me about a dish by name."))
+                d.lines.append(lock("T", f"I couldn't find a checked {kind} with {want}{without} that suits you. Try a different amount, or ask me about a dish by name."))
                 if person is None or person.allergies is None:
                     d.lines.append(lock("T", "I don't know your allergies yet, so I left out dishes with common allergens. Tell me if you have none and I can show more."))
             return
         if state is not None:
             state.target_shown = (state.target_shown + [m.code for m in matches])[-60:]
-        d.lines.append(lock("T", f"Dishes with {want}{without}:" if close else f"No dish matches {want}{without} closely. These are the nearest:"))
+        d.lines.append(lock("T", f"{kind.capitalize()}es with {want}{without}:" if close else f"No {kind} matches {want}{without} closely. These are the nearest:"))
         for m in matches:
             res = m.result
             quantity, _, unit = res.serving_text.partition(" ")

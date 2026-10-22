@@ -4,6 +4,8 @@
    reply, before anything else and without the AI. Dixit's own emergency rules will run before ours once the base package is here.
 2. Risk words update the safety status used by the pre-check (NUT-SAFE-PRE-001): insulin or sugar tablets, pregnancy,
    kidney disease, eating disorder, under 18. A risk word after a negation ("no insulin", "not pregnant") sets "no".
+3. Harmful-intent check (`harmful.py`, guardrail A3), only when there is no emergency: starving, purging, diet pills or an
+   unsafe speed of weight loss get that category's fixed reply.
 """
 from __future__ import annotations
 
@@ -39,6 +41,7 @@ class SafetyResult:
     emergency: bool = False
     emergency_phrase: str = ""
     em: EmergencyResult = field(default_factory=EmergencyResult)
+    harm: EmergencyResult = field(default_factory=EmergencyResult)      # guardrail A3 (H1-H4); empty when it did not run
     updates: dict = field(default_factory=dict)      # safety field -> "yes" / "no"
 
 
@@ -51,13 +54,16 @@ def _negated(cleaned: str, phrase: str, negations) -> bool:
         has_phrase(" ".join(before), n) for n in negations if " " in n)
 
 
-def check(text: str, state: ChatState, word_lists: dict, emergency_rules: EmergencyRules | None = None) -> SafetyResult:
+def check(text: str, state: ChatState, word_lists: dict, emergency_rules: EmergencyRules | None = None,
+          harmful_rules: EmergencyRules | None = None) -> SafetyResult:
     cleaned = clean(text)
     result = SafetyResult()
     negations = word_lists["negation_words"]
     result.em = (emergency_rules or default_emergency_rules()).check(text, negations)
     if result.em.is_emergency:
         result.emergency, result.emergency_phrase = True, result.em.matched[0]["what"]     # (the risk words below are still read)
+    elif harmful_rules is not None:
+        result.harm = harmful_rules.check(text, negations)                                # an emergency always wins
 
     for field_name, terms in word_lists["risk_terms"].items():
         for term in terms:

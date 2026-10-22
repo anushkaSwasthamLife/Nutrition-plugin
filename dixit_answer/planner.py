@@ -64,8 +64,8 @@ class AnswerPlan:
     unknown_dish: str = ""
     rules: list = field(default_factory=list)
     max_words: int = 120
-    emergency_category: str = ""          # E1-E7 when this turn is an emergency reply
-    emergency_lines: dict = field(default_factory=dict)   # block -> fixed text (emergency, emergency_checkin, emergency_note)
+    emergency_category: str = ""          # E1-E7 when this turn is an emergency reply, H1-H4 for a harmful-intent reply
+    emergency_lines: dict = field(default_factory=dict)   # block -> fixed text (emergency, harmful, emergency_checkin, emergency_note)
 
     def as_dict(self) -> dict:
         return asdict(self)
@@ -126,13 +126,17 @@ def _protocol_level(plan: AnswerPlan, u: Understanding, state: ChatState) -> Non
 
 
 def make_plan(u: Understanding, state: ChatState, emergency: bool = False, allergies_known: bool = True, status=None,
-              em=None) -> AnswerPlan:
+              em=None, harm=None) -> AnswerPlan:
     plan = AnswerPlan(type=u.type, topic=u.topic, pairs_with=list(u.pairs_with))
     if emergency:
         plan.type, plan.blocks, plan.rules = "emergency", ["emergency"], ["R1"]
         if em is not None and em.is_emergency:
             plan.emergency_category = em.category
             plan.emergency_lines = {"emergency": em.reply}
+        return plan
+    if harm is not None and harm.is_emergency:
+        plan.type, plan.blocks, plan.rules = "harmful_intent", ["harmful"], ["R1-HARM"]
+        plan.emergency_category, plan.emergency_lines = harm.category, {"harmful": harm.reply}
         return plan
     if u.type == "greeting_thanks":
         plan.blocks = ["greeting"]
