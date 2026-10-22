@@ -50,7 +50,16 @@
         "jeene ka mann nahi",
         "jeene ka man nahi",
         "jeene ki ichha nahi",
-        "jeene ka dil nahi"
+        "jeene ka dil nahi",
+        "जीना नहीं चाहता",
+        "जीना नहीं चाहती",
+        "जीना नहीं है",
+        "जीने का मन नहीं",
+        "जीने की इच्छा नहीं",
+        "मर जाना चाहता",
+        "मर जाना चाहती",
+        "जान दे दूं",
+        "जान दे दूँ"
       ],
       "combos": [],
       "reply": "I'm really sorry you're feeling this way, and I'm glad you said it. Please talk to someone right now: call Tele-MANAS on 14416 (free, any time, in many Indian languages), or 112 if you might act on these thoughts or are in danger. If you can, tell someone near you and stay with them.",
@@ -105,7 +114,13 @@
         "सांस नहीं",
         "साँस नहीं",
         "सांस लेने में तकलीफ",
-        "दम घुट"
+        "दम घुट",
+        "साँस लेने में दिक्कत",
+        "सांस लेने में दिक्कत",
+        "सांस फूल रही",
+        "सांस नहीं ले पा",
+        "गले में सूजन",
+        "होंठ सूज"
       ],
       "combos": [],
       "reply": "This could be an emergency. If you or the person with you has trouble breathing, or swelling of the lips, tongue, face or throat, call 112 now. If an adrenaline pen (EpiPen) has been prescribed, use it as you were shown. Don't wait to see if it gets better, and don't eat or drink anything more.",
@@ -148,7 +163,12 @@
         "chest is hurting",
         "my chest is hurting",
         "दिल का दौरा",
-        "हार्ट अटैक"
+        "हार्ट अटैक",
+        "छाती में दर्द",
+        "सीने में जकड़न",
+        "सीने में भारीपन",
+        "बोलने में तकलीफ",
+        "लकवा"
       ],
       "combos": [],
       "reply": "This could be an emergency. Chest pain or tightness, or a face drooping, slurred speech or weakness on one side, needs help now: call 112. Don't drive yourself. Note the time it started.",
@@ -204,7 +224,12 @@
         "epileptic fit",
         "मिर्गी का दौरा",
         "खून की उल्टी",
-        "उल्टी में खून"
+        "उल्टी में खून",
+        "बेहोशी",
+        "दौरा पड़",
+        "जहर खा",
+        "ज़हर खा",
+        "बहुत खून बह"
       ],
       "combos": [],
       "reply": "This could be an emergency. If someone has fainted, had a fit, is vomiting blood, or may have taken poison or too many tablets, call 112 now. If they are not awake, turn them on their side and don't give them anything to eat or drink.",
@@ -236,7 +261,10 @@
         "sweating and shaking",
         "shaky and sweaty",
         "शुगर लो",
-        "शुगर कम हो गई"
+        "शुगर कम हो गई",
+        "शुगर बहुत कम",
+        "शुगर लो हो",
+        "शुगर गिर गई"
       ],
       "combos": [
         [
@@ -289,7 +317,10 @@
         "baby stopped moving",
         "baby is not moving",
         "water broke",
-        "waters broke"
+        "waters broke",
+        "बच्चा हिल नहीं रहा",
+        "बच्चे ने हिलना बंद",
+        "पानी की थैली फट"
       ],
       "combos": [
         [
@@ -326,7 +357,9 @@
         "fruity breath",
         "sugar is very high",
         "very high sugar",
-        "sugar bahut high"
+        "sugar bahut high",
+        "कीटोन",
+        "सांस से फल जैसी बदबू"
       ],
       "combos": [],
       "reply": "Very high blood sugar can become dangerous. Please call your doctor today. If you are also vomiting, breathing fast or deeply, very sleepy or confused, call 112 now.",

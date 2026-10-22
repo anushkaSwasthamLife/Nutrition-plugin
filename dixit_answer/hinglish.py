@@ -52,11 +52,13 @@ def _words(text: str) -> str:
 _SUBJ = r"(?:mujhe\s+|mujhko\s+|mereko\s+|meri\s+|main\s+|mai\s+)?"
 _FIXED = [
     # "iske alawa kuch aur batao", "kuch aur batao", "aur kuch", "koi doosra option": different ones
-    (re.compile(r"^(?:ok\s+|accha\s+|theek hai\s+|ab\s+)?(?:iske|isse|is ke)\s+(?:alawa|alaawa|ilawa)(?:\s+\w+){0,3}$"), "something else"),
+    (re.compile(r"^(?:ok\s+|accha\s+|theek hai\s+|ab\s+)?(?:iske|isse|is ke)\s+(?:alawa|alaawa|ilawa|alava)(?:\s+\w+){0,3}$"), "something else"),
     (re.compile(r"^(?:ok\s+|accha\s+)?(?:koi\s+)?(?:aur|doosra|dusra|doosre|dusre|alag)\s+(?:kuch|koi|option|options|dish|dishes|batao|bataiye|dikhao)(?:\s+(?:batao|bataiye|dikhao|hai|hai kya|option|options|dish|dishes))*$"), "something else"),
-    (re.compile(r"^(?:ok\s+|accha\s+)?kuch\s+(?:aur|doosra|dusra|alag)(?:\s+(?:batao|bataiye|dikhao|hai|hai kya))*$"), "something else"),
+    (re.compile(r"^(?:ok\s+|accha\s+)?kuch(?:h)?\s+(?:aur|doosra|dusra|alag)(?:\s+(?:batao|bataiye|dikhao|hai|hai kya))*$"), "something else"),
     # "mujhe diabetes hai", "mujhe bp hai kya khau" (the question part is cut off first)
     (re.compile(rf"^{_SUBJ}(?P<x>diabetes|thyroid|bp|pcos|pcod|obesity|blood pressure|high blood pressure|cholesterol|uric acid)\s+(?:hai|hain)$"), "i have {x}"),
+    # "me kya kha sakti hu lunch ke liye", "kya khau dinner ke liye" (the meal was turned into "for lunch" before this rule runs)
+    (re.compile(r"^(?:main\s+|mai\s+|me\s+)?kya\s+(?:kha|khaun|khau|khaoon|khaye|khayen|khayein)(?:\s+(?:sakta|sakti))?(?:\s+(?:hoon|hun|hu))?\s+for\s+(?P<m>\w+)$"), "what can i have for {m}"),
     # "bhookh lagi hai"
     (re.compile(rf"^{_SUBJ}(?:bhook(?:h)?|bhukh)\s+(?:lagi|lag rahi|lag raha)(?:\s+(?:hai|hain))?$"), "i am hungry"),
     # "mera chicken khane ka mann hai", "chicken khane ka dil hai"

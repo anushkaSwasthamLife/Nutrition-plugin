@@ -33,7 +33,8 @@ EGG = {"egg", "eggs", "anda", "omelette", "omelet", "bhurji"}
 WISH_WORDS = {"chicken", "mutton", "lamb", "goat", "beef", "pork", "keema", "kheema", "fish", "prawn", "prawns", "shrimp", "crab", "squid", "salmon",
               "tuna", "pomfret", "rohu", "turkey", "duck", "seafood", "meat"}
 ASK_WORDS = re.compile(r"\b(?:want|need|craving|crave|mood|feel like|feeling like|wish|chahiye|khana|what can i|what should i|what do i|have|eat|something|"
-                       r"dishes?|options?|ideas?|suggest|show|give|batao|dikhao)\b")
+                           r"dishes?|options?|ideas?|suggest|show|give|batao|dikhao|tell|recipes?|cook|make|prepare|curry|curries|banau|how to)\b")
+RECIPE_WORDS = re.compile(r"\b(?:recipes?|cook|make|prepare|banau|banana|how to)\b")
 PERMISSION = re.compile(r"\b(?:can|may|should|is|are|does|do|allowed|safe|good|bad|healthy|harmful|ok|okay)\b")
 NEGATED = re.compile(r"\b(?:dont|don't|do not|doesnt|not|never|no|without|except|avoid|allergic|allergy|intolerant|nahi|nahin|mat)\b")
 NOT_A_WISH = re.compile(r"\b(?:what can i|what should i|what do i|want|need|craving|crave|mood|feel like|feeling like|chahiye|khana)\b")

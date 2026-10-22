@@ -45,6 +45,7 @@ class ChatState:
     last_targets: list = field(default_factory=list)         # the nutrient amounts of the last dish search [[field, value, mode], ...]
     last_targets_turn: int = -99
     target_exclude: list = field(default_factory=list)       # words the person asked to leave out of that search ("paneer")
+    target_open: bool = False                                # a dish search is open (it may hold only a diet)
     target_include: list = field(default_factory=list)       # meat / fish words the dish search must contain ("chicken")
     target_diet: str = ""                                    # a narrower diet asked for within a dish search ("what about veg") for a person whose profile is wider
     target_shown: list = field(default_factory=list)         # dish codes already listed for it ("what else" skips them)

@@ -261,8 +261,9 @@ class Engine:
             state.last_targets = [[t.field, t.value, t.mode, t.high] for t in u.targets]
             state.last_targets_turn, state.target_exclude = state.turn, list(u.target_exclude)
             state.target_diet, state.target_include = u.target_diet, list(u.target_include)
+            state.target_open = bool(u.targets or u.target_include or u.target_diet)
         elif u.type not in {"greeting_thanks", "out_of_scope", "explain_last"}:
-            state.last_targets, state.target_include = [], []      # a different kind of question ends the dish search
+            state.last_targets, state.target_include, state.target_open = [], [], False      # a different kind of question ends the dish search
         if u.type != "explain_last":
             explain = explain_lines(draft, plan, self.library)
             if explain:

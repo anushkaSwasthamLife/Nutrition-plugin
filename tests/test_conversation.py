@@ -12,26 +12,25 @@ def test_six_turn_conversation(chat):
         "i have obesity . so what should i eat to reduce it",
         "No medicines. I have chapati, what sabji can I eat?",
         "bhindi, aloo, cauliflower",
-        "aloo",
+        "can i eat aloo",
         "give me recipes",
-        "none",
         "I have aloo and onion, what Indian meal can I prepare?",
         "Aloo Pyaz ki Sabji",
     )
     for result in r:
         assert not failed(result), (result.turn, failed(result))
 
-    # Turn 1: warm line, caution BEFORE the protocol, full protocol once, named foods, safety question.
+    # Turn 1 (changed 22 Oct): the question is answered with food. No warm line, no caution and no full programme text in front
+    # (those come with a question about meal timing); named foods; then one question, the allergies.
     t1 = r[0].answer
-    assert t1.startswith("Thank you for asking")
-    assert t1.index("quick check") < t1.index("How Dixit meals work")
-    assert FULL_SEQUENCE in t1 and "dal" in t1 and "Have less often" in t1
-    assert r[0].plan["followup"]["id"] == "FU-SAFETY"
+    assert not t1.startswith("Thank you for asking") and "quick check" not in t1 and FULL_SEQUENCE not in t1
+    assert "dal" in t1 and "Have less often" in t1
+    assert r[0].plan["followup"]["id"] == "FU-ALLERGY"
 
-    # The full sequence is never repeated afterwards (was repeated 6 times in the live app).
-    assert all(FULL_SEQUENCE not in x.answer for x in r[1:])
+    # The full sequence is never shown unasked.
+    assert all(FULL_SEQUENCE not in x.answer for x in r)
 
-    # Turn 2: safety reply understood; named sabjis; a sourced number; asks what's cooked at home.
+    # Turn 2: the medicines are understood without having been asked; named sabjis; a sourced number; asks what's cooked at home.
     t2 = r[1].answer
     assert "bhindi" in t2 and "aloo" in t2 and "calories" in t2
     assert r[1].plan["followup"]["slot"] == "home_foods"
@@ -46,14 +45,13 @@ def test_six_turn_conversation(chat):
     assert r[3].answer.startswith("Aloo is allowed in the programme")
     assert "starchy" in r[3].answer and "dry potato" in r[3].answer
 
-    # Turn 5: "give me recipes" offers approved dishes and asks which; turn 6 builds the aloo-onion recipe from the library.
-    assert "light dishes" in r[4].answer and "In your meal" not in r[4].answer
-    assert "Which one should I show?" in r[5].answer                      # allergies answered: the same list, now with the question to pick
-    assert "Aloo Pyaz ki Sabji" in r[6].answer and "Which one should I show?" in r[6].answer      # aloo and onion fit several approved dishes: they are listed
-    t6 = r[7].answer
-    assert "Aloo Pyaz ki Sabji" in t6 and "**You need**" in t6 and "**How:**" in t6
-    assert "372 kcal" in t6 and "calculated from USDA" in t6             # whole-dish numbers worked out by code
-    assert "In your meal" in t6 and "Thanks, noted" not in t6
+    # Turn 5: "give me recipes" offers approved dishes and asks which; turn 6 lists the dishes that fit aloo and onion; turn 7 builds the recipe.
+    assert "light dishes" in r[4].answer and "In your meal" not in r[4].answer and "Which one should I show?" in r[4].answer
+    assert "Aloo Pyaz ki Sabji" in r[5].answer and "Which one should I show?" in r[5].answer      # aloo and onion fit several approved dishes: they are listed
+    t7 = r[6].answer
+    assert "Aloo Pyaz ki Sabji" in t7 and "**You need**" in t7 and "**How:**" in t7
+    assert "372 kcal" in t7 and "calculated from USDA" in t7             # whole-dish numbers worked out by code
+    assert "In your meal" in t7 and "Thanks, noted" not in t7
 
 
 def test_no_status_question_for_a_plain_fact(chat):

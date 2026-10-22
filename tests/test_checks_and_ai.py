@@ -59,9 +59,9 @@ def _engine_with(settings, llm):
 
 
 def test_good_ai_rewording_is_used(settings):
-    llm = ScriptedLLM([lambda t: t.replace("Thank you for asking.", "Thanks for reaching out.")])
-    r = _engine_with(settings, llm).answer("i have obesity . so what should i eat to reduce it")
-    assert r.ai_used and not r.fallback and r.answer.startswith("Thanks for reaching out.")
+    llm = ScriptedLLM([lambda t: t.replace("I can only help with", "I can just help with")])      # the out-of-scope line is one the AI may reword
+    r = _engine_with(settings, llm).answer("tell me a joke")
+    assert r.ai_used and not r.fallback and r.answer.startswith("I can just help with")
 
 
 def test_bad_ai_draft_is_retried_then_template_is_sent(settings):
@@ -81,4 +81,4 @@ def test_ai_that_adds_a_food_is_rejected(settings):
 
 def test_ai_error_falls_back_to_template(settings):
     r = _engine_with(settings, ScriptedLLM([LLMError("HTTP 503")])).answer("what should i eat")
-    assert r.fallback and "How Dixit meals work" in r.answer
+    assert r.fallback and "choose more often" in r.answer          # the plain template answer, since the AI call failed

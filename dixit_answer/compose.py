@@ -66,6 +66,8 @@ def _dish(fact: Fact) -> str:
 
 
 def _join(names: list[str]) -> str:
+    if not names:
+        return ""
     return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
 
 
@@ -376,6 +378,8 @@ class Composer:
     # ---------- recipes (stage 6d) ----------
     def _recipe_block(self, plan, state, u, person, d: Draft, lock, free, name, given: set) -> None:
         reply = bool(plan.reply_slot)
+        if plan.time_wish:
+            d.lines.append(lock("T", "I don't have cooking times for these dishes yet, so they aren't picked by speed."))
         if person is None:                                  # no profile at all: allergies unknown, so the most careful rules apply
             from .person import Person
             person = Person()
@@ -447,7 +451,7 @@ class Composer:
         self._tips_lines(plan, state, d, lock, given)
 
     def _target_meals(self, plan, d: Draft, lock, person, state=None, u=None) -> None:
-        if not plan.targets and not plan.target_include:           # "start over", or the last wish taken off (chips on the chat page)
+        if not plan.targets and not plan.target_include and not plan.target_diet:           # "start over", or the last wish taken off (chips on the chat page)
             if state is not None:
                 state.target_shown = []
             d.lines.append(lock("T", "Okay, I've cleared that search. Tell me what you'd like, for example high protein or fewer calories."))
@@ -478,7 +482,10 @@ class Composer:
         if u is not None and (getattr(u, "preference", "") == "non_vegetarian" or plan.target_include) and profile_diet in {"vegetarian", "jain"}:
             d.lines.append(lock("T", f"Your profile says {profile_diet}, so I only looked at {profile_diet} dishes."))
         only_nonveg = plan.target_diet == "non_vegetarian" and profile_diet == "non_vegetarian"
-        kind = "non-veg dish" if only_nonveg else "dish"            # "Non-veg dishes with high protein and few calories:"
+        diet_only = not plan.targets and not plan.target_include
+        adjective = {"non_vegetarian": "non-veg", "vegetarian": "vegetarian", "jain": "Jain", "egg": "egg"}.get(plan.target_diet, "") if (only_nonveg or diet_only) else ""
+        kind = f"{adjective} dish".strip()                           # "Non-veg dishes with high protein and few calories:"
+        with_want = f" with {want}" if want else ""
         if self.dishes is None:
             d.lines.append(lock("T", "I can't look dishes up by their nutrients here yet."))
             return
@@ -501,16 +508,22 @@ class Composer:
             if plan.target_mode == "more" and shown_before:
                 d.lines.append(lock("T", f"Those are all the dishes I have near {want}{without}. Try a different amount, or ask me about a dish by name."))
             else:
-                d.lines.append(lock("T", f"I couldn't find a checked {kind} with {want}{without} that suits you. Try a different amount, or ask me about a dish by name."))
+                d.lines.append(lock("T", f"I couldn't find a checked {kind}{with_want}{without} that suits you. Try a different amount, or ask me about a dish by name."))
                 if person is None or person.allergies is None:
                     d.lines.append(lock("T", "I don't know your allergies yet, so I left out dishes with common allergens. Tell me if you have none and I can show more."))
             return
         if state is not None:
             state.target_shown = (state.target_shown + [m.code for m in matches])[-60:]
+        if plan.meat_recipe and plan.target_mode == "new":
+            d.backlog_request = True                                 # the dietitian sees the request for the backlog
+            d.lines.append(lock("T", f"I don't have an approved {_join(sorted(plan.target_include))} recipe yet, so I've passed your request to our dietitian. "
+                                     "Meanwhile, these dishes from our library have it:"))
+        if plan.extra_foods:
+            d.lines.append(lock("T", f"I picked these by {_join(sorted(plan.target_include))} only; I can't pick dishes by {_join(plan.extra_foods)} as well yet."))
         if relaxed:
             d.lines.append(lock("T", f"No {kind} with {_join(sorted(plan.target_include))} counts as {_join(parts[:len(plan.targets)])} by our checks. These come closest:"))
         else:
-            d.lines.append(lock("T", f"{kind.capitalize()}es with {want}{without}:" if close else f"No {kind} matches {want}{without} closely. These are the nearest:"))
+            d.lines.append(lock("T", (f"{kind.capitalize()}es{with_want}{without}" + (", lightest first:" if not plan.targets and not want else ":")) if close else f"No {kind} matches {want}{without} closely. These are the nearest:"))
         for m in matches:
             res = m.result
             quantity, _, unit = res.serving_text.partition(" ")

@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from .dish_lookup import SCAFFOLD as SCAFFOLD_WORDS
 from .foods import FoodIndex
 from .unknown_foods import compare_sides, food_phrase, kind_question, subject_of
-from .targets import QUAL_FIELD, WANT, Target, ingredient_wish, is_target_request, parse_qualifiers, parse_targets
+from .targets import QUAL_FIELD, RECIPE_WORDS, WANT, Target, ingredient_wish, is_target_request, parse_qualifiers, parse_targets
 from .semantics import HARMFUL_WORDS, HEALTH_WORDS, NON_FOOD_WORDS, NEGATED, NEGATED_AFTER, meaningful_words, negated_foods, split_chunks
 from .status import parse_status
 from .textnorm import clean, has_phrase
@@ -34,7 +34,8 @@ COOK_ASK = re.compile(r"\b(?:what (?:to|should i|can i|do i|shall i) (?:cook|mak
 GOAL = re.compile(r"\b(?:lose|reduce|gain|drop|cut|shed)\s+(?:\d+(?:\.\d+)?\s*)?(?:kg|kgs|kilo|kilos|kilogram|kilograms|pounds?|lbs|weight|belly|fat)\b|\bweight loss\b|\bget slim\b|\bbecome slim\b")
 REQUEST_WORDS = re.compile(r"\b(?:want|need|what|which|how|can i|could|should|suggest|show|recipe|meal|dish|dishes|options?|ideas?)\b")
 PORTION = re.compile(r"\bhow (?:much|many)\b.*\b(?:should|can|do|must|shall) (?:i|we)\b.*\b(?:eat|have|drink|take|use|consume|add|put)\b|\b(?:portion|serving) sizes?\b|"
-                     r"\bhow (?:much|many)\b.*\bper (?:meal|day)\b|\bhow (?:much|many)\b.*\b(?:is|are) enough\b")
+                     r"\bhow (?:much|many)\b.*\bper (?:meal|day)\b|\bhow (?:much|many)\b.*\b(?:is|are) enough\b|"
+                     r"\bhow (?:much|many)\b.*\b(?:do|should|must) (?:i|we)\b.*\b(?:need|require|get)\b")
 SYMPTOM = re.compile(r"\b(?:headache|headaches|dizzy|dizziness|nausea|nauseous|vomit|vomiting|fever|pain|aching|weak|weakness|tired|tiredness|fatigue|giddy|cramps?|"
                      r"constipation|diarrhoea|diarrhea|bloating|bloated|acidity|gas|rash|itching)\b")
 STATEMENT_DIET = re.compile(r"^(?:i am|i m|im|we are|i eat|we eat|my diet is|i follow)\b")
@@ -86,8 +87,9 @@ ALLOWED = re.compile(r"\b(can i (eat|have|take|drink)|should i (eat|have)|is it 
 CHOICE = re.compile(r"\b(cheat (?:day|meal)|treat day|binge|what (should|can|do) i (eat|have|cook)|what to eat|which (sabji|vegetable|food|foods|dal|fruit)|"
                     r"what (sabji|vegetable|food|foods)|what (kind of|type of) food|instead of|eat to (reduce|lose|control)|"
                     r"diet (for|to)|foods? (for|to) (reduce|lose|control)|what is good to eat|suggest (some )?(food|sabji|vegetable))\b")
-EXPLAIN = re.compile(r"\b(how does (the |this |dixit )?(program|diet|plan|lifestyle) work|what is (the )?dixit|explain (the )?"
-                     r"(program|rules|diet|plan)|what are the rules|tell me about (the )?(program|dixit))\b")
+EXPLAIN = re.compile(r"\b(how does (the |this |dixit )?(program|programme|diet|plan|lifestyle) work|what is (the )?dixit|explain (the |this |dixit )?"
+                     r"(program|programme|rules|diet|plan)|what are the rules|what are (the |dixit )?(program|programme|dixit) rules|(program|programme|dixit) rules|"
+                     r"rules of (the )?(program|programme|diet)|tell me about (the )?(program|programme|dixit))\b")
 STRUGGLE = re.compile(r"\b(hungry|hunger|craving|cravings|not losing|no weight loss|weight (is )?not (reducing|going down)|"
                       r"plateau|stuck|tired|weak|weakness|dizzy|headache|difficult to follow|can't follow|cannot follow)\b")
 DIET_WORDS = re.compile(r"\b(eat|eating|food|foods|meal|meals|diet|weight|sabji|vegetable|cook|cooking|drink|nutrition|program|"
@@ -103,6 +105,8 @@ EXCLUDE = re.compile(r"\b(?:other than|apart from|aside from|except for|except|b
 # "what else", "any other", "something different": a follow-up that only makes sense after the last answer
 MORE = re.compile(r"\b(what else|anything else|something else|any other|any more|more options|other options|another one|another|one more|"
                   r"something different|show more|different one|other ones?|else|more)\b")
+NEED_AMOUNT = re.compile(r"\bhow (?:much|many)\b.*\b(?:do|should|must) (?:i|we)\b.*\b(?:need|require)\b|\bhow (?:much|many)\b.*\b(?:do|does) (?:i|we|a person|an adult)\b.*\bneed\b")
+TIME_WISH = re.compile(r"\b(?:in|within|under|less than)\s+(?:\d+|ten|five|fifteen|twenty|thirty)\s*(?:min|mins|minutes?|hours?)\b|\b(?:quick|quickly|fast|instant|jaldi)\b")
 # "other than this", "something else", "what other options do i have": a request for different ones, said in up to nine words.
 # (No bare "more" or "else": "more protein" is a wish, not a request for other dishes.)
 MORE_ASK = re.compile(r"\b(?:what else|anything else|something else|anything different|something different|any other|more options|other options|another one|one more|"
@@ -142,6 +146,9 @@ class Understanding:
     target_exclude: list = field(default_factory=list)   # words to leave out of a dish search ("paneer")
     target_diet: str = ""                                # vegetarian | jain | egg (narrower) or non_vegetarian (dishes with meat, fish or egg) for this search
     target_include: list = field(default_factory=list)  # meat / fish words the dish search must contain ("chicken")
+    meat_recipe: bool = False                            # it was a recipe request for that meat: no approved recipe, so dishes are listed and the dietitian told
+    extra_foods: list = field(default_factory=list)      # other foods named with the meat ("chicken and onion"): not used to pick dishes
+    time_wish: bool = False                              # "what can i make in 10 minutes": we hold no cooking times
     target_mode: str = "new"                             # new | refine (changed amounts or something left out) | more (what else) | cleared
     targets: list = field(default_factory=list)          # nutrient amounts asked for ("326 kcal", "26 g protein"): a dish search
     compare_sides: list = field(default_factory=list)    # the foods an "X vs Y" question sets side by side, as phrases
@@ -211,6 +218,8 @@ def classify(cleaned: str, foods: list[str], index: FoodIndex) -> str:
         return "recipe_request"
     if SOURCE.search(cleaned):
         return "source_fact_lookup"
+    if NEED_AMOUNT.search(cleaned) and not foods:
+        return "portion_question"                          # "how much protein do i need a day": the programme sets no amounts
     if LOOKUP.search(cleaned) or NUTRIENT_QUESTION.search(cleaned) or LOOKUP_MORE.search(cleaned):
         return "neutral_nutrient_lookup"
     if COMPARE.search(cleaned) and len(foods) >= 2:
@@ -336,7 +345,7 @@ def target_refinement(text: str, state, index: FoodIndex, word_lists: dict):
     request that names a meal or dish, with no "but" / "and" / "also" in front, starts a new search; "start over" clears it."""
     last = getattr(state, "last_targets", None)
     include = list(getattr(state, "target_include", []) or [])
-    if not (last or include) or state.turn - getattr(state, "last_targets_turn", -99) > SEARCH_TURNS:
+    if not (last or include or getattr(state, "target_open", False)) or state.turn - getattr(state, "last_targets_turn", -99) > SEARCH_TURNS:
         return None
     cleaned = clean(question_part(text), word_lists["spelling_map"])
     words = cleaned.split()
@@ -391,6 +400,17 @@ def target_refinement(text: str, state, index: FoodIndex, word_lists: dict):
     if new_diet:
         u.preference, u.statement = new_diet, {"diet": new_diet, "label": "diet"}
     return u
+
+
+DIET_DISH_ASK = re.compile(r"\b(?:suggest|show|give|tell|list|recommend|batao|dikhao)\b.*\b(?:dishes|dish|meals|meal|food|foods|options|ideas|recipes|recipe)\b|"
+                           r"^(?:veg|vegetarian|non veg|nonveg|non vegetarian|jain|egg|eggetarian)\s+(?:dishes|dish|meals|food|foods|options|ideas)$")
+
+
+def _diet_dishes(cleaned: str, word_lists: dict) -> str:
+    """"suggest non veg dishes", "show some veg meals": a request for dishes by diet alone, with no nutrient and no meat. The diet, or ""."""
+    if not DIET_DISH_ASK.search(cleaned):
+        return ""
+    return _preference(cleaned, word_lists)
 
 
 def _search_diet(diet: str) -> str:
@@ -660,11 +680,15 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
             question_type = "recipe_request"
     if question_type != "recipe_request" and not (u.slot_fill and "recipe_choice" in u.slot_fill):
         u.recipe_ids = []                # a dish name only counts when the person is asking for that recipe
+    if question_type == "recipe_request" and TIME_WISH.search(cleaned):
+        u.time_wish = True
     if question_type == "recipe_request" and not u.recipe_ids:
         m = DISH_AFTER.search(cleaned)
         if m:
             dish = " ".join(w for w in m.group(1).split() if w not in {"please", "pls", "some", "a", "an", "the", "me", "for", "my"})
-            if dish and dish not in GENERIC_DISH and not u.foods and any(w not in NON_FOOD_WORDS for w in dish.split()):
+            if TIME_WISH.search(dish):
+                u.time_wish = True                                        # "in 10 minutes", "quick": no dish named, and we hold no cooking times
+            elif dish and dish not in GENERIC_DISH and not u.foods and any(w not in NON_FOOD_WORDS for w in dish.split()):
                 u.unknown_dish = dish
     if INGREDIENTS.search(cleaned) and question_type == "meal_from_ingredients":
         u.ingredients = foods
@@ -698,13 +722,24 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
             u.foods = [f for f in u.foods if f not in inside]      # "calories in chilli paneer" is the dish, not the food paneer
     elif dish_finder and not u.slot_fill and not foods and question_type in {"out_of_scope", "food_choice_guidance"} and _bare_dish(focus, dish_finder):
         question_type = "neutral_nutrient_lookup"           # "poha", "what is poha?": the whole message is a dish name, so give its calories
+    if dish_finder and question_type == "meal_from_ingredients" and not u.slot_fill and foods and ingredient_wish(cleaned) and not u.recipe_ids:
+        # "what can i cook with chicken and onion": the meat picks the dishes; the other foods are said not to
+        wish_now = ingredient_wish(cleaned)
+        u.targets, u.target_include, u.type = is_target_request(cleaned), wish_now, "target_meal_search"
+        u.meat_recipe = bool(RECIPE_WORDS.search(cleaned))
+        u.extra_foods = [index.foods[f]["name"] for f in foods if index.foods[f]["category"] != "pantry"][:3]
+        u.target_diet = _search_diet(u.preference)
+        return u
     if question_type not in {"support_wellbeing", "greeting_thanks", "followup_reply"} and not u.slot_fill and not foods and not u.recipe_ids:
         targets = is_target_request(cleaned)
-        wish = ingredient_wish(cleaned) if question_type in {"out_of_scope", "food_choice_guidance", "target_meal_search", "recipe_request", "meal_from_ingredients"} else []
-        if (targets or wish) and not (dish_finder and any(h["exact"] for h in dish_finder(focus))):       # a loose word match ("drink") is not a dish named
+        wish = ingredient_wish(cleaned) if dish_finder and question_type in {"out_of_scope", "food_choice_guidance", "target_meal_search", "recipe_request", "meal_from_ingredients"} else []
+        diet_dishes = _diet_dishes(cleaned, word_lists) if dish_finder and question_type in {"out_of_scope", "food_choice_guidance", "recipe_request"} and not wish else ""
+        named = bool(dish_finder and any(h["exact"] for h in dish_finder(focus))) and not (wish and RECIPE_WORDS.search(cleaned))
+        if (targets or wish or diet_dishes) and not named:       # (a recipe request for a meat dish, "fish curry recipe", is still a meat wish)       # a loose word match ("drink") is not a dish named
             question_type, u.targets = "target_meal_search", targets      # "a meal with 326 kcal and 26 g protein": dishes near those values
             u.target_include = wish                                       # "i want chicken": dishes with chicken in them
-            u.target_diet = _search_diet(u.preference)
+            u.meat_recipe = bool(wish) and bool(RECIPE_WORDS.search(cleaned))
+            u.target_diet = _search_diet(u.preference or diet_dishes)     # "suggest non veg dishes": a search by diet alone
             u.type = question_type
             return u
     if ((question_type in {"out_of_scope", "food_choice_guidance"} or (question_type == "source_fact_lookup" and (getattr(state, "last_explain", None) or {}).get("kind") == "recipe"))

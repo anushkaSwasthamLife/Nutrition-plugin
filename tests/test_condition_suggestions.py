@@ -121,7 +121,7 @@ def test_a_message_naming_a_condition_and_no_food_never_reaches_the_dietitian_qu
 
 
 def test_the_programme_explanation_still_ends_with_the_medicines_question_and_dishes_follow_next_turn(engine):
-    first = engine.answer("i have obesity . so what should i eat to reduce it", None, {})
+    first = engine.answer("i have obesity . can i skip breakfast", None, {})        # a timing question: the programme text, with the medicines question
     assert first.plan["followup"]["id"] == "FU-SAFETY" and "Here are some light dishes" not in first.answer
     second = engine.answer("No medicines. what sabji should I eat?", first.conversation_id, {"allergies": []})
     assert "Here are some light dishes" in second.answer or "**You need**" in second.answer

@@ -59,6 +59,9 @@ class AnswerPlan:
     target_mode: str = "new"
     target_diet: str = ""
     target_include: list = field(default_factory=list)
+    meat_recipe: bool = False
+    extra_foods: list = field(default_factory=list)
+    time_wish: bool = False
     wants_list: bool = False
     needs_status: bool = False            # the programme's answer depends on diabetes status (fruit)
     frequency_note: bool = False          # add the "no approved evidence on other eating patterns" line
@@ -109,12 +112,13 @@ def _choose_followup(plan: AnswerPlan, state: ChatState, allergies_known: bool =
 
 
 def _protocol_level(plan: AnswerPlan, u: Understanding, state: ChatState) -> None:
-    """R5: full when asked for or never explained in a general 'what should I eat'; one line for recipes; else none."""
+    """R5: the full programme text only when the question is about timing or meals (TIMING_TYPES); one line for recipes; else none.
+    A general "what can I eat" is answered with food, not with the programme (22 Oct: it used to open every new chat)."""
     explained = state.protocol_explained_turn
     if plan.type in TIMING_TYPES:
         plan.protocol_level = "full"
-    elif plan.type == "food_choice_guidance" and u.topic == "home_meal" and explained is None:
-        plan.protocol_level = "full"
+    elif u.refuse_plan and plan.type == "food_choice_guidance":
+        plan.protocol_level = "full"                       # "I can't write a meal plan", then how the programme works instead
     elif plan.type in RECIPE_TYPES:
         plan.protocol_level = "meal_place"
     else:
@@ -164,6 +168,8 @@ def make_plan(u: Understanding, state: ChatState, emergency: bool = False, aller
         plan.targets = list(u.targets)
         plan.target_exclude, plan.target_mode, plan.target_diet = list(u.target_exclude), u.target_mode, u.target_diet
         plan.target_include = list(u.target_include)
+        plan.meat_recipe, plan.extra_foods = u.meat_recipe, list(u.extra_foods)
+        plan.ingredients = list(u.target_include) if u.meat_recipe else []      # for the dietitian's recipe backlog
         return plan
     if u.type == "explain_last":
         plan.blocks = ["explain_last"]
@@ -226,9 +232,7 @@ def make_plan(u: Understanding, state: ChatState, emergency: bool = False, aller
     # ---- new questions ----
     _protocol_level(plan, u, state)
     is_weight = bool(set(u.conditions) & WEIGHT_CONDITIONS)
-    if is_weight and not state.warm_opening_used and plan.type in {"food_choice_guidance", "protocol_explain", "support_struggle"}:
-        plan.warm_opening = True
-        plan.rules.append("R9")
+    # (R9, the warm opening, was removed on 22 Oct: it opened every first answer with the same line)
     blocks: list[str] = ["opening"] if plan.warm_opening else []
     if u.is_reply and set(u.slot_fill) & {"safety", "food_preference"}:
         blocks.append("ack")
@@ -295,6 +299,7 @@ def make_plan(u: Understanding, state: ChatState, emergency: bool = False, aller
         plan.more_request = u.more_request
         plan.unknown_dish = u.unknown_dish
         plan.wants_list = plan.type == "recipe_request" and not plan.recipe_ids and not plan.ingredients
+        plan.time_wish = u.time_wish
         blocks += ["recipe", "meal_place"]
 
     # R2/R3: caution goes before the protocol whenever meal-timing advice is given and risk isn't "none".

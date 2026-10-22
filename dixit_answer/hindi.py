@@ -109,7 +109,9 @@ _WORDS_TEXT = """
 सकता sakta | सकती sakti | सकते sakte | चाहिए chahiye | चाहिये chahiye | चाहता chahta | चाहती chahti | बताओ batao | बताइए batao | बताइये batao | बताएं batao
 दो do | दीजिए do | नहीं nahi | नही nahi | न na | हाँ haan | हां haan | जी ji | कृपया please | धन्यवाद thanks | शुक्रिया thanks | नमस्ते namaste | नमस्कार namaste
 बनाऊं banau | बनाऊँ banau | बनाएं banaye | बनाये banaye | बनाए banaye | बनाना banaye | बनाते banaye | बनाती banaye | बनाता banaye | बनाकर banaye
-रेसिपी recipe | पकौड़ा pakora | पकौड़े pakora | मशरूम mushroom | ओट्स oats | चुकंदर beetroot | विधि recipe | अच्छा accha | बेहतर better | ज्यादा zyada | ज़्यादा zyada | कम kam | बहुत bahut | रोज roz | रोज़ roz | आज aaj | रात raat
+रेसिपी recipe | पकौड़ा pakora | पकौड़े pakora | मशरूम mushroom | ओट्स oats | चुकंदर beetroot | विधि recipe | अच्छा accha | बेहतर better | ज्यादा zyada | ज़्यादा zyada | कम kam | बहुत bahut | रोज roz | रोज़ roz | आज aaj | रात raat | तो toh | वाला wala | वाली wali | वाले wale | लिए liye | लिये liye | इसके iske | अलावा alawa | कुछ kuch | अब ab
+हेल्दी healthy | सेहतमंद healthy | फायदेमंद faydemand | नाश्ते nashta | खाएं khayein | खायें khayein | खाएँ khayein | खाये khaye | लगी lagi | लगा laga
+रही rahi | रहा raha | जीना jeena | जीने jeene | मन mann | इच्छा ichha | मरना marna
 कैलोरी calories | कैलोरीज calories | कैलरी calories | कैलरीज calories | कैलोरीस calories | कैलोरीज़ calories | ऊर्जा energy | एनर्जी energy
 प्रोटीन protein | कार्ब carb | कार्ब्स carbs | कार्बोहाइड्रेट carbohydrate | कार्बोहाइड्रेट्स carbohydrates | फैट fat | फ़ैट fat | वसा fat | चर्बी fat
 चिकनाई fat | फाइबर fibre | फ़ाइबर fibre | रेशा fibre | रेशे fibre | पोषण nutrition | पोषक nutrients | तत्व nutrients | न्यूट्रिशन nutrition
@@ -118,7 +120,7 @@ _WORDS_TEXT = """
 थायराइड thyroid | थायरॉइड thyroid | बीपी bp | ब्लड blood | प्रेशर pressure | रक्तचाप blood-pressure | उच्च high | पीसीओएस pcos | पीसीओडी pcod
 एलर्जी allergy | एलर्जिक allergic | एलर्जियां allergies | एलर्जियाँ allergies | गर्भवती pregnant | गर्भावस्था pregnancy | दवा medicine | दवाई medicine
 दवाइयां medicines | दवाइयाँ medicines | दवाएं medicines | इंसुलिन insulin | बीमारी illness | शाकाहारी vegetarian | मांसाहारी non-veg | जैन jain
-नाश्ता breakfast | ब्रेकफास्ट breakfast | लंच lunch | डिनर dinner | स्नैक snack | स्नैक्स snacks | भूख hungry | भूखा hungry | भूखी hungry | खाना khana
+नाश्ता breakfast | ब्रेकफास्ट breakfast | लंच lunch | डिनर dinner | स्नैक snack | स्नैक्स snacks | भूख bhookh | भूखा hungry | भूखी hungry | खाना khana
 रोटी roti | रोटियां roti | रोटियाँ roti | चपाती chapati | फुल्का phulka | चावल chawal | भात rice | दाल dal | आलू aloo | भिंडी bhindi | फूलगोभी phool-gobhi
 फूल phool | गोभी gobhi | पत्तागोभी patta-gobhi | बंदगोभी band-gobhi | लौकी lauki | घिया ghiya | पालक palak | मटर matar | शकरकंद shakarkandi | शकरकन्द shakarkandi
 दही dahi | पनीर paneer | प्याज pyaz | पियाज pyaz | टमाटर tamatar | खीरा kheera | ककड़ी kakdi | बादाम badam | अखरोट akhrot | मूंगफली moongphali
@@ -179,7 +181,7 @@ _SHAPES = [
     (re.compile(rf"^(?P<x>.+?)\s+(?:ki|ka|ke)\s+(?P<n>{_NUT})\s+{_HOW}{_BE}\s*\??$"), r"how much \g<n> in \g<x>"),
     (re.compile(rf"^(?P<x>.+?)\s+(?:ki|ka|ke)\s+{_HOW}\s+(?P<n>{_NUT}){_BE}\s*\??$"), r"how much \g<n> in \g<x>"),
     # "kya main chawal kha sakta hoon"
-    (re.compile(r"^(?:kya\s+)?(?:main|mai)\s+(?P<x>.+?)\s+(?:kha|khaun|le|pi|peeta|pee)\s+(?:sakta|sakti|sakte)(?:\s+(?:hoon|hun|hu|hain))?\s*\??$"),
+    (re.compile(r"^(?:kya\s+)?(?:main|mai)\s+(?P<x>.+?)\s+(?:kha|khaun|le|pi|peeta|pee)\s+(?:sakta|sakti|sakte)(?:\s+(?:hoon|hun|hu|hain))?(?:\s+kya)?\s*\??$"),
      r"can i eat \g<x>"),
     (re.compile(r"^(?:kya\s+)?(?P<x>.+?)\s+(?:kha|khana)\s+(?:sakta|sakti|sakte)\s+(?:hoon|hun|hu|hain)\s*\??$"), r"can i eat \g<x>"),
     # recipes
