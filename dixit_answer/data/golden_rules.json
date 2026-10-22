@@ -1,10 +1,11 @@
 {
-  "version": "GR-PARTIAL-0.2",
+  "version": "GR-PARTIAL-0.3",
   "status": "PARTIAL",
-  "note": "UNSIGNED. Built only from what is documented: (a) the live Dixit app's answers on 13 Oct 2026 and (b) the expectations in the Dixit nutrition amendment v1.2.6 tests (NUT-T005, T008, T011, T012, T017). The Dixit base package v1.1 + v1.1.1 is not available, so every rule not listed here is 'unknown' and the engine refuses to answer it instead of guessing. Production refuses this file.",
+  "note": "UNSIGNED. Built only from what is documented: (a) the live Dixit app's answers on 13 Oct 2026, (b) the expectations in the Dixit nutrition amendment v1.2.6 tests (NUT-T005, T008, T011, T012, T017) and (c) from 0.3, the fruit rule for diabetic and prediabetic people, taken from the client's Golden Rules KB (DRAFT: neither the client nor a doctor has signed this wording). The Dixit base package v1.1 + v1.1.1 is not available, so every rule not listed here is 'unknown' and the engine refuses to answer it instead of guessing. Production refuses this file.",
   "sources": {
     "live_app": "Dixit Lifestyle web app answers, 13 Oct 2026",
-    "amendment_tests": "Dixit_AI_Nutrition_Data_Integration_Amendment_v1_2_6/05_tests/nutrition_integration_tests.json"
+    "amendment_tests": "Dixit_AI_Nutrition_Data_Integration_Amendment_v1_2_6/05_tests/nutrition_integration_tests.json",
+    "golden_rules_kb": "Dixit_Golden_Rules_KB_English_Source_Reconciled_v1_1: Decision Logic (Fruit/Sugar), Ratna-Confirmed Q&A RAG-02 and RAG-17, Golden Rule Core GRC-NEW-8 and GRC-NEW-12"
   },
 
   "full": [
@@ -64,8 +65,18 @@
       "text": "If you had diabetes and your readings are now normal, the fruit restriction continues until your consultant confirms you no longer have diabetes. A normal reading alone is not enough."
     },
     "currently_non_diabetic_validated": {"allowed": "unknown", "text": null},
-    "diabetic": {"allowed": "unknown", "text": null},
-    "prediabetic": {"allowed": "unknown", "text": null},
+    "diabetic": {
+      "allowed": "no",
+      "text": "The programme's fruit rule for people with diabetes: no fruit and no sweets. This changes only when your Dixit expert has checked your results and cleared you.",
+      "status": "DRAFT",
+      "source": "KB Decision Logic (Fruit/Sugar); Ratna Q&A RAG-02, RAG-17; Core GRC-NEW-8"
+    },
+    "prediabetic": {
+      "allowed": "no",
+      "text": "The programme's fruit rule for people with prediabetes: no fruit and no sweets. This changes only when your Dixit expert has checked your results and cleared you.",
+      "status": "DRAFT",
+      "source": "KB Decision Logic (Fruit/Sugar); Ratna Q&A RAG-02, RAG-17; Core GRC-NEW-8"
+    },
     "unknown": {"allowed": "depends_on_status", "text": "The programme's fruit rule depends on your diabetes status."},
     "unknown_rule_text": "The programme has a specific fruit rule for this situation, and I can't state it here yet. Please check with your Dixit coach. Nutrition facts below are for information only and are not permission."
   },

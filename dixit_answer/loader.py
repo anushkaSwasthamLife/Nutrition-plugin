@@ -68,6 +68,7 @@ class SwasthamData:
     black_lists: dict
     dish_rules: dict
     book_measures: dict
+    decision_logic: dict
     manifest: dict
 
 

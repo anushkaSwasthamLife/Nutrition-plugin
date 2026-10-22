@@ -1,0 +1,305 @@
+{
+  "version": "DL-0.1.0",
+  "status": "DRAFT",
+  "note": "Baseline and modifier rules from the client's Golden Rules KB, sheet 'Decision Logic' (4 topics). DRAFT and unsigned: neither the client (ADORE Trust, Dr. Dixit) nor a doctor has signed this file. Nothing here is used to answer or to check a recipe yet; it is the reference the planner and the recipe gate will read once the numbers are supplied and the file is signed. Production refuses it. The only live effect today is the fruit rule, which is stated in golden_rules.json.",
+  "source": {
+    "file": "Dixit_Golden_Rules_KB_English_Source_Reconciled_v1_1(Decision Logic).csv",
+    "sheet_note": "4 of 4 rows ready. Fruit/Sugar was previously excluded pending the fruit/uric-acid conflict -- resolved Aug 2026 (Dixit/Ratna: Golden Rule fruit restriction applies, no citrus exception) and added back as a full row.",
+    "rule_ids_cited": [
+      "DIET-102",
+      "DIET-107",
+      "DIET-108",
+      "DIET-114",
+      "DIET-115",
+      "DIET-116",
+      "DIET-117",
+      "GRC-031",
+      "GRC-036"
+    ],
+    "rule_ids_not_supplied": "The Diet KB (DIET-xxx) and GRC-031 / GRC-036 were not in the files we received, so no number or wording below can be checked against them."
+  },
+  "authority": {
+    "rank": 3,
+    "meaning": "Modifies a Golden Rule for a person with a second condition. It may tighten a rule; it may never relax one.",
+    "proposed_by": "developer, from the sheet's own 'Rationale for Precedence' column and the workflow.html authority order; the client has not confirmed it"
+  },
+  "enforcement": "none: reference only. Modifiers with no number are never enforced, and none is shown to a person as advice.",
+  "direction_values": {
+    "tighten": "a lower or stricter limit than the baseline",
+    "review": "the baseline may not apply as it stands; refer to the doctor",
+    "reverse": "the direction itself flips (a target to meet becomes a limit)",
+    "redirect": "the amount stays; the choice of food within the category changes",
+    "no_exception": "a condition that does not unlock any exception to the baseline"
+  },
+  "combining_rules": {
+    "proposed_by": "developer, not in the KB",
+    "rules": [
+      "A modifier may tighten a Golden Rule; it may never relax one.",
+      "When two conditions pull in different directions, the stricter rule applies, and a 'reverse' beats the baseline (CKD and protein).",
+      "If no modifier covers the person's combination of conditions, the answer is 'ask your doctor or Dixit coach', never a guess.",
+      "A modifier with no number is information only; the recipe gate does not enforce it.",
+      "These are general information, not protocol advice for the other condition (KB policy GRC-NEW-21: other conditions go to the person's doctor)."
+    ]
+  },
+  "topics": [
+    {
+      "id": "DL-SODIUM",
+      "topic": "Salt / sodium",
+      "baseline": {
+        "summary": "People with diabetes generally have no special sodium limit beyond the standard advice (added salt under about 2 g a day). Salt does not directly affect blood sugar.",
+        "source_ids": [
+          "DIET-108"
+        ],
+        "numeric": {
+          "added_salt_g_per_day_max": 2,
+          "unit_is_ambiguous": true
+        }
+      },
+      "modifiers": [
+        {
+          "condition": "hypertension",
+          "effect": "tighten",
+          "applies_to": "amount",
+          "numeric": null,
+          "source_ids": [
+            "DIET-108"
+          ],
+          "summary": "Sodium usually needs to run lower than the standard advice; it is one of the more direct diet levers for blood pressure."
+        },
+        {
+          "condition": "ckd",
+          "effect": "review",
+          "applies_to": "amount",
+          "numeric": null,
+          "source_ids": [
+            "DIET-108"
+          ],
+          "summary": "Kidney function also affects how the body handles sodium, so the standard limit may not apply as it stands."
+        }
+      ],
+      "precedence": {
+        "primary_gate": [
+          "hypertension",
+          "ckd"
+        ],
+        "not_a_gate": [
+          "diabetes"
+        ],
+        "rationale": "Hypertension and CKD, not diabetes status, decide the sodium rule; a diabetes-only view would leave out the caveat for someone with both."
+      },
+      "kb_status": "Ready: sourced, no open conflict",
+      "kb_text": {
+        "baseline": "People with diabetes generally have no special sodium restriction beyond standard daily guidance (added salt under ~2g/day, DIET-108) — salt does not directly affect blood sugar.",
+        "modifiers": "If hypertension is also present, sodium intake typically needs to run lower than the standard guidance — this is one of the more directly diet-linked levers for blood pressure. If CKD is also present, kidney function affects sodium handling too, another reason the standard limit may not apply as-is.",
+        "why": "Hypertension/CKD are the primary gate for sodium, not diabetes status — a diabetes-only framing would omit the relevant caveat for a comorbid user.",
+        "status": "Ready — sourced, no open conflict"
+      },
+      "open_questions": [
+        {
+          "code": "DL-1",
+          "text": "No number is given for the lower limit in hypertension or CKD, so nothing can be enforced."
+        },
+        {
+          "code": "DL-2",
+          "text": "'Added salt under about 2 g a day': is that salt or sodium? 2 g of sodium is about 5 g of salt, and the recipe gate counts sodium_mg."
+        },
+        {
+          "code": "DL-3",
+          "text": "Heart failure is not covered here, although the book and the Condition Context sheet mention a salt-restricted diet for it."
+        }
+      ]
+    },
+    {
+      "id": "DL-PROTEIN",
+      "topic": "Protein quantity",
+      "baseline": {
+        "summary": "The general target is about 0.83 g per kg of body weight a day: a floor to meet, not something most people need to limit.",
+        "source_ids": [
+          "GRC-031"
+        ],
+        "numeric": {
+          "g_per_kg_per_day": 0.83,
+          "role": "floor"
+        }
+      },
+      "modifiers": [
+        {
+          "condition": "ckd",
+          "effect": "reverse",
+          "applies_to": "amount",
+          "numeric": null,
+          "source_ids": [
+            "DIET-117"
+          ],
+          "summary": "Protein may need to be limited instead of met or exceeded, because the kidneys process protein's waste products."
+        },
+        {
+          "condition": "hyperuricemia",
+          "effect": "redirect",
+          "applies_to": "food_choice",
+          "numeric": null,
+          "source_ids": [
+            "DIET-114"
+          ],
+          "summary": "Purine-rich proteins (red meat, seafood) are worth moderating. This is about which protein, not how much."
+        }
+      ],
+      "precedence": {
+        "primary_gate": [
+          "ckd"
+        ],
+        "not_a_gate": [],
+        "rationale": "CKD is the one case where the direction itself reverses; hyperuricemia changes the choice of food inside the protein group, not the total."
+      },
+      "kb_status": "Ready: CKD modifier flagged as priority because it directly conflicts with the baseline framing",
+      "kb_text": {
+        "baseline": "General target ~0.83 g/kg body weight/day (GRC-031) — a floor to meet, not something most people need to actively limit.",
+        "modifiers": "CKD reverses this: protein may need to be limited rather than met or exceeded, since the kidneys process protein's waste byproducts (DIET-117). Hyperuricemia: purine-rich protein sources specifically (red meat, seafood) are worth moderating — this is about which protein, not how much (DIET-114).",
+        "why": "CKD is the one case where the direction itself reverses, not just the amount — the sharpest test of the baseline+modifier structure. Hyperuricemia modifies food choice within the protein category, not the total.",
+        "status": "Ready — CKD modifier flagged as priority given direct conflict with GRC-031 framing"
+      },
+      "open_questions": [
+        {
+          "code": "DL-4",
+          "text": "The recipe limits table has only a daily_max. This topic needs a floor and a cap, and the cap for CKD has no number."
+        },
+        {
+          "code": "DL-5",
+          "text": "The Healthful Diet book says 0.75 g/kg (pp. 42, 82). GRC-031 says 0.83 g/kg and was not supplied; the KB figure is used here."
+        },
+        {
+          "code": "DL-6",
+          "text": "CKD is not split by stage or by dialysis. Dialysis patients are usually advised more protein, not less, so a doctor must confirm this rule."
+        },
+        {
+          "code": "DL-7",
+          "text": "Plant purines (the book names horse gram and chana dal for vegetarians) are not covered under hyperuricemia."
+        }
+      ]
+    },
+    {
+      "id": "DL-OIL",
+      "topic": "Oil / Saturated fat",
+      "baseline": {
+        "summary": "Rotate between two unrefined oils, changing weekly when heating. No single oil is presented as necessary or better.",
+        "source_ids": [
+          "DIET-102"
+        ],
+        "numeric": null
+      },
+      "modifiers": [
+        {
+          "condition": "dyslipidemia",
+          "effect": "tighten",
+          "applies_to": "food_choice",
+          "numeric": null,
+          "source_ids": [
+            "DIET-115"
+          ],
+          "summary": "Saturated fat (ghee, coconut oil, butter, fatty red meat) is one of the more direct diet levers, so moderation matters more than without a lipid concern."
+        }
+      ],
+      "precedence": {
+        "primary_gate": [
+          "dyslipidemia"
+        ],
+        "not_a_gate": [],
+        "rationale": "Dyslipidemia is the main gate for moderating saturated fat; the general oil-rotation advice applies to everyone."
+      },
+      "kb_status": "Ready: sourced, no open conflict. Oil guidance for CKD and heart disease is not covered: an open gap, not guessed.",
+      "kb_text": {
+        "baseline": "Rotating between two unrefined oils, changing weekly when heating, is the general guidance (DIET-102) — no single oil is presented as necessary or superior.",
+        "modifiers": "If dyslipidemia is present, saturated fat specifically (ghee, coconut oil, butter, fatty red meat) is one of the more direct diet levers — moderation matters more here than without a lipid concern (DIET-115).",
+        "why": "Dyslipidemia is the primary gate for saturated-fat moderation; general oil-rotation guidance applies regardless.",
+        "status": "Ready — sourced, no open conflict. Oil guidance for CKD/heart disease specifically not covered in current source material — open gap, not guessed at."
+      },
+      "open_questions": [
+        {
+          "code": "DL-8",
+          "text": "No number for 'moderation'. The recipe gate can check saturated_fat_g, but there is no limit to check it against."
+        },
+        {
+          "code": "DL-9",
+          "text": "No oil guidance for CKD or heart disease."
+        },
+        {
+          "code": "DL-10",
+          "text": "'Unrefined' is not defined, and the book's coconut-oil and ghee health claims conflict with this modifier and are not used."
+        }
+      ]
+    },
+    {
+      "id": "DL-FRUIT",
+      "topic": "Fruit / Sugar",
+      "baseline": {
+        "summary": "Diabetic and prediabetic members restrict fruit as part of the Golden Rule diet composition.",
+        "source_ids": [
+          "GRC-036"
+        ],
+        "numeric": null
+      },
+      "modifiers": [
+        {
+          "condition": "hyperuricemia",
+          "effect": "no_exception",
+          "applies_to": "food_choice",
+          "numeric": null,
+          "source_ids": [
+            "GRC-036"
+          ],
+          "summary": "Raised uric acid does not unlock a citrus exception. The book's claim that citrus helps uric acid is not adopted; the general fruit restriction still applies."
+        }
+      ],
+      "precedence": {
+        "primary_gate": [
+          "diabetes",
+          "prediabetes"
+        ],
+        "not_a_gate": [
+          "hyperuricemia"
+        ],
+        "rationale": "Resolved Aug 2026 (Dixit and Dr. Ratna): the Golden Rule wins over the book's citrus claim, which had no independent confirmation."
+      },
+      "kb_status": "Ready: resolved Aug 2026",
+      "implemented_in": {
+        "file": "golden_rules.json",
+        "path": "fruit.diabetic and fruit.prediabetic",
+        "version": "GR-PARTIAL-0.3",
+        "effect": "allowed = 'no', DRAFT wording; recipes already leave fruit out for anyone who is not confirmed non-diabetic"
+      },
+      "kb_text": {
+        "baseline": "Diabetic/prediabetic members restrict fruit intake as part of the Golden Rule diet composition.",
+        "modifiers": "Elevated uric acid does NOT unlock a citrus exception — the Healthful Diet book's claim that citrus fruit helps uric acid management is not adopted; the general fruit restriction still applies regardless of uric-acid status.",
+        "why": "Resolved Aug 2026 (Dixit/Ratna): Golden Rule takes precedence over the book's citrus claim, which lacked independent confirmation.",
+        "status": "Ready — resolved Aug 2026, see Diet KB GRC-036."
+      },
+      "open_questions": [
+        {
+          "code": "DL-11",
+          "text": "The sheet says 'restrict'; the Q&A text beside the rule says 'no sweets or fruits'. The draft uses 'no'. The client must confirm."
+        },
+        {
+          "code": "DL-12",
+          "text": "The title says 'Fruit / Sugar' but only fruit is covered. Added sugar has no rule here and is unverifiable in the library."
+        },
+        {
+          "code": "DL-13",
+          "text": "golden.py treats a squeeze of lemon as seasoning, not fruit (FRUIT_EXCEPTIONS). The sheet says no citrus exception. Is lemon in a recipe allowed?"
+        },
+        {
+          "code": "DL-14",
+          "text": "After remission, fruit comes back only with expert clearance, sour seasonal fruit first (Ratna Q&A RAG-02 and RAG-17). golden_rules.json still says 'unknown' for that case."
+        },
+        {
+          "code": "DL-15",
+          "text": "Nothing says what a non-diabetic person with raised uric acid should do about fruit; only the diabetic and prediabetic case is stated."
+        }
+      ]
+    }
+  ],
+  "not_covered": [
+    "Hypertension, CKD and dyslipidemia are named as conditions but not defined here (see the Condition Context sheet).",
+    "No topic has a numeric limit in the KB except added salt (unit unclear) and the 0.83 g/kg protein baseline.",
+    "How to combine three or more conditions is not stated by the KB."
+  ]
+}

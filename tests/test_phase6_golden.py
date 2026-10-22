@@ -67,14 +67,15 @@ def test_fruit_position_by_status(engine):
     unvalidated = g.fruit_position(Status("currently_non_diabetic", True, False))
     assert unvalidated.allowed == "no" and not unvalidated.needs_consultant
     assert g.fruit_position(Status("currently_non_diabetic", True, None)).needs_consultant        # restricted until told
-    assert g.fruit_position(Status("diabetic")).allowed == "unknown"                              # rule not in our data: said, not guessed
-    assert g.fruit_position(Status("prediabetic")).allowed == "unknown"
+    for status in ("diabetic", "prediabetic"):                                                    # KB Decision Logic (DRAFT wording)
+        position = g.fruit_position(Status(status))
+        assert position.allowed == "no" and "no fruit and no sweets" in position.text and not position.needs_status
     assert g.fruit_position(Status("unknown")).needs_status
     assert g.fruit_position(Status("currently_non_diabetic", True, True)).allowed == "unknown"    # validated: base package needed
 
 
 def test_unknown_rules_point_to_the_coach_instead_of_inventing(engine):
-    text = engine.services.golden.fruit_position(Status("diabetic")).text
+    text = engine.services.golden.fruit_position(Status("currently_non_diabetic", True, True)).text      # validated: the KB gives no wording yet
     assert "can't state it here yet" in text and "Dixit coach" in text
     assert "Dixit coach" in engine.services.golden.between_meals()
 
