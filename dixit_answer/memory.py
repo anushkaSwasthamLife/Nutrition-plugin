@@ -315,6 +315,12 @@ class MemoryStore:
             self._db.commit()
             return cur.rowcount > 0
 
+    def last_turn(self, conversation_id: str) -> int:
+        """The highest turn saved for a conversation (0 if none): a chat whose state row is gone must not write over its history."""
+        with self._lock:
+            row = self._db.execute("SELECT MAX(turn) FROM turns WHERE conversation_id = ?", (conversation_id,)).fetchone()
+        return int(row[0] or 0)
+
     def owner(self, conversation_id: str) -> str | None:
         with self._lock:
             row = self._db.execute("SELECT user_id FROM turns WHERE conversation_id = ? LIMIT 1", (conversation_id,)).fetchone()

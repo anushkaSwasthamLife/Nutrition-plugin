@@ -27,8 +27,9 @@
   [hidden] { display: none !important; }
   :focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; border-radius: 6px; }
 
-  .shell { height: 100%; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); max-width: 1120px; margin: 0 auto; }
-  @media (min-width: 900px) { .shell { grid-template-columns: minmax(0, 1fr) 320px; } header { grid-column: 1 / -1; } }
+  .shell { height: 100%; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); max-width: 1440px; margin: 0 auto; }
+  @media (min-width: 1000px) { .shell { grid-template-columns: 270px minmax(0, 1fr) 320px; } header { grid-column: 1 / -1; } }
+  @media (min-width: 1000px) { .shell.nomem { grid-template-columns: minmax(0, 1fr) 320px; } }
 
   header { display: flex; align-items: center; gap: 12px; padding: 10px max(16px, env(safe-area-inset-left)) 10px; background: var(--surface);
     border-bottom: 1px solid var(--line); position: relative; z-index: 5; }
@@ -42,7 +43,7 @@
   .hbtn:hover { border-color: var(--green); }
   .hbtn[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
   .only-small { display: inline-flex; }
-  @media (min-width: 900px) { .only-small { display: none; } }
+  @media (min-width: 1000px) { .only-small { display: none; } }
 
   /* chat column */
   main { display: flex; flex-direction: column; min-height: 0; position: relative; }
@@ -152,9 +153,9 @@
 
   /* profile side panel */
   aside { background: var(--surface); border-left: 1px solid var(--line); padding: 16px; overflow-y: auto; display: none; }
-  @media (min-width: 900px) { aside { display: block; } }
+  @media (min-width: 1000px) { aside { display: block; } }
   aside.sheet { display: block; position: fixed; inset: 0 0 0 auto; width: min(360px, 92vw); z-index: 20; box-shadow: -20px 0 50px -20px rgba(21, 38, 30, .4); }
-  @media (min-width: 900px) { aside.sheet { position: static; width: auto; box-shadow: none; } }
+  @media (min-width: 1000px) { aside.sheet { position: static; width: auto; box-shadow: none; } }
   aside h2 { font-family: var(--serif); font-size: 1.05rem; margin: 0 0 2px; }
   aside .note { font-size: .82rem; color: var(--muted); margin: 0 0 12px; }
   .grp { margin: 14px 0; } .grp > b { display: block; font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
@@ -167,6 +168,43 @@
   .opt input:disabled + span { opacity: .45; }
   aside select { width: 100%; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); }
   .close { float: right; border: 0; background: transparent; font-size: 22px; }
+  /* past conversations side panel */
+  .side { background: var(--surface); border-right: 1px solid var(--line); padding: 14px 12px; overflow-y: auto; display: none; flex-direction: column; gap: 14px; }
+  @media (min-width: 1000px) { .side { display: flex; } }
+  .side.sheet { display: flex; position: fixed; inset: 0 auto 0 0; width: min(330px, 92vw); z-index: 20; box-shadow: 20px 0 50px -20px rgba(21, 38, 30, .4); }
+  @media (min-width: 1000px) { .side.sheet { position: static; width: auto; box-shadow: none; } }
+  .shell.nomem .side { display: none !important; }
+  .shell.nomem .side { display: none !important; }
+  .newbtn { width: 100%; border: 0; background: var(--green); color: #fff; border-radius: 12px; padding: 10px 14px; font-weight: 700; display: flex; gap: 8px; justify-content: center; align-items: center; }
+  .newbtn:hover { background: var(--green-dark); }
+  .side h3 { font-family: var(--serif); font-size: .82rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 4px 4px; }
+  .convs { display: flex; flex-direction: column; gap: 3px; }
+  .daylabel { font-size: .72rem; color: var(--muted); margin: 8px 6px 2px; font-weight: 700; }
+  .conv { display: flex; align-items: stretch; border: 1px solid transparent; border-radius: 12px; }
+  .conv:hover { background: var(--lane); }
+  .conv.on { background: var(--green-soft); border-color: var(--green); }
+  .conv .open { flex: 1; min-width: 0; border: 0; background: transparent; text-align: left; padding: 8px 6px 8px 10px; border-radius: 12px; }
+  .conv .t { display: block; font-size: .9rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .conv .m { display: block; font-size: .74rem; color: var(--muted); }
+  .conv .flag { color: var(--amber); font-weight: 700; display: none; }
+  body.techon .conv .flag { display: inline; }      /* the care team sees which chats need a look (Details on) */
+  .conv .del { border: 0; background: transparent; color: var(--muted); padding: 0 10px; border-radius: 12px; opacity: 0; font-size: 15px; }
+  .conv:hover .del, .conv .del:focus-visible, .conv.on .del { opacity: 1; }
+  .conv .del:hover { color: var(--red); }
+  .emptyconv { font-size: .84rem; color: var(--muted); padding: 6px 8px; }
+  .facts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+  .facts li { display: flex; gap: 6px; align-items: flex-start; font-size: .84rem; background: var(--lane); border-radius: 10px; padding: 6px 8px; }
+  .facts li span.x { flex: 1; overflow-wrap: anywhere; }
+  .facts .stale { color: var(--amber); font-size: .74rem; display: block; }
+  .facts .d { color: var(--muted); font-size: .72rem; display: block; }
+  .facts button { border: 0; background: transparent; color: var(--muted); padding: 0 2px; font-size: 14px; }
+  .facts button:hover { color: var(--red); }
+  .linkbtn { border: 0; background: transparent; color: var(--muted); text-decoration: underline; font-size: .8rem; padding: 4px; text-align: left; }
+  .linkbtn:hover { color: var(--red); }
+  .repeat { border: 1.5px solid var(--green); color: var(--green-dark); background: var(--surface); border-radius: 12px; padding: 6px 10px; font-size: .84rem; text-align: left; }
+  .repeat:hover { background: var(--green-soft); }
+  .remnote { max-width: 760px; width: 100%; margin: 0 auto; font-size: .82rem; color: var(--green-dark); background: var(--green-soft); border-radius: 12px; padding: 6px 12px; }
+  .oldnote { max-width: 760px; width: 100%; margin: 0 auto; font-size: .78rem; color: var(--muted); text-align: center; padding: 2px 0; }
   .scrim { position: fixed; inset: 0; background: rgba(21, 38, 30, .35); z-index: 15; display: none; }
   .scrim.show { display: block; }
   .fine { font-size: .76rem; color: var(--muted); margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); }
@@ -187,7 +225,7 @@
 </style>
 </head>
 <body>
-<div class="shell">
+<div class="shell nomem" id="shell">
   <header>
     <div class="logo" aria-hidden="true">🥗</div>
     <div>
@@ -195,10 +233,27 @@
       <div class="sub"><span class="dot" id="dot"></span><span id="meta">connecting…</span></div>
     </div>
     <span class="spacer"></span>
+    <button class="hbtn only-small" id="openHistory" type="button" aria-label="Past conversations" hidden>🕘 <span class="lbl">History</span></button>
+    <button class="hbtn" id="exportChat" type="button" aria-label="Export this conversation" title="Download this conversation" hidden>⬇️ <span class="lbl">Export</span></button>
     <button class="hbtn only-small" id="openProfile" type="button" aria-label="Your profile">👤 <span class="lbl">Profile</span></button>
     <button class="hbtn" id="tech" type="button" aria-pressed="false" title="Show the checks behind each answer (for the care team)" aria-label="Details">🔍 <span class="lbl">Details</span></button>
     <button class="hbtn" id="newchat" type="button" aria-label="New chat">✨ <span class="lbl">New chat</span></button>
   </header>
+
+  <nav class="side" id="side" aria-label="Past conversations">
+    <button class="newbtn" id="newchat2" type="button">✨ New chat</button>
+    <section aria-labelledby="hConv">
+      <h3 id="hConv">🕘 Past conversations</h3>
+      <div class="convs" id="convs"></div>
+    </section>
+    <section aria-labelledby="hMem">
+      <h3 id="hMem">🧠 What I remember</h3>
+      <button class="repeat" id="repeat" type="button" hidden></button>
+      <ul class="facts" id="facts"></ul>
+      <button class="linkbtn" id="forgetAll" type="button" hidden>Forget everything about me</button>
+    </section>
+    <p class="fine" style="margin-top:auto">Saved on this server for this browser, so you can come back to a chat. Development build only. You can delete any chat or fact.</p>
+  </nav>
 
   <main>
     <div class="scroll" id="scroll">
@@ -276,6 +331,14 @@
     del: function (k) { try { sessionStorage.removeItem(k); } catch (e) {} }
   };
   conversationId = store.get('dixit_cid');
+  /* who is chatting: kept in this browser for good (the tab's own store forgets), so past chats come back on the next visit */
+  var uid = null, memoryOn = false;
+  try { uid = localStorage.getItem('dixit_uid'); } catch (e) { uid = null; }
+  if (!uid || !/^[A-Za-z0-9_.-]{6,64}$/.test(uid)) {
+    var bytes = new Uint8Array(12); (window.crypto || window.msCrypto).getRandomValues(bytes);
+    uid = 'u' + Array.prototype.map.call(bytes, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+    try { localStorage.setItem('dixit_uid', uid); } catch (e) {}
+  }
 
   var STARTERS = [
     ['🍲', 'What can I cook?', 'I have lauki and tomato, what can I cook?'],
@@ -548,8 +611,8 @@
   function openProfile(open) { $('profile').classList.toggle('sheet', open); $('scrim').classList.toggle('show', open); }
   $('openProfile').addEventListener('click', function () { openProfile(true); });
   $('closeProfile').addEventListener('click', function () { openProfile(false); });
-  $('scrim').addEventListener('click', function () { openProfile(false); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') openProfile(false); });
+  $('scrim').addEventListener('click', function () { openProfile(false); showSide(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { openProfile(false); showSide(false); } });
 
   /* ---------- sending ---------- */
   function setBusy(v) { busy = v; sendBtn.disabled = v || !input.value.trim(); input.setAttribute('aria-busy', v ? 'true' : 'false'); }
@@ -564,12 +627,17 @@
     scrollDown(true);
     var started = Date.now();
     fetch('/api/chat', {method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({message: text, conversation_id: conversationId, profile: profile()})})
+      body: JSON.stringify({message: text, conversation_id: conversationId, profile: profile(), user_id: uid})})
       .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
       .then(function (r) {
         conversationId = r.conversation_id; store.set('dixit_cid', conversationId);
+        if (r.remembered && r.remembered.length) {                    // a new chat that started from what is already known
+          var note = document.createElement('div'); note.className = 'remnote';
+          note.textContent = '🧠 Remembered from earlier chats: ' + r.remembered.map(function (x) { return x.label + ' (' + dayName(x.at) + ')'; }).join(' · ');
+          stream.insertBefore(note, wait);
+        }
         var delay = Math.max(0, 450 - (Date.now() - started));       // a short pause so the typing dots are seen, never a long one
-        setTimeout(function () { showAnswer(wait, r); setBusy(false); input.focus(); }, delay);
+        setTimeout(function () { showAnswer(wait, r); setBusy(false); input.focus(); refreshSide(); }, delay);
       })
       .catch(function () {
         wait.querySelector('.bubble').innerHTML = '<p>😕 I could not get an answer just now. Your message was not lost.</p>';
@@ -611,25 +679,114 @@
     var raw = store.get('dixit_history'), saved = [];
     try { saved = raw ? JSON.parse(raw) : []; } catch (e) { saved = []; }
     if (!Array.isArray(saved) || !saved.length || !conversationId) { welcome(); return; }
-    saved.forEach(function (m) {
-      if (!m || typeof m.text !== 'string') return;
-      history.push(m);
-      if (m.role === 'me') { var row = document.createElement('div'); row.className = 'row me'; row.innerHTML = '<div><div class="bubble"></div><div class="time"></div></div>';
-        row.querySelector('.bubble').textContent = m.text; row.querySelector('.time').textContent = m.time || ''; stream.appendChild(row); }
-      else { var r = addRow('bot', '', m.time); var bub = r.querySelector('.bubble');
-        if (m.type === 'emergency' || m.type === 'support_wellbeing') bub.classList.add('plain');
-        bub.innerHTML = m.type === 'support_wellbeing' ? alertHtml(m.text, 'support') : m.type === 'emergency' ? alertHtml(m.text, /tele-manas|14416|really sorry/i.test(m.text) ? 'care' : (/blood sugar/i.test(m.text) ? 'sugar' : 'urgent')) : render(m.text); }
-    });
+    saved.forEach(function (m) { if (m && typeof m.text === 'string') { history.push(m); addStored(m); } });
     scrollDown(true);
   }
-  $('newchat').addEventListener('click', function () {
-    if (conversationId) { fetch('/api/reset/' + encodeURIComponent(conversationId), {method: 'POST'}).catch(function () {}); }
+  /* one saved message, drawn the same way as a live one */
+  function addStored(m) {
+    if (m.role === 'me') { var row = document.createElement('div'); row.className = 'row me'; row.innerHTML = '<div><div class="bubble"></div><div class="time"></div></div>';
+      row.querySelector('.bubble').textContent = m.text; row.querySelector('.time').textContent = m.time || ''; stream.appendChild(row); }
+    else { var r = addRow('bot', '', m.time); var bub = r.querySelector('.bubble');
+      if (m.type === 'emergency' || m.type === 'support_wellbeing') bub.classList.add('plain');
+      bub.innerHTML = m.type === 'support_wellbeing' ? alertHtml(m.text, 'support') : m.type === 'emergency' ? alertHtml(m.text, /tele-manas|14416|really sorry/i.test(m.text) ? 'care' : (/blood sugar/i.test(m.text) ? 'sugar' : 'urgent')) : render(m.text); }
+  }
+  /* A new chat only clears the page. The old chat stays in "Past conversations" and can be opened again. */
+  function newChat() {
     $('search').hidden = true; $('search').innerHTML = '';
     conversationId = null; store.del('dixit_cid'); store.del('dixit_history'); history = [];
-    stream.innerHTML = ''; welcome(); input.focus();
+    stream.innerHTML = ''; welcome(); showSide(false); markActive(); input.focus();
+  }
+  $('newchat').addEventListener('click', newChat);
+  $('newchat2').addEventListener('click', newChat);
+
+  /* ---------- past conversations and what is remembered ---------- */
+  var apiMem = function (tail) { return '/api/memory/' + encodeURIComponent(uid) + (tail || ''); };
+  var apiHist = function (cid, tail) { return '/api/history/' + encodeURIComponent(uid) + '/' + encodeURIComponent(cid) + (tail || ''); };
+  function dayName(epoch) {
+    var d = new Date(epoch * 1000), now = new Date(), start = function (x) { return new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime(); };
+    var diff = Math.round((start(now) - start(d)) / 86400000);
+    if (diff === 0) return 'today'; if (diff === 1) return 'yesterday';
+    return d.toLocaleDateString([], {day: 'numeric', month: 'short', year: d.getFullYear() === now.getFullYear() ? undefined : 'numeric'});
+  }
+  function dayGroup(epoch) {
+    var n = dayName(epoch);
+    if (n === 'today') return 'Today'; if (n === 'yesterday') return 'Yesterday';
+    var age = (Date.now() / 1000 - epoch) / 86400;
+    return age < 7 ? 'Earlier this week' : age < 31 ? 'Earlier this month' : 'Older';
+  }
+  function showSide(open) { $('side').classList.toggle('sheet', open); $('scrim').classList.toggle('show', open); }
+  function markActive() {
+    Array.prototype.forEach.call(document.querySelectorAll('.conv'), function (c) { c.classList.toggle('on', !!conversationId && c.getAttribute('data-cid') === conversationId); });
+    $('exportChat').hidden = !(memoryOn && conversationId);
+  }
+  function renderSide(data) {
+    var convs = $('convs'), lastGroup = '';
+    convs.innerHTML = '';
+    if (!data.conversations.length) { convs.innerHTML = '<div class="emptyconv">Your chats will show up here, so you can come back to them.</div>'; }
+    data.conversations.forEach(function (c) {
+      var g = dayGroup(c.updated);
+      if (g !== lastGroup) { var l = document.createElement('div'); l.className = 'daylabel'; l.textContent = g; convs.appendChild(l); lastGroup = g; }
+      var row = document.createElement('div'); row.className = 'conv'; row.setAttribute('data-cid', c.conversation_id);
+      row.innerHTML = '<button type="button" class="open"><span class="t"></span><span class="m"></span></button><button type="button" class="del" aria-label="Delete this conversation" title="Delete">🗑</button>';
+      row.querySelector('.t').textContent = c.title || 'Conversation';
+      row.querySelector('.m').innerHTML = esc(dayName(c.updated) + ' · ' + c.turns + (c.turns === 1 ? ' question' : ' questions')) + (c.needs_look ? '<span class="flag"> · needs a look</span>' : '');
+      row.querySelector('.open').addEventListener('click', function () { openConversation(c.conversation_id); });
+      row.querySelector('.del').addEventListener('click', function () { deleteConversation(c); });
+      convs.appendChild(row);
+    });
+    var facts = $('facts'); facts.innerHTML = '';
+    data.facts.forEach(function (f) {
+      var li = document.createElement('li');
+      li.innerHTML = '<span class="x"></span><button type="button" aria-label="Forget this">✕</button>';
+      li.querySelector('.x').innerHTML = esc(f.text) + '<span class="d">learned ' + esc(f.date) + '</span>' + (f.stale ? '<span class="stale">old, so I will ask again</span>' : '');
+      li.querySelector('button').addEventListener('click', function () {
+        fetch(apiMem('/fact/' + encodeURIComponent(f.key)), {method: 'DELETE'}).then(refreshSide);
+      });
+      facts.appendChild(li);
+    });
+    if (!data.facts.length) facts.innerHTML = '<li><span class="x">Nothing yet. When you tell me your allergies, diet or health, I keep it here.</span></li>';
+    $('forgetAll').hidden = !(data.facts.length || data.conversations.length);
+    var rep = $('repeat');
+    rep.hidden = !data.suggest;
+    if (data.suggest) { rep.textContent = '🔁 Repeat my last search: ' + data.suggest.label; rep.onclick = function () { newChat(); send(data.suggest.message); }; }
+    markActive();
+  }
+  function refreshSide() {
+    return fetch(apiMem()).then(function (r) { if (!r.ok) throw new Error('off'); return r.json(); }).then(function (data) {
+      memoryOn = true; $('shell').classList.remove('nomem'); $('openHistory').hidden = false; renderSide(data);
+    }).catch(function () { memoryOn = false; $('shell').classList.add('nomem'); $('openHistory').hidden = true; markActive(); });
+  }
+  function openConversation(cid) {
+    if (busy) return;
+    fetch(apiHist(cid)).then(function (r) { if (!r.ok) throw new Error('gone'); return r.json(); }).then(function (data) {
+      $('search').hidden = true; $('search').innerHTML = '';
+      stream.innerHTML = ''; history = [];
+      var old = document.createElement('div'); old.className = 'oldnote';
+      old.textContent = '🕘 Earlier chat from ' + dayName(data.turns[0].at) + '. Type below to carry on.'; stream.appendChild(old);
+      data.turns.forEach(function (t) {
+        var t1 = new Date(t.at * 1000).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+        var a = {role: 'me', text: t.question, time: t1}, b = {role: 'bot', text: t.answer, type: t.type, time: t1};
+        history.push(a, b); addStored(a); addStored(b);
+      });
+      conversationId = cid; store.set('dixit_cid', cid); saveHistory(); clearReplies();
+      showSide(false); markActive(); scrollDown(true); input.focus();
+    }).catch(function () { refreshSide(); });
+  }
+  function deleteConversation(c) {
+    if (!window.confirm('Delete this conversation? This cannot be undone.')) return;
+    fetch(apiHist(c.conversation_id), {method: 'DELETE'}).then(function () {
+      if (conversationId === c.conversation_id) newChat();
+      refreshSide();
+    });
+  }
+  $('forgetAll').addEventListener('click', function () {
+    if (!window.confirm('Forget everything I know about you and delete all your past conversations? This cannot be undone.')) return;
+    fetch(apiMem(), {method: 'DELETE'}).then(function () { newChat(); refreshSide(); });
   });
+  $('exportChat').addEventListener('click', function () { if (conversationId) window.location = apiHist(conversationId, '/export'); });
+  $('openHistory').addEventListener('click', function () { showSide(true); });
   $('tech').addEventListener('click', function () {
-    techOn = !techOn; this.setAttribute('aria-pressed', techOn ? 'true' : 'false');
+    techOn = !techOn; this.setAttribute('aria-pressed', techOn ? 'true' : 'false'); document.body.classList.toggle('techon', techOn);
     Array.prototype.forEach.call(stream.querySelectorAll('.row.bot'), function (row) {
       var old = row.querySelector('details.tech'); if (old) old.remove();
       if (techOn && row._result) techBlock(row, row._result);
@@ -642,7 +799,7 @@
     $('devBanner').hidden = !dev;
   }).catch(function () { $('dot').classList.add('off'); $('meta').textContent = 'offline: start the server'; });
 
-  loadProfile(); syncAllergyUi(); renderUsing(); restore(); updateCount(); input.focus();
+  loadProfile(); syncAllergyUi(); renderUsing(); restore(); updateCount(); input.focus(); refreshSide();
 })();
 </script>
 </body>

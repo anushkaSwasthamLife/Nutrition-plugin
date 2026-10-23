@@ -1,0 +1,28 @@
+{
+  "version": "GR-0.1.0",
+  "status": "PROPOSED",
+  "note": "Rules for the general recipe fallback: when no approved recipe exists for a dish, the model writes a recipe as plain ingredient names and steps, and the code checks the words below plus the person's allergies, diet, avoid list and the Golden Rules before anything is shown. No amounts and no nutrition numbers are ever shown for these recipes. Every word list, the label and the limits need a dietitian and a doctor to review them before production; production refuses this file while it is PROPOSED.",
+  "label": "General recipe written by an AI helper. It is not a Swastham-approved recipe and its nutrition has not been calculated, so it is not checked against your calorie, sugar or salt limits. It was only checked for your allergies, diet and foods you avoid. Your doctor or dietitian has the final say.",
+  "limits": {
+    "ingredients_min": 3,
+    "ingredients_max": 14,
+    "steps_min": 2,
+    "steps_max": 6,
+    "attempts": 2
+  },
+  "diet_words": {
+    "meat": ["chicken", "mutton", "lamb", "goat", "beef", "pork", "bacon", "ham", "sausage", "salami", "keema", "mince", "minced", "meat", "turkey", "duck", "liver", "gizzard", "bone", "bones", "gelatin", "gelatine", "lard"],
+    "fish": ["fish", "prawn", "shrimp", "crab", "lobster", "squid", "calamari", "tuna", "salmon", "pomfret", "rohu", "hilsa", "surmai", "bombil", "sardine", "mackerel", "anchovy", "seafood", "oyster", "mussel", "clam", "fish sauce"],
+    "egg": ["egg", "omelette", "omelet", "anda", "mayonnaise"],
+    "jain_extra": ["onion", "garlic", "potato", "aloo", "carrot", "beetroot", "radish", "mooli", "turnip", "ginger", "sweet potato", "mushroom", "yam", "arbi", "suran", "spring onion", "shallot", "leek", "pyaz", "lahsun", "adrak", "tapioca"]
+  },
+  "sugar_words": ["sugar", "jaggery", "gur", "honey", "syrup", "molasses", "sweetener", "sweetened", "condensed milk", "icing", "caramel", "dessert", "sweet dish", "gulab jamun", "halwa", "kheer", "ice cream", "chocolate", "cake", "cookie", "biscuit"],
+  "condition_words": {
+    "hypertension": ["pickle", "achar", "papad", "soy sauce", "ketchup", "stock cube", "bouillon", "ajinomoto", "msg", "salted butter", "processed cheese"],
+    "diabetes": ["maida", "white bread", "fruit juice", "cornflour slurry", "refined flour"],
+    "obesity": ["deep fry", "deep fried", "deep frying", "cream", "mayonnaise"]
+  },
+  "claim_words": ["healthy", "healthier", "good for", "boost", "boosts", "immunity", "detox", "low calorie", "low fat", "low carb", "diabetic friendly", "diabetes friendly", "weight loss", "heart healthy", "nutritious", "superfood", "guilt free", "light on", "protein rich", "high protein"],
+  "quantity_words": ["cup", "cups", "spoon", "spoons", "tablespoon", "tablespoons", "teaspoon", "teaspoons", "tbsp", "tsp", "bowl", "bowls", "katori", "glass", "handful", "pinch", "gram", "grams", "kg", "ml", "litre", "litres", "liter", "liters", "ladle", "dollop", "inch", "half", "quarter", "dozen"],
+  "number_words": ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "twelve", "twenty"]
+}

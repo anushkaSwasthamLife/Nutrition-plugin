@@ -78,12 +78,17 @@ class Settings:
     llm_model: str = "openai/gpt-oss-120b"
     llm_timeout_seconds: int = 30
     llm_reasoning: str = "low"
+    memory: bool = True                          # remember facts and keep past conversations per person (development only; off in production)
     port: int = 8100                             # not 8000 / 5173: those are the Swastham website servers
     host: str = LOOPBACK_HOST                    # 127.0.0.1 = this machine only; 0.0.0.0 = reachable from the network (DIXIT_HOST)
 
     @property
     def state_db(self) -> Path:
         return self.var_dir / "chat_state.sqlite3"
+
+    @property
+    def memory_db(self) -> Path:
+        return self.var_dir / "memory.sqlite3"
 
     @property
     def audit_log(self) -> Path:
@@ -118,6 +123,7 @@ def load_settings(**overrides) -> Settings:
         llm_model=env.get("LLM_MODEL") or "openai/gpt-oss-120b",
         llm_timeout_seconds=int(env.get("LLM_TIMEOUT_SECONDS") or 30),
         llm_reasoning=env.get("LLM_REASONING", "low"),
+        memory=env.get("DIXIT_MEMORY", "on").strip().lower() not in {"off", "0", "false", "no"},
         port=int(env.get("DIXIT_PORT") or 8100),
         host=parse_host(env.get("DIXIT_HOST", "")),
     )

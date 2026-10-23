@@ -21,14 +21,17 @@ from .dish_lookup import build_dish_lookup, find_all_in_text
 from .lists import apply_blocked_records
 from .foods import FoodIndex
 from .hindi import translate as hindi_translate
+from .translate_reply import ReplyTranslator, detect_language, reply_translations
 from .explain import explain_lines
 from .semantics import SemanticJudge
 from .llm import LLMError, make_llm
 from .emergency import EmergencyRules
 from .harmful import HarmfulRules
+from .memory import MemoryStore, apply_memory, clean_user_id, collect, findings_for
 from .loader import LoadError, load_library, load_manifest, load_swastham_data
 from .person import AllergyFilter, apply_profile_safety, build_person, sanitize_profile
 from .planner import make_plan
+from .general_recipe import GeneralRecipeService
 from .recipes import RecipeService
 from .services import Services
 from .status import apply_status, parse_status
@@ -52,6 +55,8 @@ class TurnResult:
     fallback: bool = False
     records: list = field(default_factory=list)
     timing_ms: int = 0
+    language: str = "en"                                 # the language the answer is shown in
+    remembered: list = field(default_factory=list)       # what a new chat took from memory: [{"key", "label", "at"}]
 
 
 class AuditLog:
@@ -85,13 +90,18 @@ class Engine:
         self.allergy = AllergyFilter(self.data.allergen_map, self.index, self.data.black_lists)
         self.store = StateStore(self.settings.state_db)
         self.audit = AuditLog(self.settings.audit_log)
+        # Past conversations and remembered facts: development only until a privacy and consent decision is made (health data, DPDP Act).
+        self.memory = MemoryStore(self.settings.memory_db) if (self.settings.memory and self.settings.environment != "production") else None
         self.llm = llm or make_llm(self.settings)
+        self.translator = ReplyTranslator(self.llm, self.index, self.words)
         self.judge = SemanticJudge(self.llm, self.index)          # what a still-unknown word means (only with a real model)
         ai_drafting = bool(manifest["environments"][self.settings.environment].get("recipe_ai_drafting"))
         self.recipes = RecipeService(self.library, self.data, self.index, self.allergy, self.llm, ai_drafting,
                                      self.services.golden)
+        self.general = GeneralRecipeService(self.llm, self.data.general_recipe_rules, self.allergy, self.index, self.words,
+                                            self.data.white_lists, self.settings.environment, self.services.golden, ai_drafting)
         self.dishes = build_dish_lookup(self.settings, self.library, self.data.dish_rules, self.words["spelling_map"])
-        self.composer = Composer(self.services, self.index, self.words, self.recipes, self.allergy, self.dishes)
+        self.composer = Composer(self.services, self.index, self.words, self.recipes, self.allergy, self.dishes, self.general)
         self.versions = {
             "runtime": manifest["runtime_id"],
             "library": manifest["library"]["version"],
@@ -109,6 +119,8 @@ class Engine:
             "emergency_rules": self.data.emergency_rules["version"],
             "harmful_intent_rules": self.data.harmful_intent_rules["version"],
             "hinglish_glossary": self.data.hinglish_glossary["version"],
+            "general_recipe_rules": self.data.general_recipe_rules["version"],
+            "reply_translations": self.data.reply_translations["version"],
             "white_lists": self.data.white_lists["version"],
             "black_lists": self.data.black_lists["version"],
             "dish_rules": self.data.dish_rules["version"],
@@ -121,11 +133,17 @@ class Engine:
         return [{"span": span, "exact": span in self.dishes.exact} for span, _result in find_all_in_text(self.dishes, cleaned)]
 
     # ------------------------------------------------------------------
-    def answer(self, message: str, conversation_id: str | None = None, profile: dict | None = None) -> TurnResult:
+    def answer(self, message: str, conversation_id: str | None = None, profile: dict | None = None, user_id: str | None = None) -> TurnResult:
         started = time.perf_counter()
         conversation_id = conversation_id or uuid.uuid4().hex
         text = (message or "").strip()
         state = self.store.load(conversation_id)
+        user_id = clean_user_id(user_id) if self.memory is not None else None
+        remembered: list = []
+        if user_id and state.turn == 0:
+            state.turn = self.memory.last_turn(conversation_id)       # state lost but history kept: carry on numbering, never overwrite
+            if state.turn == 0:                            # a new chat starts from what is already known about this person
+                remembered = apply_memory(state, self.memory.facts(user_id))
 
         if not text or len(text) > MAX_MESSAGE_CHARS:
             reply = "Please send your question in a few lines, and I'll help."
@@ -137,7 +155,9 @@ class Engine:
         if profile.get("diet_type") and state.food_preference == "unknown":
             state.food_preference = profile["diet_type"]       # the app already knows: never ask it in the chat
         original = text
-        text = hindi_translate(text)                      # Devanagari and Roman-Hindi question shapes, read as plain words
+        rewritten = hindi_translate(text)
+        state.language = detect_language(original, rewritten, state.language)
+        text = rewritten                                  # Devanagari and Roman-Hindi question shapes, read as plain words
         gate_text = original if text == original else f"{original} . {text}"      # the emergency phrases include Devanagari ones
         gate = safety_gate.check(gate_text, state, self.words, self.emergency, self.harmful)
         state.safety_status.update(gate.updates)
@@ -224,7 +244,10 @@ class Engine:
             # Even the template broke a critical check: nothing unchecked is shown.
             final, ai_used, fallback = SAFE_FALLBACK, False, True
 
-        # 9 deliver + log + save state
+        # 9 deliver + log + save state. The English answer above passed every check; a Hindi chat gets it in Hindi (translate_reply.py).
+        english = final
+        translation = self.translator.translate(english, state.language, plan.type, text)
+        final = translation.text
         state.turn += 1
         if plan.type in {"emergency", "harmful_intent"}:          # both get the one check-in line on a later turn
             state.emergency_turn, state.emergency_category = state.turn, plan.emergency_category
@@ -281,14 +304,16 @@ class Engine:
         elapsed = int((time.perf_counter() - started) * 1000)
         all_checks = [r.as_dict() for r in ai_results + final_results]
         result = TurnResult(conversation_id, state.turn, final, plan.type, plan.as_dict(), all_checks, ai_used, fallback,
-                            sorted({f.record_id for f in draft.facts}), elapsed)
-        self.audit.append({
+                            sorted({f.record_id for f in draft.facts}), elapsed, translation.language, remembered)
+        record = {
             "kind": "turn", "at": time.strftime("%Y-%m-%dT%H:%M:%S"), "conversation_id": conversation_id, "turn": state.turn,
             "environment": self.settings.environment, "versions": self.versions, "type": plan.type, "plan": plan.as_dict(),
             "risk_level": state.risk_level(), "records": result.records, "locked": draft.locked, "template": template,
             "checks": all_checks, "ai": {"provider": getattr(self.llm, "name", "mock"), "model": getattr(self.llm, "model", ""),
                                          "used": ai_used, "fallback": fallback},
             "final_text": final, "ms": elapsed,
+            "language": {"chat": state.language, "shown": translation.language, "method": translation.method,
+                         "english_text": english if translation.method != "none" else None, "problems": translation.problems[:6]},
             "emergency": ({"category": gate.em.category, "matched": gate.em.matched, "negated": gate.em.negated,
                            "glucose_mg_dl": gate.em.glucose_mg_dl, "checkin": "emergency_checkin" in plan.blocks}
                           if (gate.em.matched or gate.em.negated or "emergency_checkin" in plan.blocks) else None),
@@ -299,7 +324,20 @@ class Engine:
                         "gate_passed": bool(draft.recipe.gate and draft.recipe.gate.passed), "repairs": draft.recipe.repairs}
                        if draft.recipe else None),
             "recipe_trace": draft.recipe_trace,
-        })
+            "general_recipe": draft.general,
+        }
+        self.audit.append(record)
+        if user_id:
+            self.memory.remember(user_id, collect(state), conversation_id)
+            self.memory.record_turn(user_id, conversation_id, state.turn, original, final,
+                                    findings_for(plan.type, plan.as_dict(), all_checks, ai_used, fallback, record))
+        if draft.general and draft.general.get("shown"):
+            self.audit.append({"kind": "general_recipe", "at": time.strftime("%Y-%m-%dT%H:%M:%S"), "conversation_id": conversation_id,
+                               "turn": state.turn, "request": draft.general["request"], "name": draft.general["name"],
+                               "method": draft.general["method"], "ingredients": draft.general["ingredients"],
+                               "steps": draft.general["steps"], "attempts": draft.general["attempts"],
+                               "rules": self.versions["general_recipe_rules"], "model": getattr(self.llm, "model", ""),
+                               "reviewed": False})
         for item in draft.unknown_items:
             self.audit.append({"kind": "unknown_item", "at": time.strftime("%Y-%m-%dT%H:%M:%S"), "conversation_id": conversation_id,
                                "turn": state.turn, "word": str(item["word"])[:80], "item_kind": item["kind"],
@@ -316,6 +354,8 @@ class Engine:
             raise ValueError(f"feedback must be one of {sorted(allowed)}")
         self.audit.append({"kind": "feedback", "at": time.strftime("%Y-%m-%dT%H:%M:%S"), "conversation_id": conversation_id,
                            "turn": turn, "feedback": kind, "note": note[:500]})
+        if self.memory is not None:
+            self.memory.record_feedback(conversation_id, turn, kind)
 
     def reset(self, conversation_id: str) -> None:
         self.store.delete(conversation_id)

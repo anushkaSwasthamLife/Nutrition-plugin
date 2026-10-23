@@ -57,6 +57,8 @@
     "emergency_rules": "emergency_rules.json",
     "harmful_intent_rules": "harmful_intent_rules.json",
     "hinglish_glossary": "hinglish_glossary.json",
+    "reply_translations": "reply_translations.json",
+    "general_recipe_rules": "general_recipe_rules.json",
     "support_content": "support_content.json",
     "white_lists": "white_lists.json",
     "black_lists": "black_lists.json",

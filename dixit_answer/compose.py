@@ -45,6 +45,7 @@ class Draft:
     unknown_items: list = field(default_factory=list)       # [{"word", "kind": ingredient|dish, "suggested_food_id"}] for the dietitian queue
     backlog_request: bool = False                           # no checked recipe: goes to the dietitian's recipe backlog
     suppress: set = field(default_factory=set)              # blocks the recipe flow drops (this request only: Composer is shared)
+    general: dict | None = None                             # general recipe fallback: what was asked, tried and shown (audit)
 
     def template(self) -> str:
         return "\n".join(self.lines)
@@ -95,8 +96,9 @@ def _cap(text: str) -> str:
 
 
 class Composer:
-    def __init__(self, services: Services, index: FoodIndex, word_lists: dict, recipes=None, allergy=None, dishes=None):
+    def __init__(self, services: Services, index: FoodIndex, word_lists: dict, recipes=None, allergy=None, dishes=None, general=None):
         self.dishes = dishes
+        self.general = general
         self.s = services
         self.index = index
         self.words = word_lists
@@ -388,9 +390,12 @@ class Composer:
                                suggestion=None if reply else u.suggestion, wants_list=plan.wants_list,
                                home_foods=list(state.home_foods), exclude=list(plan.exclude_recipes), exclude_foods=list(plan.exclude_foods))
         d.recipe_trace = out.trace
+        general = None
         if plan.unknown_dish and not plan.reply_slot:
             d.unknown_items.append({"word": plan.unknown_dish, "kind": "dish", "suggested_food_id": ""})
-            d.lines.append(lock("T", f"I don't have a checked recipe for \"{plan.unknown_dish}\" yet; I've passed it to our dietitian."))
+            general = self._try_general(plan.unknown_dish, person, d) if out.status in {"tips_only", "choices"} else None
+            meanwhile = " Meanwhile, here is a general recipe:" if general is not None and general.status == "recipe" else ""
+            d.lines.append(lock("T", f"I don't have a checked recipe for \"{plan.unknown_dish}\" yet; I've passed it to our dietitian.{meanwhile}"))
             d.backlog_request = True
         for fid, why in out.left_out:
             text = f"I left out {self.index.name(fid)} because of {why}."
@@ -414,6 +419,11 @@ class Composer:
             d.lines.append(lock("T", "I left out " + _join([f'"{w}"' for w in out.unknown_words]) +
                                 " because it isn't in our food list yet; it has been passed to our dietitian."))
             d.backlog_request = True
+        if general is not None and out.status in {"tips_only", "choices"}:
+            if general.status == "recipe":                   # the dish asked for by name comes first; the approved list is not offered instead
+                self._render_general(general.recipe, d, lock)
+                return
+            self._general_declined(general, d, lock)
         if out.status == "choices":
             for dish, reasons in out.rejected:
                 text = f"I can't show {dish} for you: {reasons[0]}."
@@ -482,6 +492,16 @@ class Composer:
         if u is not None and (getattr(u, "preference", "") == "non_vegetarian" or plan.target_include) and profile_diet in {"vegetarian", "jain"}:
             d.lines.append(lock("T", f"Your profile says {profile_diet}, so I only looked at {profile_diet} dishes."))
         only_nonveg = plan.target_diet == "non_vegetarian" and profile_diet == "non_vegetarian"
+        general_shown = False
+        if plan.meat_recipe and plan.target_mode == "new" and self.dishes is not None:
+            general = self._try_general(f"{_join(sorted(plan.target_include))} recipe", person, d)
+            if general is not None and general.status == "recipe":
+                d.backlog_request, general_shown = True, True
+                d.lines.append(lock("T", f"I don't have an approved {_join(sorted(plan.target_include))} recipe yet, so I've passed your request to our dietitian. "
+                                         "Here is a general recipe meanwhile:"))
+                self._render_general(general.recipe, d, lock)
+            elif general is not None:
+                self._general_declined(general, d, lock)
         diet_only = not plan.targets and not plan.target_include
         adjective = {"non_vegetarian": "non-veg", "vegetarian": "vegetarian", "jain": "Jain", "egg": "egg"}.get(plan.target_diet, "") if (only_nonveg or diet_only) else ""
         kind = f"{adjective} dish".strip()                           # "Non-veg dishes with high protein and few calories:"
@@ -516,8 +536,9 @@ class Composer:
             state.target_shown = (state.target_shown + [m.code for m in matches])[-60:]
         if plan.meat_recipe and plan.target_mode == "new":
             d.backlog_request = True                                 # the dietitian sees the request for the backlog
-            d.lines.append(lock("T", f"I don't have an approved {_join(sorted(plan.target_include))} recipe yet, so I've passed your request to our dietitian. "
-                                     "Meanwhile, these dishes from our library have it:"))
+            d.lines.append(lock("T", "These dishes from our library have it:" if general_shown else
+                                f"I don't have an approved {_join(sorted(plan.target_include))} recipe yet, so I've passed your request to our dietitian. "
+                                "Meanwhile, these dishes from our library have it:"))
         if plan.extra_foods:
             d.lines.append(lock("T", f"I picked these by {_join(sorted(plan.target_include))} only; I can't pick dishes by {_join(plan.extra_foods)} as well yet."))
         if relaxed:
@@ -540,6 +561,39 @@ class Composer:
             shown = f"about {_join(pieces)} {serving}"
             d.lines.append("- " + m.name.split(" (")[0] + ": " + lock("F", shown + " (dev data)"))
         d.lines.append(lock("T", "These are the values stored for each dish, one serving as shown. They are not a meal plan, and amounts change with how it is cooked."))
+
+    def _try_general(self, request: str, person, d: Draft):
+        """The general recipe fallback (development only): returns its outcome, or None when it is not available."""
+        if self.general is None:
+            return None
+        from .person import Person
+        out = self.general.run(request, person if person is not None else Person(), d.blocked_foods)
+        if out.status == "skipped" and out.reasons != ["allergies"]:
+            return None
+        d.general = {"request": out.request, "status": out.status, "attempts": out.attempts, "trace": out.trace,
+                     "reasons": out.reasons[:4], "shown": False}
+        return out
+
+    def _render_general(self, recipe, d: Draft, lock) -> None:
+        d.general.update({"shown": True, "name": recipe.name, "method": recipe.method, "ingredients": recipe.ingredients,
+                          "steps": recipe.steps})
+        d.lines.append("**" + lock("T", recipe.name) + "**")
+        d.lines.append(lock("T", recipe.label))
+        d.lines.append("**You need:**")
+        for item in recipe.ingredients:
+            d.lines.append("- " + lock("K", item))
+        d.lines.append("**How:**")
+        for step in recipe.steps:
+            d.lines.append("- " + lock("K", step))
+
+    def _general_declined(self, out, d: Draft, lock) -> None:
+        if out.reasons == ["allergies"]:
+            d.lines.append(lock("T", "I don't know your allergies yet, so I haven't written a general recipe. "
+                                     "Tell me any you have, or say none, and ask again."))
+        elif out.reasons:
+            text = f"I can't write a general recipe for this: {out.reasons[0]}."
+            d.exclusion_texts.append(text)
+            d.lines.append(lock("T", text))
 
     @staticmethod
     def _remember_shown(state, recipe_ids) -> None:

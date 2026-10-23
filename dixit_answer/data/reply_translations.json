@@ -1,0 +1,119 @@
+{
+  "version": "RT-0.1.0",
+  "status": "PROPOSED",
+  "signed_by": null,
+  "signed_on": null,
+  "note": "Fixed Hindi (Devanagari) and Roman-Hindi wording for the emergency, harmful-intent and fallback replies, written as drafts by the developer. Each entry carries the English text it translates: if the English reply changes, the entry stops matching and the English reply is shown, so a reviewer must re-check it. Needs a native Hindi speaker and the doctor / mental-health reviewer who sign the English replies. Production refuses this file while it is PROPOSED.",
+  "fixed": {
+    "E5.reply": {
+      "english": "I'm really sorry you're feeling this way, and I'm glad you said it. Please talk to someone right now: call Tele-MANAS on 14416 (free, any time, in many Indian languages), or 112 if you might act on these thoughts or are in danger. If you can, tell someone near you and stay with them.",
+      "hi": "मुझे बहुत दुख है कि आप ऐसा महसूस कर रहे हैं, और मुझे खुशी है कि आपने यह कहा। कृपया अभी किसी से बात करें: Tele-MANAS को 14416 पर कॉल करें (मुफ़्त, किसी भी समय, कई भारतीय भाषाओं में), या अगर आप खुद को नुकसान पहुँचा सकते हैं या खतरे में हैं तो 112 पर कॉल करें। हो सके तो अपने पास किसी को बताएँ और उनके साथ रहें।",
+      "hinglish": "Mujhe bahut dukh hai ki aap aisa mehsoos kar rahe hain, aur mujhe khushi hai ki aapne yeh kaha. Kripya abhi kisi se baat karein: Tele-MANAS ko 14416 par call karein (muft, kisi bhi samay, kai Bharatiya bhashaon mein), ya agar aap khud ko nuksan pahuncha sakte hain ya khatre mein hain to 112 par call karein. Ho sake to apne paas kisi ko batayein aur unke saath rahein."
+    },
+    "E5.checkin": {
+      "english": "Before we carry on: if those feelings are still there, please call Tele-MANAS on 14416 now, or 112 if you are in danger.",
+      "hi": "आगे बढ़ने से पहले: अगर वे भावनाएँ अब भी हैं, तो कृपया अभी Tele-MANAS को 14416 पर कॉल करें, या खतरे में हों तो 112 पर।",
+      "hinglish": "Aage badhne se pehle: agar woh bhavnayein ab bhi hain, to kripya abhi Tele-MANAS ko 14416 par call karein, ya khatre mein hon to 112 par."
+    },
+    "E3.reply": {
+      "english": "This could be an emergency. If you or the person with you has trouble breathing, or swelling of the lips, tongue, face or throat, call 112 now. If an adrenaline pen (EpiPen) has been prescribed, use it as you were shown. Don't wait to see if it gets better, and don't eat or drink anything more.",
+      "hi": "यह एक आपात स्थिति हो सकती है। अगर आपको या आपके साथ वाले व्यक्ति को साँस लेने में तकलीफ़ है, या होंठ, जीभ, चेहरे या गले में सूजन है, तो अभी 112 पर कॉल करें। अगर एड्रेनालिन पेन (EpiPen) लिखी गई है, तो उसे वैसे ही इस्तेमाल करें जैसे आपको बताया गया था। यह देखने के लिए इंतज़ार न करें कि आराम होता है या नहीं, और अब कुछ और खाएँ-पिएँ नहीं।",
+      "hinglish": "Yeh ek aapat sthiti ho sakti hai. Agar aapko ya aapke saath wale vyakti ko saans lene mein taklif hai, ya hont, jeebh, chehre ya gale mein sujan hai, to abhi 112 par call karein. Agar adrenaline pen (EpiPen) likhi gayi hai, to use waise hi istemal karein jaise aapko bataya gaya tha. Yeh dekhne ke liye intezaar na karein ki aaram hota hai ya nahi, aur ab kuch aur khayein-piyein nahi."
+    },
+    "E3.checkin": {
+      "english": "Before we carry on: if breathing is still hard or the swelling is still there, please call 112 now.",
+      "hi": "आगे बढ़ने से पहले: अगर साँस लेने में अब भी तकलीफ़ है या सूजन अब भी है, तो कृपया अभी 112 पर कॉल करें।",
+      "hinglish": "Aage badhne se pehle: agar saans lene mein ab bhi taklif hai ya sujan ab bhi hai, to kripya abhi 112 par call karein."
+    },
+    "E2.reply": {
+      "english": "This could be an emergency. Chest pain or tightness, or a face drooping, slurred speech or weakness on one side, needs help now: call 112. Don't drive yourself. Note the time it started.",
+      "hi": "यह एक आपात स्थिति हो सकती है। सीने में दर्द या जकड़न, या चेहरा टेढ़ा होना, बोलने में लड़खड़ाहट, या एक तरफ़ कमज़ोरी होने पर तुरंत मदद चाहिए: 112 पर कॉल करें। खुद गाड़ी न चलाएँ। ध्यान रखें कि यह कब शुरू हुआ।",
+      "hinglish": "Yeh ek aapat sthiti ho sakti hai. Seene mein dard ya jakdan, ya chehra tedha hona, bolne mein ladkhadahat, ya ek taraf kamzori hone par turant madad chahiye: 112 par call karein. Khud gaadi na chalayein. Dhyan rakhein ki yeh kab shuru hua."
+    },
+    "E2.checkin": {
+      "english": "Before we carry on: if the chest pain, weakness or speech problem is still there, please call 112 now.",
+      "hi": "आगे बढ़ने से पहले: अगर सीने का दर्द, कमज़ोरी या बोलने की दिक्कत अब भी है, तो कृपया अभी 112 पर कॉल करें।",
+      "hinglish": "Aage badhne se pehle: agar seene ka dard, kamzori ya bolne ki dikkat ab bhi hai, to kripya abhi 112 par call karein."
+    },
+    "E6.reply": {
+      "english": "This could be an emergency. If someone has fainted, had a fit, is vomiting blood, or may have taken poison or too many tablets, call 112 now. If they are not awake, turn them on their side and don't give them anything to eat or drink.",
+      "hi": "यह एक आपात स्थिति हो सकती है। अगर कोई बेहोश हो गया है, उसे दौरा पड़ा है, खून की उल्टी कर रहा है, या उसने ज़हर या बहुत सारी गोलियाँ खा ली हो सकती हैं, तो अभी 112 पर कॉल करें। अगर वे होश में नहीं हैं, तो उन्हें करवट से लिटाएँ और खाने-पीने को कुछ न दें।",
+      "hinglish": "Yeh ek aapat sthiti ho sakti hai. Agar koi behosh ho gaya hai, use daura pada hai, khoon ki ulti kar raha hai, ya usne zehar ya bahut saari goliyan kha li ho sakti hain, to abhi 112 par call karein. Agar woh hosh mein nahi hain, to unhein karvat se litayein aur khane-peene ko kuch na dein."
+    },
+    "E6.checkin": {
+      "english": "Before we carry on: if anyone is still unwell after what happened, please call 112 now.",
+      "hi": "आगे बढ़ने से पहले: अगर जो हुआ उसके बाद कोई अब भी ठीक महसूस नहीं कर रहा, तो कृपया अभी 112 पर कॉल करें।",
+      "hinglish": "Aage badhne se pehle: agar jo hua uske baad koi ab bhi theek mehsoos nahi kar raha, to kripya abhi 112 par call karein."
+    },
+    "E1.reply": {
+      "english": "This could be low blood sugar, which can be an emergency. If you feel shaky, sweaty, confused or faint, check your sugar if you can and follow the low-sugar steps your doctor gave you now. If the person is very drowsy, confused, can't swallow or isn't getting better, call 112.",
+      "hi": "यह कम ब्लड शुगर हो सकता है, जो आपात स्थिति भी हो सकती है। अगर आपको काँपना, पसीना, उलझन या चक्कर महसूस हो रहा है, तो हो सके तो अपनी शुगर जाँचें और अभी वे कम-शुगर वाले कदम उठाएँ जो आपके डॉक्टर ने बताए हैं। अगर व्यक्ति बहुत उनींदा या उलझन में है, निगल नहीं पा रहा, या ठीक नहीं हो रहा, तो 112 पर कॉल करें।",
+      "hinglish": "Yeh kam blood sugar ho sakta hai, jo aapat sthiti bhi ho sakti hai. Agar aapko kaanpna, paseena, uljhan ya chakkar mehsoos ho raha hai, to ho sake to apni sugar jaanchein aur abhi woh kam-sugar wale kadam uthayein jo aapke doctor ne bataye hain. Agar vyakti bahut unindha ya uljhan mein hai, nigal nahi pa raha, ya theek nahi ho raha, to 112 par call karein."
+    },
+    "E1.checkin": {
+      "english": "Before we carry on: if you still feel shaky, sweaty, confused or faint, please follow your low-sugar steps or call 112 now.",
+      "hi": "आगे बढ़ने से पहले: अगर आपको अब भी काँपना, पसीना, उलझन या चक्कर महसूस हो रहा है, तो कृपया अपने कम-शुगर वाले कदम उठाएँ या अभी 112 पर कॉल करें।",
+      "hinglish": "Aage badhne se pehle: agar aapko ab bhi kaanpna, paseena, uljhan ya chakkar mehsoos ho raha hai, to kripya apne kam-sugar wale kadam uthayein ya abhi 112 par call karein."
+    },
+    "E7.reply": {
+      "english": "During pregnancy, bleeding, strong pain, a bad headache with blurred vision, fits, or the baby moving less needs help now: call your doctor or 112, or go to the nearest hospital.",
+      "hi": "गर्भावस्था में खून बहना, तेज़ दर्द, धुंधली नज़र के साथ तेज़ सिरदर्द, दौरे, या बच्चे की हलचल कम होने पर तुरंत मदद चाहिए: अपने डॉक्टर या 112 पर कॉल करें, या नज़दीकी अस्पताल जाएँ।",
+      "hinglish": "Garbhavastha mein khoon bahna, tez dard, dhundhli nazar ke saath tez sirdard, daure, ya bachche ki halchal kam hone par turant madad chahiye: apne doctor ya 112 par call karein, ya nazdiki aspatal jayein."
+    },
+    "E7.checkin": {
+      "english": "Before we carry on: if the bleeding, pain or other sign is still there, please call your doctor or 112 now.",
+      "hi": "आगे बढ़ने से पहले: अगर खून बहना, दर्द या कोई और संकेत अब भी है, तो कृपया अभी अपने डॉक्टर या 112 को कॉल करें।",
+      "hinglish": "Aage badhne se pehle: agar khoon bahna, dard ya koi aur sanket ab bhi hai, to kripya abhi apne doctor ya 112 ko call karein."
+    },
+    "E4.reply": {
+      "english": "Very high blood sugar can become dangerous. Please call your doctor today. If you are also vomiting, breathing fast or deeply, very sleepy or confused, call 112 now.",
+      "hi": "बहुत ज़्यादा ब्लड शुगर खतरनाक हो सकती है। कृपया आज ही अपने डॉक्टर को कॉल करें। अगर आपको उल्टी भी हो रही है, साँस तेज़ या गहरी चल रही है, बहुत नींद आ रही है या उलझन है, तो अभी 112 पर कॉल करें।",
+      "hinglish": "Bahut zyada blood sugar khatarnak ho sakti hai. Kripya aaj hi apne doctor ko call karein. Agar aapko ulti bhi ho rahi hai, saans tez ya gehri chal rahi hai, bahut neend aa rahi hai ya uljhan hai, to abhi 112 par call karein."
+    },
+    "E4.checkin": {
+      "english": "Before we carry on: if your sugar is still very high, or you are vomiting or very sleepy, please call your doctor or 112 now.",
+      "hi": "आगे बढ़ने से पहले: अगर आपकी शुगर अब भी बहुत ज़्यादा है, या आपको उल्टी हो रही है या बहुत नींद आ रही है, तो कृपया अभी अपने डॉक्टर या 112 को कॉल करें।",
+      "hinglish": "Aage badhne se pehle: agar aapki sugar ab bhi bahut zyada hai, ya aapko ulti ho rahi hai ya bahut neend aa rahi hai, to kripya abhi apne doctor ya 112 ko call karein."
+    },
+    "H1.reply": {
+      "english": "I can't help with laxatives, water pills or throwing up to lose weight. They take out water, not fat, and they can seriously harm your body. If you feel you have to do this, or you feel bad after eating, please talk to someone today: Tele-MANAS 14416 is free and open 24 hours, or speak to your doctor. When you feel ready, I'm happy to help with filling meals.",
+      "hi": "वज़न घटाने के लिए जुलाब, पानी की गोलियाँ या उल्टी करने में मैं मदद नहीं कर सकता। इनसे शरीर से पानी निकलता है, चर्बी नहीं, और ये शरीर को गंभीर नुकसान पहुँचा सकते हैं। अगर आपको लगता है कि आपको यह करना ही पड़ता है, या खाने के बाद आप बुरा महसूस करते हैं, तो कृपया आज ही किसी से बात करें: Tele-MANAS 14416 मुफ़्त है और 24 घंटे खुला है, या अपने डॉक्टर से बात करें। जब आप तैयार हों, मैं पेट भरने वाले भोजन में खुशी से मदद करूँगा।",
+      "hinglish": "Wazan ghatane ke liye julab, paani ki goliyan ya ulti karne mein main madad nahi kar sakta. Inse sharir se paani nikalta hai, charbi nahi, aur yeh sharir ko gambhir nuksan pahuncha sakte hain. Agar aapko lagta hai ki aapko yeh karna hi padta hai, ya khane ke baad aap bura mehsoos karte hain, to kripya aaj hi kisi se baat karein: Tele-MANAS 14416 muft hai aur 24 ghante khula hai, ya apne doctor se baat karein. Jab aap taiyaar hon, main pet bharne wale bhojan mein khushi se madad karunga."
+    },
+    "H1.checkin": {
+      "english": "Before we go on: if eating feels hard, Tele-MANAS (14416) is there to talk, any time.",
+      "hi": "आगे बढ़ने से पहले: अगर खाना मुश्किल लग रहा है, तो Tele-MANAS (14416) किसी भी समय बात करने के लिए है।",
+      "hinglish": "Aage badhne se pehle: agar khana mushkil lag raha hai, to Tele-MANAS (14416) kisi bhi samay baat karne ke liye hai."
+    },
+    "H2.reply": {
+      "english": "Going without food is not a safe way to lose weight, so I can't help plan that. If eating, or not eating, feels hard right now, please talk to someone: Tele-MANAS 14416 is free and open 24 hours, or speak to your doctor. When you feel ready, I'm happy to help with filling meals within the Dixit programme.",
+      "hi": "भूखे रहना वज़न घटाने का सुरक्षित तरीका नहीं है, इसलिए मैं इसकी योजना बनाने में मदद नहीं कर सकता। अगर अभी खाना, या न खाना, मुश्किल लग रहा है, तो कृपया किसी से बात करें: Tele-MANAS 14416 मुफ़्त है और 24 घंटे खुला है, या अपने डॉक्टर से बात करें। जब आप तैयार हों, मैं Dixit कार्यक्रम के भीतर पेट भरने वाले भोजन में खुशी से मदद करूँगा।",
+      "hinglish": "Bhookhe rehna wazan ghatane ka surakshit tarika nahi hai, isliye main iski yojana banane mein madad nahi kar sakta. Agar abhi khana, ya na khana, mushkil lag raha hai, to kripya kisi se baat karein: Tele-MANAS 14416 muft hai aur 24 ghante khula hai, ya apne doctor se baat karein. Jab aap taiyaar hon, main Dixit karyakram ke bheetar pet bharne wale bhojan mein khushi se madad karunga."
+    },
+    "H3.reply": {
+      "english": "I can't advise on diet pills, fat burners or weight-loss injections. Some sold online are unsafe, and the ones that work need a doctor's prescription and regular check-ups. Please ask your doctor before taking any of them. I'm happy to help with food questions.",
+      "hi": "मैं डाइट पिल्स, फैट बर्नर या वज़न घटाने के इंजेक्शन पर सलाह नहीं दे सकता। ऑनलाइन बिकने वाली कुछ चीज़ें असुरक्षित होती हैं, और जो असर करती हैं उनके लिए डॉक्टर का पर्चा और नियमित जाँच चाहिए। इनमें से कुछ भी लेने से पहले कृपया अपने डॉक्टर से पूछें। खाने के सवालों में मैं खुशी से मदद करूँगा।",
+      "hinglish": "Main diet pills, fat burner ya wazan ghatane ke injection par salah nahi de sakta. Online bikne wali kuch cheezein asurakshit hoti hain, aur jo asar karti hain unke liye doctor ka parcha aur niyamit jaanch chahiye. Inmein se kuch bhi lene se pehle kripya apne doctor se poochhein. Khane ke sawaalon mein main khushi se madad karunga."
+    },
+    "H4.reply": {
+      "english": "Losing weight that fast, or eating that little, is not safe, so I can't help plan it. A slow, steady pace is safer and easier to keep. Your doctor or Dixit coach can set a target that is right for you. I'm happy to help with food questions within the programme.",
+      "hi": "इतनी तेज़ी से वज़न घटाना, या इतना कम खाना, सुरक्षित नहीं है, इसलिए मैं इसकी योजना बनाने में मदद नहीं कर सकता। धीमी, स्थिर गति ज़्यादा सुरक्षित है और निभाना आसान है। आपके लिए सही लक्ष्य आपका डॉक्टर या Dixit कोच तय कर सकता है। कार्यक्रम के भीतर खाने के सवालों में मैं खुशी से मदद करूँगा।",
+      "hinglish": "Itni tezi se wazan ghatana, ya itna kam khana, surakshit nahi hai, isliye main iski yojana banane mein madad nahi kar sakta. Dheemi, sthir gati zyada surakshit hai aur nibhana aasan hai. Aapke liye sahi lakshya aapka doctor ya Dixit coach tay kar sakta hai. Karyakram ke bheetar khane ke sawaalon mein main khushi se madad karunga."
+    },
+    "negated_note": {
+      "english": "If that changes, or you feel very unwell, call 112.",
+      "hi": "अगर यह बदले, या आप बहुत अस्वस्थ महसूस करें, तो 112 पर कॉल करें।",
+      "hinglish": "Agar yeh badle, ya aap bahut aswasth mehsoos karein, to 112 par call karein."
+    },
+    "emergency_answer": {
+      "english": "This sounds like it could be an emergency. If you feel shaky, sweaty, confused or faint, or have chest pain or trouble breathing, please get medical help now: call your doctor or emergency services (112 in India). If you take insulin or sugar tablets and feel shaky, follow the low-sugar steps your doctor gave you.",
+      "hi": "यह एक आपात स्थिति हो सकती है। अगर आपको काँपना, पसीना, उलझन या चक्कर महसूस हो रहा है, या सीने में दर्द या साँस लेने में तकलीफ़ है, तो कृपया अभी चिकित्सा सहायता लें: अपने डॉक्टर या आपातकालीन सेवाओं (भारत में 112) को कॉल करें। अगर आप इंसुलिन या शुगर की गोलियाँ लेते हैं और काँप रहे हैं, तो वे कम-शुगर वाले कदम उठाएँ जो आपके डॉक्टर ने बताए हैं।",
+      "hinglish": "Yeh ek aapat sthiti ho sakti hai. Agar aapko kaanpna, paseena, uljhan ya chakkar mehsoos ho raha hai, ya seene mein dard ya saans lene mein taklif hai, to kripya abhi chikitsa sahayata lein: apne doctor ya aapatkaleen sevaon (Bharat mein 112) ko call karein. Agar aap insulin ya sugar ki goliyan lete hain aur kaanp rahe hain, to woh kam-sugar wale kadam uthayein jo aapke doctor ne bataye hain."
+    },
+    "safe_fallback": {
+      "english": "I can't give a reliable answer to that right now. Your dietitian can help, and I've noted your question for our team.",
+      "hi": "मैं अभी इसका भरोसेमंद जवाब नहीं दे सकता। आपके डायटीशियन मदद कर सकते हैं, और मैंने आपका सवाल हमारी टीम के लिए नोट कर लिया है।",
+      "hinglish": "Main abhi iska bharosemand jawab nahi de sakta. Aapke dietitian madad kar sakte hain, aur maine aapka sawaal hamari team ke liye note kar liya hai."
+    }
+  }
+}

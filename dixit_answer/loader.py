@@ -65,6 +65,8 @@ class SwasthamData:
     emergency_rules: dict
     harmful_intent_rules: dict
     hinglish_glossary: dict
+    reply_translations: dict
+    general_recipe_rules: dict
     support_content: dict
     white_lists: dict
     black_lists: dict

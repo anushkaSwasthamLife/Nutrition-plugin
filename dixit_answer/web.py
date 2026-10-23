@@ -7,15 +7,17 @@ Then the chat stays open to the network, but the dietitian review pages and thei
 """
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, PlainTextResponse
 from pydantic import BaseModel, Field
 
 from .config import DATA_DIR, is_loopback, load_settings
 from .foods import LibrarySearch
 from .lists import bad_mapping_pairs
+from .memory import clean_user_id, export_markdown
 from .pipeline import Engine
 from .review_queue import ApplyError, QueueError, ReviewQueue
 
@@ -26,6 +28,7 @@ class ChatIn(BaseModel):
     message: str = Field(..., max_length=2000)
     conversation_id: str | None = Field(default=None, max_length=64)
     profile: dict | None = None          # what the Dixit app would send: allergies, diet_type, medicines, conditions ...
+    user_id: str | None = Field(default=None, max_length=64)      # who is chatting: past conversations and remembered facts hang on it
 
 
 class FeedbackIn(BaseModel):
@@ -84,10 +87,11 @@ def create_app(engine: Engine | None = None, data_dir=None) -> FastAPI:
 
     @app.post("/api/chat")
     def chat(body: ChatIn):
-        result = get_engine().answer(body.message, body.conversation_id, body.profile)
+        result = get_engine().answer(body.message, body.conversation_id, body.profile, body.user_id)
         return {"conversation_id": result.conversation_id, "turn": result.turn, "answer": result.answer,
                 "type": result.type, "plan": result.plan, "checks": result.checks, "ai_used": result.ai_used,
-                "fallback": result.fallback, "records": result.records, "ms": result.timing_ms}
+                "fallback": result.fallback, "records": result.records, "ms": result.timing_ms, "language": result.language,
+                "remembered": result.remembered}
 
     @app.post("/api/feedback")
     def feedback(body: FeedbackIn):
@@ -95,6 +99,60 @@ def create_app(engine: Engine | None = None, data_dir=None) -> FastAPI:
             get_engine().feedback(body.conversation_id, body.turn, body.kind, body.note)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return {"ok": True}
+
+    # ---- past conversations and what is remembered (development build; production keeps this off until consent is decided)
+    def get_memory(user_id: str):
+        memory = get_engine().memory
+        if memory is None or clean_user_id(user_id) is None:
+            raise HTTPException(status_code=404, detail="Past conversations are not switched on here.")
+        return memory
+
+    def own_turns(memory, user_id: str, conversation_id: str) -> list:
+        turns = memory.turns(user_id, conversation_id)
+        if not turns:
+            raise HTTPException(status_code=404, detail="No such conversation.")
+        return turns
+
+    @app.get("/api/memory/{user_id}")
+    def memory_summary(user_id: str):
+        memory = get_memory(user_id)
+        summary = memory.summary(user_id)
+        names = {fid: food["name"] for fid, food in get_engine().index.foods.items()}
+        for fact in summary["facts"]:                       # a remembered food shows as its name, never its id
+            fact["text"] = re.sub(r"FOOD-[A-Z0-9-]+", lambda m: names.get(m.group(0), m.group(0).replace("FOOD-", "").title()), fact["text"])
+        return {"conversations": memory.conversations(user_id), **summary}
+
+    @app.get("/api/history/{user_id}/{conversation_id}")
+    def history_turns(user_id: str, conversation_id: str):
+        memory = get_memory(user_id)
+        return {"conversation_id": conversation_id, "turns": [{"turn": t["turn"], "at": t["at"], "question": t["question"], "answer": t["answer"],
+                                                               "type": t["findings"].get("type", ""), "feedback": t["feedback"]}
+                                                              for t in own_turns(memory, user_id, conversation_id)]}
+
+    @app.get("/api/history/{user_id}/{conversation_id}/export")
+    def history_export(user_id: str, conversation_id: str):
+        memory = get_memory(user_id)
+        return PlainTextResponse(export_markdown(conversation_id, own_turns(memory, user_id, conversation_id)),
+                                 headers={"Content-Disposition": 'attachment; filename="conversation.md"'})
+
+    @app.delete("/api/history/{user_id}/{conversation_id}")
+    def history_delete(user_id: str, conversation_id: str):
+        memory = get_memory(user_id)
+        if not memory.delete_conversation(user_id, conversation_id):
+            raise HTTPException(status_code=404, detail="No such conversation.")
+        get_engine().reset(conversation_id)
+        return {"ok": True}
+
+    @app.delete("/api/memory/{user_id}/fact/{key}")
+    def memory_forget(user_id: str, key: str):
+        return {"ok": get_memory(user_id).forget(user_id, key)}
+
+    @app.delete("/api/memory/{user_id}")
+    def memory_forget_all(user_id: str):
+        engine_ = get_engine()
+        for conversation_id in get_memory(user_id).forget_all(user_id):
+            engine_.reset(conversation_id)
         return {"ok": True}
 
     @app.post("/api/reset/{conversation_id}")
