@@ -1,0 +1,47 @@
+{
+  "version": "IR-0.1.0",
+  "status": "PROPOSED",
+  "note": "Intent router (step R of the main pipeline), after the emergency and safety checks. Nutrition related (sent to the nutrition plugin): foods, dishes, recipes, nutrients, meals, the programme's food rules, and statements about allergies, diet or conditions. Everything else (symptoms, medicines on their own, exercise, sleep, greetings, other topics) is answered by the main assistant. A condition or health word with no food or diet word is unsure: the router asks one question. Word lists are drafts for Swastham to review against real traffic.",
+  "nutrition_words": ["eat", "eats", "eating", "ate", "food", "foods", "meal", "meals", "breakfast", "lunch", "dinner", "snack", "snacks",
+                      "recipe", "recipes", "cook", "cooking", "cooked", "make", "dish", "dishes", "diet", "dieting", "calorie", "calories", "kcal",
+                      "protein", "proteins", "carb", "carbs", "carbohydrate", "carbohydrates", "fat", "fats", "fibre", "fiber", "vitamin",
+                      "vitamins", "mineral", "minerals", "nutrient", "nutrients", "nutrition", "nutritional", "macro", "macros", "veg",
+                      "vegetarian", "non veg", "vegan", "jain", "eggetarian", "allergy", "allergies", "allergic", "intolerant", "hungry",
+                      "hunger", "craving", "cravings", "khana", "khaana", "khane", "bhojan", "nashta", "sabji", "sabzi", "golden rule",
+                      "golden rules", "programme", "program", "protocol", "fasting", "vrat", "upvas", "weight loss", "lose weight",
+                      "gain weight", "drink", "drinks", "juice", "tea", "chai", "coffee", "water", "pantry", "ingredients", "ingredient",
+                      "portion", "serving", "salad", "sprouts", "nuts", "fruit", "fruits", "vegetable", "vegetables", "sweet", "sweets"],
+  "statement_starts": ["i have", "i ve", "i've", "i am", "i m", "im", "my", "we have", "i got", "i was diagnosed", "diagnosed with"],
+  "unsure_words": ["health", "healthy", "unhealthy", "good for me", "bad for me", "benefit", "benefits", "weight", "bmi", "cure", "control",
+                   "manage", "reverse"],
+  "main_topics": {
+    "exercise": ["exercise", "exercises", "workout", "workouts", "gym", "yoga", "walk", "walking", "run", "running", "jog", "jogging",
+                 "steps", "cardio", "stretching", "pranayam", "pranayama", "swim", "swimming", "cycling"],
+    "sleep": ["sleep", "sleeping", "slept", "insomnia", "nap", "naps", "neend", "can t sleep", "cant sleep"],
+    "medicine": ["medicine", "medicines", "medication", "medications", "tablet", "tablets", "pill", "pills", "dose", "dosage", "insulin",
+                 "metformin", "injection", "dawai", "dawa", "goli", "prescription"],
+    "symptom": ["headache", "headaches", "dizzy", "dizziness", "nausea", "nauseous", "vomit", "vomiting", "fever", "pain", "aching", "weak",
+                "weakness", "tired", "tiredness", "fatigue", "giddy", "cramp", "cramps", "constipation", "diarrhoea", "diarrhea",
+                "bloating", "bloated", "acidity", "rash", "itching", "cough", "cold"]
+  },
+  "clarify_question": "Is your question about food or your diet? Say yes and I'll answer it with your food plan, or no and I'll answer it in general.",
+  "clarify_yes": ["yes", "y", "yeah", "yep", "haan", "han", "ha", "ji", "haan ji", "food", "diet", "about food", "about diet", "it is", "yes it is"],
+  "clarify_no": ["no", "n", "nope", "nahi", "nahin", "na", "not food", "not about food", "no it isn t", "no it is not", "general"],
+  "continuation_max_words": 6,
+  "main_replies": {
+    "greeting": "Hello! I'm the Dixit assistant. Ask me about food, meals, recipes or the programme's food rules.",
+    "thanks": "You're welcome. Ask me any time.",
+    "about": "I'm the Dixit assistant, an automated helper, not a doctor and not a person. I can look up the nutrition of foods and dishes, suggest recipes and explain the Dixit programme's food rules. For medical advice please talk to your doctor.",
+    "exercise": "I can't advise on exercise here. Please ask your Dixit coach or your doctor what activity suits you. I can help with food, meals and recipes.",
+    "sleep": "I can't advise on sleep here. If poor sleep goes on, please talk to your doctor. I can help with food, meals and recipes.",
+    "medicine": "I can't advise on medicines or doses. Please ask your doctor.",
+    "symptom": "I can't judge symptoms. If it continues or gets worse, please talk to your doctor.",
+    "general": "I'm best with food and diet questions, such as what to cook, the calories in a dish, or the programme's food rules. For other topics, please ask your Dixit coach."
+  },
+  "noted_line": "Thank you for telling me; I've noted it for your food answers.",
+  "locked_lines": {
+    "medicine": "Please don't start, stop or change a medicine without your doctor.",
+    "symptom": "If you feel shaky, sweaty or dizzy, especially if you take diabetes medicine, eat something and contact your doctor."
+  },
+  "max_words": 90
+}

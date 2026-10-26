@@ -18,6 +18,7 @@ from .config import DATA_DIR, is_loopback, load_settings
 from .foods import LibrarySearch
 from .lists import bad_mapping_pairs
 from .memory import clean_user_id, export_markdown
+from .main_pipeline import MainPipeline
 from .pipeline import Engine
 from .review_queue import ApplyError, QueueError, ReviewQueue
 
@@ -29,6 +30,7 @@ class ChatIn(BaseModel):
     conversation_id: str | None = Field(default=None, max_length=64)
     profile: dict | None = None          # what the Dixit app would send: allergies, diet_type, medicines, conditions ...
     user_id: str | None = Field(default=None, max_length=64)      # who is chatting: past conversations and remembered facts hang on it
+    doctor_id: str | None = Field(default=None, max_length=64)    # the patient's doctor: picks the doctor pack (default pack if unknown)
 
 
 class FeedbackIn(BaseModel):
@@ -66,6 +68,7 @@ class ApplyIn(BaseModel):
 def create_app(engine: Engine | None = None, data_dir=None) -> FastAPI:
     app = FastAPI(title="Dixit answer pipeline (dev)")
     app.state.engine = engine
+    app.state.main = None
     app.state.queue = None
     app.state.search = None
     data_dir = data_dir or DATA_DIR
@@ -75,23 +78,30 @@ def create_app(engine: Engine | None = None, data_dir=None) -> FastAPI:
             app.state.engine = Engine()
         return app.state.engine
 
+    def get_main() -> MainPipeline:
+        if app.state.main is None:
+            app.state.main = MainPipeline(get_engine())
+        return app.state.main
+
     @app.get("/")
     def index():
-        return FileResponse(STATIC / "chat.html")
+        return FileResponse(STATIC / "chat.html", headers={"Cache-Control": "no-cache"})     # a changed page shows on a plain reload
 
     @app.get("/api/info")
     def info():
         eng = get_engine()
         return {"environment": eng.settings.environment, "llm": {"provider": getattr(eng.llm, "name", "mock"),
-                "model": getattr(eng.llm, "model", "")}, "versions": eng.versions, "library": eng.library.report}
+                "model": getattr(eng.llm, "model", "")}, "versions": eng.versions, "library": eng.library.report,
+                "book": eng.book.summary() if eng.book else {"status": "off"}}
 
     @app.post("/api/chat")
     def chat(body: ChatIn):
-        result = get_engine().answer(body.message, body.conversation_id, body.profile, body.user_id)
+        result = get_main().answer(body.message, body.conversation_id, body.profile, body.user_id, body.doctor_id)
         return {"conversation_id": result.conversation_id, "turn": result.turn, "answer": result.answer,
                 "type": result.type, "plan": result.plan, "checks": result.checks, "ai_used": result.ai_used,
                 "fallback": result.fallback, "records": result.records, "ms": result.timing_ms, "language": result.language,
-                "remembered": result.remembered}
+                "remembered": result.remembered, "badge": result.badge, "sources": result.sources, "route": result.route,
+                "handled_by": result.handled_by}
 
     @app.post("/api/feedback")
     def feedback(body: FeedbackIn):

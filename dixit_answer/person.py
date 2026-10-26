@@ -95,6 +95,9 @@ def sanitize_profile(profile) -> dict:
                                           if isinstance(k, str) and k in TARGET_NUTRIENTS) if v is not None}
         if clean_intake:
             out["intake_today"] = clean_intake
+    programme = profile.get("programme")
+    if isinstance(programme, str) and 0 < len(programme.strip()) <= MAX_TEXT:
+        out["programme"] = programme.strip().lower()
     logged = profile.get("intake_logged_at")
     if isinstance(logged, str) and len(logged) <= 40:
         out["intake_logged_at"] = logged
@@ -112,6 +115,7 @@ class Person:
     intake_today: dict = field(default_factory=dict)        # nutrient -> amount, only used if logged recently
     intake_logged_at: str | None = None
     status: Status = field(default_factory=Status)          # diabetes status for the Golden Rules (fruit)
+    doctor_pack: object = None                              # DoctorPack: the doctor's layer, merged first (doctor_packs.py)
 
     @property
     def allergies_known(self) -> bool:
@@ -152,9 +156,9 @@ class AllergyFilter:
         return blocked
 
     def blocked_foods(self, person: Person) -> set[str]:
-        """Food IDs this person must never be offered: allergies (with derivatives), avoid list, diet type."""
+        """Food IDs this person must never be offered: the doctor pack's never-foods, allergies (with derivatives), avoid list, diet type."""
         allergens = person.allergies if person.allergies is not None else []
-        blocked = self.foods_for(allergens) | set(person.avoid_foods) | lists.condition_blocked_foods(self.black, person.conditions)
+        blocked = set(person.doctor_pack.never_foods if person.doctor_pack is not None else ()) | self.foods_for(allergens) | set(person.avoid_foods) | lists.condition_blocked_foods(self.black, person.conditions)
         if person.unmapped_allergies:                       # an allergy we can't map: stay clear of every common allergen
             blocked |= self.major_allergen_foods()
         if person.diet_type in ("vegetarian", "jain"):

@@ -42,7 +42,9 @@ def full_engine(settings, _classic_recipe_collection):
 @pytest.fixture(scope="session")
 def settings(tmp_path_factory):
     # The INDB dish lookup is tested on its own (test_dish_chat.py); the rest of the suite runs without it.
-    return load_settings(llm_provider="mock", llm_api_key="", var_dir=tmp_path_factory.mktemp("var"), dish_lookup=False)
+    # The Healthful Diet book is tested on its own (test_book_recipes.py); the rest of the suite runs without it.
+    return load_settings(llm_provider="mock", llm_api_key="", var_dir=tmp_path_factory.mktemp("var"), dish_lookup=False,
+                         book_recipes_file=None)
 
 
 @pytest.fixture(scope="session")

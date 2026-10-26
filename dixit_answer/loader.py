@@ -73,6 +73,9 @@ class SwasthamData:
     dish_rules: dict
     book_measures: dict
     decision_logic: dict
+    doctor_packs: dict
+    router_rules: dict
+    book_ingredient_map: dict
     manifest: dict
 
 

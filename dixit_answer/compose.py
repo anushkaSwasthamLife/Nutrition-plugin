@@ -54,6 +54,10 @@ class Draft:
         return PLACEHOLDER_RE.sub(lambda m: self.locked.get(m.group(1), m.group(0)), text)
 
 
+def _grams(value) -> str:
+    return f"{float(value):g} g"
+
+
 def _short_source(fact: Fact) -> str:
     if fact.source == "USDA":
         return "USDA"
@@ -391,6 +395,25 @@ class Composer:
                                home_foods=list(state.home_foods), exclude=list(plan.exclude_recipes), exclude_foods=list(plan.exclude_foods))
         d.recipe_trace = out.trace
         general = None
+        if plan.unknown_dish and not plan.reply_slot and out.status in {"tips_only", "choices"}:
+            # A dish we don't hold: the closest recipe we have, then an AI draft recalculated and gated, then the general fallback.
+            closest = self._closest_recipe(plan.unknown_dish, person, d)
+            if closest is not None:
+                d.unknown_items.append({"word": plan.unknown_dish, "kind": "dish", "suggested_food_id": ""})
+                d.backlog_request = True
+                d.lines.append(lock("T", f"I don't have a recipe called \"{plan.unknown_dish}\" yet; I've passed it to our dietitian. "
+                                         f"The closest dish in our recipes is {closest.name}:"))
+                self._render_recipe(closest, plan, d, lock, free, name, state)
+                return
+            drafted = self.recipes.draft_for_dish(plan.unknown_dish, person)
+            d.recipe_trace += drafted.trace
+            if drafted.status == "recipe":
+                d.unknown_items.append({"word": plan.unknown_dish, "kind": "dish", "suggested_food_id": ""})
+                d.backlog_request = True
+                d.lines.append(lock("T", f"I don't have a checked recipe for \"{plan.unknown_dish}\" yet; I've passed it to our dietitian. "
+                                         "Our AI drafted one from our food list, and our checks recalculated it from USDA values:"))
+                self._render_recipe(drafted.recipe, plan, d, lock, free, name, state)
+                return
         if plan.unknown_dish and not plan.reply_slot:
             d.unknown_items.append({"word": plan.unknown_dish, "kind": "dish", "suggested_food_id": ""})
             general = self._try_general(plan.unknown_dish, person, d) if out.status in {"tips_only", "choices"} else None
@@ -562,6 +585,23 @@ class Composer:
             d.lines.append("- " + m.name.split(" (")[0] + ": " + lock("F", shown + " (dev data)"))
         d.lines.append(lock("T", "These are the values stored for each dish, one serving as shown. They are not a meal plan, and amounts change with how it is cooked."))
 
+    def _closest_recipe(self, request: str, person, d: Draft):
+        """The most similar recipe we hold that passes this person's gate, or None (trace kept for the audit log)."""
+        candidates = self.recipes.similar(request, person)
+        if not candidates:
+            d.recipe_trace.append(f"similar: nothing close to '{request[:40]}'")
+            return None
+        out = self.recipes.run(person=person, have=[], dish_ids=candidates[:1], unknown_words=[], suggestion=None,
+                               wants_list=False, home_foods=[])
+        for rid in candidates[1:]:
+            if out.status == "recipe":
+                break
+            out = self.recipes.run(person=person, have=[], dish_ids=[rid], unknown_words=[], suggestion=None,
+                                   wants_list=False, home_foods=[])
+        d.recipe_trace.append(f"similar: '{request[:40]}' -> {candidates}: " +
+                              (f"{out.recipe.recipe_id} passes" if out.status == "recipe" else "none passes for this person"))
+        return out.recipe if out.status == "recipe" else None
+
     def _try_general(self, request: str, person, d: Draft):
         """The general recipe fallback (development only): returns its outcome, or None when it is not available."""
         if self.general is None:
@@ -613,6 +653,8 @@ class Composer:
             recipe.also_need = [f for f in self.recipes.recipes[recipe.recipe_id]["main_ingredients"] if f not in have and f not in d.blocked_foods]
         for item in recipe.ingredients:
             d.foods_named.add(item["food"])
+        if getattr(recipe, "book", None):
+            d.foods_named.update(self.recipes.step_foods(recipe))     # the book's own steps ("serve with chapati"), already gated
         used = [f for f in plan.ingredients if f in {i["food"] for i in recipe.ingredients} and f not in d.blocked_foods
                 and self.index.foods[f]["category"] != "pantry"] if not plan.recipe_ids else []
         if used:                                   # only foods that really are in the recipe, never words from the message
@@ -620,16 +662,27 @@ class Composer:
         elif plan.recipe_ids:
             free("Here's the recipe:")
         d.lines.append("**" + lock("T", recipe.name) + "**")
+        recipe.label = self.recipes.label_for(recipe)          # after any repair or scaling: an adapted dish is no longer "as recommended"
         d.lines.append(lock("T", recipe.label))
         d.lines.append(lock("T", f"**You need** ({recipe.makes}):"))       # locked: the AI must not hint at portions
         for line in self.recipes.ingredient_lines(recipe):
             d.lines.append("- " + lock("K", line))
+        if recipe.assumed:                         # the book left these open: the grams we counted are named, never hidden
+            d.lines.append("**Amounts we assumed:** " + lock("T", _join(
+                [f"{a['text']} {_grams(a['grams'])} (the book says \"{a['book']}\")" for a in recipe.assumed])))
+        if recipe.trace_items:
+            d.lines.append("**Not counted (a pinch or a few leaves):** " + lock("T", _join(recipe.trace_items)))
+        if recipe.optional_items:
+            d.lines.append("**Optional, not counted:** " + lock("T", _join(recipe.optional_items)))
         d.lines.append("**How:**")
         for step in recipe.steps:
             d.lines.append("- " + lock("K", step))
         totals = self.recipes.totals_text(recipe)
         if totals:
             d.lines.append("**Whole dish:** " + lock("F", totals))
+        each = self.recipes.per_unit_text(recipe)
+        if each:
+            d.lines.append(lock("F", each))
         if recipe.repairs:
             note = _join(recipe.repairs)             # e.g. "oil instead of ghee": names what was removed, not an offer
             d.exclusion_texts.append(note)

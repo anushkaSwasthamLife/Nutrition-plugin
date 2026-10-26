@@ -59,6 +59,7 @@ NO_ALLERGY = re.compile(r"^(?:i have |i got |we have )?(?:no|zero|none|nil)(?: k
 INGREDIENTS = re.compile(r"\b((?:cook|make|prepare|recipes?|dishes?|meals?|ideas?)\s+(?:with|using|from)|(?<!can )(?<!could )(?<!may )(?<!should )(?<!do )(?<!shall )(?<!must )(?<!would )(?<!will )i have|i've got|i got|we have|at home (i|we) have|there is|there's|have only|only have|my paas|ingredients?\s+(?:are\s+)?(?!of\b|in\b|for\b|used\b|needed\b|required\b|list\b))\b")
 HINDI_MAKE = re.compile(r"\b(bana|banau|banaun|banaye|pakau|pakaun|pakana|pakaye|kya bana)\b")   # not "banana": that's a fruit
 DISH_AFTER = re.compile(r"(?:recipe (?:for|of)|how (?:do|to|can|should) (?:i |you |we )?(?:make|cook|prepare)|make|cook|prepare)\s+(.+)$")
+DISH_BEFORE = re.compile(r"^(?:(?:the|a|an|please|pls|give me|show me|send me|share)\s+)*(.+?)\s+(?:recipe|recipes|ki recipe|ka recipe|kaise banaye|kaise banate hai|kaise banta hai)(?:\s+please|\s+pls)?$")
 DISH_FILLER = {"please", "pls", "show", "me", "the", "a", "an", "recipe", "recipes", "for", "i", "want", "give", "ka", "ki", "ke", "ko", "dikhao", "batao",
                "chahiye", "of", "to", "and", "ok", "okay", "yes", "this", "that", "one", "sure", "make", "how"}
 GENERIC_DISH = {"recipes", "recipe", "some recipes", "a recipe", "something", "food", "a dish", "dish", "dishes", "some dishes",
@@ -683,7 +684,7 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
     if question_type == "recipe_request" and TIME_WISH.search(cleaned):
         u.time_wish = True
     if question_type == "recipe_request" and not u.recipe_ids:
-        m = DISH_AFTER.search(cleaned)
+        m = DISH_AFTER.search(cleaned) or DISH_BEFORE.match(cleaned)          # "recipe for methi paratha", "methi paratha recipe"
         if m:
             dish = " ".join(w for w in m.group(1).split() if w not in {"please", "pls", "some", "a", "an", "the", "me", "for", "my"})
             if TIME_WISH.search(dish):

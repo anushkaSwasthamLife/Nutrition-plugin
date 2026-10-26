@@ -32,6 +32,63 @@ The AI only rewords a draft with `{{placeholders}}`. Every number, food list, ap
 question is locked and filled in by code afterwards. A draft that fails the checks is retried once; then the template answer
 is sent.
 
+## The programme's recipe book: Healthful Diet (26 Oct 2026)
+
+The 55 recipes of *Healthful Diet: Think wise. Eat twice. Drop size* (ADORE Trust, Pune, 2021; foreword by Dr Jagannath Dixit) are
+the programme tier of the recipe search: after the doctor's own picks, before dietitian-signed and reference recipes. The book is
+**for private circulation and an unverified transcription**, so like the INDB files it stays outside the repo: `DIXIT_BOOK_RECIPES`
+(default `<parent>/Nutrition/healthful-diet/healthful-diet-recipes.json`). Without the file the book is off.
+
+- **Import** (`book_recipes.py`, rules in `data/book_ingredient_map.json`, BM-0.1.0, TEST ONLY): every one of the book's 304
+  ingredient lines is mapped to food IDs and grams. The book's own units: 1 vati = 60 g, spoons and counts per food. Lines naming
+  several vegetables share their grams. "To taste" and "as needed" get a stated assumed amount (oil 2 teaspoons, salt 3 g...), and
+  **the answer names every assumed amount**. A pinch of a spice is not counted and is listed. Water is skipped. 61 foods were added
+  for the book (`food_master.json` FM-0.4.0) with `match_in_chat: false`, so they never change how a message is read. Proxies are
+  marked (no USDA record for fenugreek leaves, horse gram, jaggery, green papaya, garam masala). The mixed-grain flour (bhajni) is
+  computed from the book's own grain list.
+- **31 dishes are offered.** 22 components (spice blends, chutneys, sauces, dips, smoothies, the flour) are not offered alone. 2 are
+  skipped: Stew (its protein has no amount) and Thai papaya salad (one step).
+- **Numbers come from USDA**, never the book's printed values (the book's own check found 9 recipes whose printed kcal and macros
+  disagree by 20 to 140%). The answer gives the whole dish and "about N kcal in each vati" (or chilla, kabab...).
+- **Credit:** "A recipe from the Dixit programme's Healthful Diet book, page N", and after a swap or scale "A version of a Healthful
+  Diet recipe, page N, tailored for your health and taste", plus "(transcribed from the book; not yet checked by our dietitian)"
+  until signed. The book is credited, never a person: its authors are Dr Dhamankar, Dr Ashtekar and A. Kelkar-Hate.
+- **Gate:** book dishes are checked per book serving where yield and serving use the same unit, else as a whole dish. Foods named
+  only in the book's steps ("serve with roti") have no amount, so they are not counted, but every allergy, diet and Golden Rule check
+  sees them. Sugar, jaggery and honey are removed by the swap table. `golden_rules.json` now lists `home_meal_kinds`, adding
+  grain, protein, salad and one_dish from the book's meal unit (to confirm with Dixit).
+- **A dish we don't hold** ("methi paratha recipe"): the closest recipe by name and dish type or main food, then an AI draft built
+  only from our food IDs and grams, recalculated from USDA and gated, then the older general recipe. Without a model nothing is drafted.
+- Tests: `tests/test_book_recipes.py` (the end-to-end part is skipped where the book file is missing).
+
+## Main pipeline and nutrition plugin (26 Oct 2026)
+
+Every chat message enters the **main pipeline** (`main_pipeline.py`); only nutrition-related messages reach the **nutrition plugin**.
+
+| # | Where | Module | What happens |
+|---|---|---|---|
+| 0 | Main | `pipeline.Engine.prepare`, `safety.py` | Message arrives. Emergency, harmful-intent and risk-word checks run first; an emergency reply ends the turn |
+| R | Main | `router.py`, `data/router_rules.json` | Nutrition related → plugin. Not → the main assistant (`main_ai.py`). Unsure (a condition or health word with no food word) → one question, and the reply decides where the earlier message goes |
+| 1 | Plugin | `plugin.py` (`HandOff`) | Receives message, user ID, doctor ID, language and the router's intent |
+| 2 | Plugin | `doctor_packs.py`, `data/doctor_packs.json`, `person.py` | Loads the doctor pack for the patient's programme (`profile.programme`; unknown doctor → default pack, noted in the audit), plus the profile |
+| 3 | Plugin | `foods.py`, `recipes.py` R1, `review_queue.py` | Maps names to food IDs; unknown words go to the review queue, a close match is confirmed first |
+| 4 | Plugin | `person.AllergyFilter`, `recipes.compile_limits` | Constraint layers, strictest first: doctor pack (never-foods, limits) → patient safety → preferences. Blocks are a union and limits a minimum, so a pack never relaxes a lower layer |
+| 5 | Plugin | `recipes.py` R4 | Recipe search by tier: doctor-approved (in the pack), dietitian-signed (recipe sign-off), reference |
+| 6 | Plugin | `recipes.py` R4–R8 | **a** found and fits, shown as written · **b** changed by code: a swap, or the whole dish scaled down (never below 50%, never for an allergen, Golden Rule or missing data) · **c** not found: the model drafts food IDs, grams and steps |
+| 7 | Plugin | `recipes.py` R6–R9, `checks.py` | Numbers from the food table, policy gate; repair, then at most 2 model retries, then a safe fallback |
+| 8 | Plugin | `recipes.recipe_badge`, `Engine._badge` | Source badge: "Recommended by Dr. Dixit", "Adapted from …", "Reference recipe", "AI-drafted, checked", "Nutrition values: USDA"; "(test)" while unsigned |
+| 9 | Plugin → main | `Engine.respond` → `MainPipeline` | Returns answer, badge and audit record; the main pipeline sends the reply |
+
+What counts as nutrition related: foods, dishes, recipes, nutrients, meals, the programme's food rules, and statements about
+allergies, diet or conditions. Symptoms, medicines on their own, exercise, sleep, greetings and other topics go to the main
+assistant. It uses the reviewed templates in `router_rules.json` without a model. With a model, a reply with any digit, link or
+markup, or over 90 words, is refused for the template. Medicine and symptom replies always end with a fixed safety line.
+`Engine.answer` still runs step 0 and the plugin without the router (tests and tools use it). `/api/chat` goes through the main
+pipeline, takes an optional `doctor_id`, and returns `badge`, `route` and `handled_by`. Tests: `tests/test_main_pipeline.py`.
+
+`doctor_packs.json` (DP-0.1.0) is **TEST ONLY**: Dr. Dixit has not reviewed it, its never-foods and limits are empty, and the first
+eight recipes stand in for the doctor's list. Production refuses it until the doctor signs it. `router_rules.json` (IR-0.1.0) is **PROPOSED**.
+
 ## How one message is answered (`dixit_answer/`)
 
 | Stage | Module | What it does |

@@ -23,6 +23,8 @@ _BESIDE_PROJECT = PROJECT_DIR.parent / "Nutrition" / LIBRARY_NAME
 DEFAULT_LIBRARY_DIR = _BESIDE_PROJECT if _BESIDE_PROJECT.is_dir() else Path.home() / "Desktop" / "Nutrition" / LIBRARY_NAME
 
 
+# The Dixit programme's recipe book (Healthful Diet), transcribed to JSON. Private circulation: it is never copied into the repo.
+DEFAULT_BOOK_RECIPES = PROJECT_DIR.parent / "Nutrition" / "healthful-diet" / "healthful-diet-recipes.json"
 LOOPBACK_HOST = "127.0.0.1"
 _HOST_NAME = re.compile(r"^(?=.{1,253}$)[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$")
 
@@ -72,6 +74,7 @@ class Settings:
     var_dir: Path = PROJECT_DIR / "var"          # chat state and audit log (gitignored)
     nutrition_dir: Path = PROJECT_DIR.parent / "Nutrition"   # INDB source files and releases (development only)
     dish_lookup: bool = True                     # answer "calories in poha" from INDB dishes (development only; off in production)
+    book_recipes_file: Path | None = DEFAULT_BOOK_RECIPES   # the Healthful Diet recipes file (kept outside the repo); None = off
     llm_provider: str = "mock"                   # mock | groq
     llm_api_key: str = field(default="", repr=False)
     llm_base_url: str = "https://api.groq.com/openai/v1"
@@ -93,6 +96,13 @@ class Settings:
     @property
     def audit_log(self) -> Path:
         return self.var_dir / "audit.jsonl"
+
+
+def _book_path(value: str) -> Path | None:
+    value = value.strip()
+    if value.lower() in {"off", "0", "false", "no", "none"}:
+        return None
+    return Path(value) if value else DEFAULT_BOOK_RECIPES
 
 
 def load_settings(**overrides) -> Settings:
@@ -117,6 +127,7 @@ def load_settings(**overrides) -> Settings:
         var_dir=Path(env.get("DIXIT_VAR_DIR") or PROJECT_DIR / "var"),
         nutrition_dir=Path(env.get("DIXIT_NUTRITION_DIR") or PROJECT_DIR.parent / "Nutrition"),
         dish_lookup=env.get("DIXIT_DISH_LOOKUP", "on").strip().lower() not in {"off", "0", "false", "no"},
+        book_recipes_file=_book_path(env.get("DIXIT_BOOK_RECIPES", "")),
         llm_provider=provider,
         llm_api_key=api_key,
         llm_base_url=env.get("LLM_BASE_URL") or "https://api.groq.com/openai/v1",
