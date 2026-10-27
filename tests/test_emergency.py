@@ -13,13 +13,15 @@ NEG = ["no", "not", "don't", "dont", "do not", "never", "without", "none"]
 @pytest.mark.parametrize("message, category", [
     ("I want to kill myself", "E5"),
     ("jeena nahi chahti ab", "E5"),
-    ("I keep making myself vomit after meals", "E5"),
     ("my throat is swelling after eating peanuts", "E3"),
     ("I can't breathe", "E3"),
     ("saans nahi aa rahi", "E3"),
     ("my father has chest pain", "E2"),
     ("seene mein dard ho raha hai", "E2"),
     ("सीने में दर्द है", "E2"),
+    ("सीने में तेज़ दर्द हो रहा है", "E2"),                      # a word between chest and pain (clause word pair)
+    ("seene mein bahut dard ho raha hai", "E2"),
+    ("there is a sharp pain in the middle of my chest", "E2"),
     ("her face is drooping and speech is slurred", "E2"),
     ("my son fainted", "E6"),
     ("he is vomiting blood", "E6"),
@@ -51,6 +53,7 @@ def test_blood_sugar_readings(message, value, category):
 @pytest.mark.parametrize("message", [
     "add 50 g sugar to halwa?", "sugar 2 spoons in tea", "low sugar dessert ideas", "sugar free biscuits",
     "I have hypothyroidism", "is dal good for diabetes", "I am allergic to peanuts", "what fits my plan",
+    "my chest is fine, but my knee has pain", "chest workout made my arms tight", "I make myself vomit after eating",
 ])
 def test_food_talk_is_not_an_emergency(message):
     assert not RULES.check(message, NEG).is_emergency

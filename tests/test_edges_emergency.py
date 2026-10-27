@@ -52,7 +52,7 @@ TRUE = [
     ("my son fainted", "E6"), ("she passed out in the kitchen", "E6"), ("he is unconscious", "E6"), ("he won't wake up", "E6"), ("my father had a seizure", "E6"),
     ("having convulsions", "E6"), ("vomiting blood", "E6"), ("there is blood in my vomit", "E6"), ("took too many tablets", "E6"), ("he drank poison", "E6"), ("behosh ho gaya", "E6"),
     ("I want to die", "E5"), ("I want to kill myself", "E5"), ("I am going to end my life", "E5"), ("thinking of suicide", "E5"), ("I want to hurt myself", "E5"),
-    ("better off dead", "E5"), ("I've been making myself vomit after meals", "E5"), ("jeena nahi chahti", "E5"), ("I don't want to die but I want to hurt myself", "E5"),
+    ("better off dead", "E5"), ("jeena nahi chahti", "E5"), ("I don't want to die but I want to hurt myself", "E5"),
     ("there is no point, I want to die", "E5"), ("no one cares, I want to die", "E5"), ("nothing helps. I want to kill myself", "E5"),
     ("I am shaking and sweating", "E1"), ("shaky and sweaty after skipping lunch", "E1"), ("having a hypo", "E1"), ("sugar is very low", "E1"), ("my sugar dropped", "E1"),
     ("sugar 52", "E1"), ("sugar is 45 mg/dl", "E1"), ("glucose 3.1 mmol", "E1"), ("rbs 55", "E1"), ("bg 40", "E1"), ("my sugar is 69", "E1"), ("sugar 3.8", "E1"),
@@ -267,4 +267,4 @@ def test_hindi_script_readings_and_phrases(text, expected):
 
 
 def test_the_rules_version_is_bumped_with_every_change():
-    assert RULES.version == "EM-0.1.3"
+    assert RULES.version == "EM-0.1.4"

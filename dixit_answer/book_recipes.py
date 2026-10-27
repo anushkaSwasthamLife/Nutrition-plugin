@@ -116,6 +116,8 @@ def convert(book: dict, mapping: dict, foods: dict) -> BookImport:
     out = BookImport(title=(book.get("_about") or {}).get("source", {}).get("title", ""), status=mapping.get("status", ""))
     items, units, no_amount = mapping["items"], mapping["units"], set(mapping["no_amount_units"])
     signed = str(mapping.get("status", "")).upper() not in TEST_STATUSES
+    meta = mapping.get("book") or {}
+    book_id, short = meta.get("id", "book"), meta.get("short_title") or meta.get("title", "the book")
     for raw in book["recipes"]:
         rid, name = raw["id"], raw["name"]
         kind = mapping["kind_overrides"].get(rid, mapping["dish_categories"].get(raw.get("category")))
@@ -194,8 +196,9 @@ def convert(book: dict, mapping: dict, foods: dict) -> BookImport:
             "kind": kind, "main_ingredients": main, "diet": diet,
             "makes": f"the whole dish; the book's yield is {raw.get('total_yield') or 'not stated'}",
             "ingredients": [{"food": f, "grams": round(g, 1), "unit": shown.get(f, "")} for f, g in grams.items()],
-            "steps": list(raw["steps"]), "why_it_fits": "", "meal_place": "home_meal", "source": SOURCE_ID,
-            "book": {"id": rid, "page": raw.get("book_page"), "title": "Healthful Diet", "signed": signed},
+            "steps": list(raw["steps"]), "why_it_fits": "", "meal_place": "home_meal", "source": meta.get("source_id", SOURCE_ID),
+            "book": {"id": rid, "page": raw.get("book_page"), "title": short, "signed": signed, "source_book": book_id,
+                     "citation": meta.get("citation", short)},
             "assumed": assumed, "trace_items": trace, "optional_items": optional,
             "printed_nutrition": raw.get("nutrition_per_serving"),
             "yield": _yield(raw.get("total_yield"), raw.get("serving_size")),

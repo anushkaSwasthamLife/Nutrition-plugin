@@ -7,6 +7,7 @@ if not, the main assistant answers (`main_ai.py`); if unsure, one question is as
 """
 from __future__ import annotations
 
+from . import programme as programmes
 from .main_ai import MainAssistant
 from .pipeline import Engine, HandOff, TurnResult
 from .plugin import NutritionPlugin
@@ -28,15 +29,22 @@ class MainPipeline:
         if isinstance(ctx, TurnResult):
             ctx.handled_by = "main"
             return ctx
+        with programmes.use(self.engine.pack_for(ctx, doctor_id).programme_obj):         # the doctor's programme names every reply
+            return self._answer(ctx, doctor_id)
+
+    def _answer(self, ctx, doctor_id: str | None) -> TurnResult:
         if ctx.gate.emergency or ctx.gate.harm.is_emergency:
             # The fixed safety reply is built by the engine's emergency path; it never reaches the router or the AI.
             result = self.engine.respond(ctx, HandOff(ctx.original, ctx.user_id, doctor_id, ctx.state.language, "safety"))
             result.route, result.handled_by = {"kind": "safety", "intent": result.type, "resolved_earlier_message": False}, "safety"
             return result
 
-        route = self.router.route(ctx.text, ctx.state)                                  # step R
+        route = self.router.route(ctx.text, ctx.state, ctx.original)                    # step R
         if route.message:
             self.engine.retarget(ctx, route.message)
+        if route.kind == NUTRITION and route.intent == "clarified" and not self.router.names_food(ctx.text, ctx.state):
+            # "is it good for my health?" -> "yes, about food": ask which food, never "I can only help with food"
+            return self.engine.finish_main(ctx, self.router.rules["clarify_which_food"], "clarify", route.as_dict(), "router")
         if route.kind == NUTRITION:
             handoff = HandOff(ctx.original, ctx.user_id, doctor_id, ctx.state.language, route.intent)   # step 1
             out = self.plugin.handle(handoff, ctx)

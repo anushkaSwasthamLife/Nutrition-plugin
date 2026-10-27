@@ -10,8 +10,10 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
+from .programme import current as programme
+
 _MARKUP = re.compile(r"[<>{}\[\]|\\`#~]|https?:|www\.|://|@", re.IGNORECASE)
-TEMPLATE_ONLY = {"thanks"}
+TEMPLATE_ONLY = {"thanks", "cure", "child"}        # a model must never word a cure or a child's diet answer
 
 
 @dataclass
@@ -28,9 +30,10 @@ class MainAssistant:
         self.max_words = int(rules["max_words"])
 
     def reply(self, message: str, topic: str, noted: bool = False) -> MainReply:
-        template = self.rules["main_replies"].get(topic) or self.rules["main_replies"]["general"]
-        locked = self.rules["locked_lines"].get(topic, "")
-        prefix = self.rules["noted_line"] + " " if noted else ""     # a risk word was read (insulin, pregnancy): say it was kept
+        fill = programme().fill                        # the programme's names in the reviewed wording
+        template = fill(self.rules["main_replies"].get(topic) or self.rules["main_replies"]["general"])
+        locked = fill(self.rules["locked_lines"].get(topic, ""))
+        prefix = fill(self.rules["noted_line"]) + " " if noted else ""     # a risk word was read (insulin, pregnancy): say it was kept
         text, method, problems = template, "template", []
         if getattr(self.llm, "name", "mock") != "mock" and topic not in TEMPLATE_ONLY:
             try:

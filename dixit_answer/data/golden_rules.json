@@ -55,6 +55,7 @@
   ],
 
   "status_values": ["unknown", "diabetic", "prediabetic", "non_diabetic", "currently_non_diabetic"],
+  "next_meal": "eat until you feel satisfied, starting with nuts, salad and sprouts.",
   "home_meal_kinds": ["sabji", "dal", "khichdi", "chilla", "grain", "protein", "salad", "one_dish"],
   "home_meal_kinds_note": "Dish kinds that may be the home-cooked part of a Dixit meal. grain, protein, salad and one_dish follow the Healthful Diet book's meal unit (grains, proteins, fibre, vegetables; book pages 60-65) and were added on 26 Oct 2026 for the book's recipes. To confirm with Dixit.",
   "fruit": {

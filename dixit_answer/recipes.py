@@ -18,6 +18,7 @@ from .foods import FoodIndex
 from .lists import method_allowed
 from .loader import FLAG_MACRO_MISMATCH, FLAG_MACROS_INCOMPLETE, Library, SwasthamData
 from .person import AllergyFilter, Person
+from .programme import current as programme
 from .textnorm import clean
 
 MACROS = ("energy_kcal", "carbohydrate_g", "fiber_g", "protein_g", "fat_g")
@@ -35,7 +36,7 @@ MAX_CHOICES = 6
 TIME_BUDGET_SECONDS = 15
 MIN_SCALE = Decimal("0.5")          # a dish is never scaled below half: smaller than that is a different dish, not an adapted one
 SCALE_STEP = Decimal("0.05")
-TIERS = ("doctor", "programme", "dietitian", "reference")   # search order (step 5); programme = the Dixit programme's recipe book
+TIERS = ("doctor", "programme", "dietitian", "reference")   # search order (step 5); programme = a recipe book the pack lists
 # A dish asked for by name that we don't hold: a similar one is offered when it shares the dish type ("paratha") or a main food,
 # and enough of its name. The words below say nothing about which dish it is.
 SIMILAR_STOP = {"recipe", "recipes", "make", "how", "to", "a", "an", "the", "of", "with", "and", "ki", "ka", "ke", "dish", "healthy",
@@ -124,7 +125,6 @@ def _valid_amount(value) -> Decimal | None:
 class RecipeService:
     def __init__(self, library: Library, data: SwasthamData, index: FoodIndex, allergy: AllergyFilter, llm,
                  ai_enabled: bool, golden=None):
-        self.golden = golden
         self.library = library
         self.data = data
         self.index = index
@@ -142,6 +142,11 @@ class RecipeService:
             for alias in [recipe["name"], *recipe.get("aliases", [])]:
                 self.alias_to_recipe[clean(alias.split(" (")[0])] = rid
 
+    @property
+    def golden(self):
+        """The rules of the patient's programme (from the doctor pack), for this request."""
+        return programme().rules
+
     # ------------------------------------------------------------------ helpers
     def approved_label(self) -> str:
         if str(self.collection.get("status", "")).upper() == "TEST ONLY":
@@ -157,6 +162,8 @@ class RecipeService:
         foods = self.index.with_generics({m.food_id for m in self.index.find(clean(request), already_clean=True)})
         scored = []
         for rid, raw in self.recipes.items():
+            if not self.usable(rid, person):
+                continue
             name_words = set()
             for name in [raw["name"], *raw.get("aliases", [])]:
                 name_words |= set(clean(name.split(" (")[0]).split())
@@ -225,13 +232,19 @@ class RecipeService:
             feedback = recipe.gate.reasons
         return out
 
+    def usable(self, rid: str, person: Person) -> bool:
+        """A recipe from a programme's book is only for patients whose programme lists that book; every other recipe is shared."""
+        book = self.recipes[rid].get("book")
+        pack = person.doctor_pack
+        return not book or (pack is not None and book.get("source_book") in pack.recipe_books)
+
     def tier_of(self, rid: str, person: Person) -> str:
         """Step 5: doctor-approved (in this patient's doctor pack), dietitian-signed (the recipe carries a sign-off), else reference."""
         pack = person.doctor_pack
         if pack is not None and rid in pack.approved_recipes:
             return "doctor"
         raw = self.recipes[rid]
-        if raw.get("book") and pack is not None and raw["book"].get("source_book", "healthful_diet") in pack.recipe_books:
+        if raw.get("book") and self.usable(rid, person):
             return "programme"
         if raw.get("approved_by") and raw.get("approved_on") and str(self.collection.get("status", "")).upper() != "TEST ONLY":
             return "dietitian"
@@ -540,6 +553,7 @@ class RecipeService:
         no_food = set(exclude_foods or [])          # "without onion": no dish that uses it
         if no_food:
             skip |= {rid for rid, raw in self.recipes.items() if no_food & {i["food"] for i in raw["ingredients"]}}
+        skip |= {rid for rid in self.recipes if not self.usable(rid, person)}       # another programme's book
         candidates = [self._from_collection(rid, person) for rid in dish_ids if rid in self.recipes and rid not in skip]
         matchable = set(usable_have)
         if not candidates and usable_have:
@@ -597,7 +611,8 @@ class RecipeService:
             return out
         if dish_ids and out.rejected:
             # A named dish that doesn't suit this person: offer approved dishes that do.
-            pool = sorted(self.recipes, key=lambda rid: (tier_rank(rid), -len(set(self.recipes[rid]["main_ingredients"]) & set(home_foods))))
+            pool = sorted((rid for rid in self.recipes if rid not in skip),
+                          key=lambda rid: (tier_rank(rid), -len(set(self.recipes[rid]["main_ingredients"]) & set(home_foods))))
             asked_main = {m for rid in dish_ids if rid in self.recipes for m in self.recipes[rid]["main_ingredients"]}
             pool.sort(key=lambda rid: -len(asked_main & set(self.recipes[rid]["main_ingredients"])))      # dishes with the same main food first (stable)
             alternatives = [r for r in (check(self._from_collection(rid, person)) for rid in pool if rid not in dish_ids)
@@ -630,7 +645,7 @@ class RecipeService:
                 request = {
                     "must_use_any": [{"food_id": f, "name": self.index.name(f)} for f in main_have],
                     "pantry": [{"food_id": f, "name": self.index.name(f)} for f in sorted(allowed - set(main_have))],
-                    "meal_place": "the home-cooked part of a Dixit meal (after nuts, salad and sprouts); a sabji or dal",
+                    "meal_place": programme().text("draft_meal_place"),
                     "limits_whole_dish": {n: float(l.release_at.quantize(Decimal('1'))) for n, l in limits.items()},
                     "previous_attempt_failed": feedback,
                 }
@@ -694,9 +709,10 @@ class RecipeService:
         if recipe.book:                                    # the programme's book: credited to the book, never to a person
             page = f", page {recipe.book['page']}" if recipe.book.get("page") else ""
             test = "" if recipe.source_signed else " (transcribed from the book; not yet checked by our dietitian)"
+            title = recipe.book.get("title", "the book")
             if recipe.repairs:
-                return f"A version of a Healthful Diet recipe{page}, tailored for your health and taste{test}."
-            return f"A recipe from the Dixit programme's Healthful Diet book{page}{test}."
+                return f"A version of a {title} recipe{page}, tailored for your health and taste{test}."
+            return f"A recipe from {programme().identity['programme']}'s {title} book{page}{test}."
         if recipe.tier == "doctor":
             lead = f"Adapted for you from a recipe recommended by {recipe.source_name}" if recipe.repairs else f"Recommended by {recipe.source_name}"
             return lead + ("." if recipe.source_signed else " (test pack, not yet signed by the doctor).")
@@ -743,6 +759,15 @@ class RecipeService:
         count = f"{float(made['count']):g}"
         return f"About {each} kcal in each {made['unit']}; the book's recipe makes about {count} {made['unit']}."
 
+    def nutrition_of(self, rid: str, person: Person) -> CheckedRecipe | None:
+        """One of our recipes with its totals worked out, for "calories in jeera aloo" or "how many calories in it" after a recipe.
+        None when this person's programme can't use it (a book their pack doesn't list)."""
+        if rid not in self.recipes or not self.usable(rid, person):
+            return None
+        recipe = self._from_collection(rid, person)
+        self.calculate(recipe)
+        return recipe
+
     def totals_text(self, recipe: CheckedRecipe) -> str:
         parts = []
         for n in ("energy_kcal", "carbohydrate_g", "protein_g", "fat_g", "fiber_g"):
@@ -769,10 +794,11 @@ def recipe_badge(recipe: CheckedRecipe) -> dict:
     if recipe.origin != "approved":
         return {"kind": "ai_checked", "text": "AI-drafted, checked", "recipe_id": recipe.recipe_id}
     if recipe.book:
+        title = recipe.book.get("title", "Book")
         if recipe.repairs:
-            return {"kind": "adapted", "text": f"Tailored from a Healthful Diet recipe{test}", "recipe_id": recipe.recipe_id,
+            return {"kind": "adapted", "text": f"Tailored from a {title} recipe{test}", "recipe_id": recipe.recipe_id,
                     "tier": recipe.tier, "changes": list(recipe.repairs), "book": recipe.book}
-        return {"kind": "programme", "text": f"Healthful Diet recipe · Dixit programme{test}", "recipe_id": recipe.recipe_id,
+        return {"kind": "programme", "text": f"{title} recipe · {programme().identity['name']}{test}", "recipe_id": recipe.recipe_id,
                 "tier": recipe.tier, "book": recipe.book}
     source = {"doctor": f"{recipe.source_name}'s recipe", "dietitian": "a dietitian-approved recipe"}.get(recipe.tier, "a reference recipe")
     if recipe.repairs:

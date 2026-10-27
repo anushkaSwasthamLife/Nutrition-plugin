@@ -1,5 +1,5 @@
 {
-  "version": "HI-0.1.0",
+  "version": "HI-0.2.0",
   "status": "PROPOSED",
   "note": "Guardrail A3 (workflow page, Guardrails section): requests to starve, purge, use laxatives, water pills or diet pills, or lose weight at an unsafe speed. Runs right after the emergency check, in code, with no AI; an emergency always wins. Each category sends its fixed reply, names no food and asks no question (check N29). Over-triggering is accepted; a missed request is not. Every phrase, the two speed and calorie numbers, every reply and the sources need sign-off from a doctor and a mental-health reviewer; a native speaker reviews the Hinglish and Hindi phrases. Production refuses this file until then.",
   "signed_by": null,
@@ -177,6 +177,14 @@
         "making myself throw up",
         "make myself sick after eating",
         "make myself puke",
+        "make myself vomit",
+        "making myself vomit",
+        "made myself vomit",
+        "force myself to vomit",
+        "forcing myself to vomit",
+        "khud ulti karta",
+        "khud ulti karti",
+        "जानबूझकर उल्टी",
         "throw up to lose weight",
         "vomit to lose weight",
         "ulti karke patla",
@@ -481,6 +489,31 @@
       "sources": [
         "https://www.cdc.gov/healthy-weight-growth/losing-weight/index.html",
         "https://www.niddk.nih.gov/health-information/weight-management/very-low-calorie-diets"
+      ]
+    },
+    {
+      "id": "H5",
+      "name": "harm_to_others",
+      "priority": 5,
+      "negatable": true,
+      "note": "Asking how to poison, drug or spike someone else's food or drink. Not 'I think I was poisoned' (E6) or food poisoning (an illness).",
+      "phrases": [
+        "poison my", "poison his", "poison her", "poison their", "poison someone", "poison somebody", "poison a person",
+        "poison the food", "poison food", "poison the drink", "poison the tea", "poison the water", "poison my neighbour", "poison my neighbor",
+        "put poison in", "put poison into", "add poison to", "mix poison in", "mix poison into", "kill someone with food",
+        "spike his drink", "spike her drink", "spike their drink", "spike someone s drink", "spike someone's drink", "spike a drink",
+        "drug his food", "drug her food", "drug their food", "drug someone", "drug somebody",
+        "zeher dena", "zeher de du", "zeher mila", "zeher milana", "zahar dena", "zahar mila", "zahar milana", "jahar dena", "jahar mila",
+        "khane mein zeher", "khane me zeher", "khane mein zahar", "khane me jahar",
+        "ज़हर देना", "जहर देना", "ज़हर मिला", "जहर मिला", "खाने में ज़हर", "खाने में जहर"
+      ],
+      "combos": [],
+      "reply": "I can't help with harming anyone in any way. If someone is in danger, call 112 now. If you are feeling angry or overwhelmed, Tele-MANAS 14416 is free and open 24 hours.",
+      "checkin": "",
+      "needs_line": "112",
+      "sources": [
+        "https://112.gov.in",
+        "https://telemanas.mohfw.gov.in"
       ]
     }
   ],

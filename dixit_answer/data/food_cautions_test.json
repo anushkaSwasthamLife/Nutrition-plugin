@@ -1,0 +1,43 @@
+{
+  "version": "FC-0.1.0",
+  "status": "TEST ONLY",
+  "note": "PLACEHOLDER cautions for development only. When the person's profile (or what they said in the chat) has a condition, a medicine or a pregnancy listed here, and the answer names one of the foods, the answer gets the fixed line: a caution and 'check with your doctor', never a ban, an amount or a dose. A doctor must review every rule, food and line, with a source, reviewer and review date. Production refuses this file until then.",
+  "cautions": [
+    {
+      "id": "FC-KIDNEY-POTASSIUM",
+      "when": {"condition": "kidney"},
+      "foods": ["FOOD-BANANA", "FOOD-PALAK", "FOOD-ALOO", "FOOD-SWEET-POTATO", "FOOD-TOMATO", "FOOD-TOMATO-PASTE", "FOOD-AVOCADO", "FOOD-COCONUT"],
+      "line": "With kidney disease, foods high in potassium, such as {foods}, may need to be limited. Please check with your doctor or dietitian how much is right for you.",
+      "source": "PLACEHOLDER",
+      "reviewer": null,
+      "review_date": null
+    },
+    {
+      "id": "FC-WARFARIN-VITAMIN-K",
+      "when": {"medicine": ["warfarin", "acitrom", "acenocoumarol", "coumadin", "nicoumalone"]},
+      "foods": ["FOOD-PALAK", "FOOD-SARSON", "FOOD-BROCCOLI", "FOOD-CABBAGE", "FOOD-FENUGREEK-LEAVES"],
+      "line": "Because you take a blood thinner, keep the amount of green leafy vegetables such as {foods} about the same from day to day, and ask your doctor before changing it.",
+      "source": "PLACEHOLDER",
+      "reviewer": null,
+      "review_date": null
+    },
+    {
+      "id": "FC-PREGNANCY-RAW-PAPAYA",
+      "when": {"pregnant": true},
+      "foods": ["FOOD-RAW-PAPAYA"],
+      "line": "During pregnancy, raw or half-ripe papaya is usually advised against. Please check with your doctor before eating it.",
+      "source": "PLACEHOLDER",
+      "reviewer": null,
+      "review_date": null
+    },
+    {
+      "id": "FC-PREGNANCY-RAW-SPROUTS",
+      "when": {"pregnant": true},
+      "foods": ["FOOD-SPROUTS", "FOOD-VAL-SPROUTS"],
+      "line": "During pregnancy, eat sprouts cooked rather than raw, and please ask your doctor before changing how you eat.",
+      "source": "PLACEHOLDER",
+      "reviewer": null,
+      "review_date": null
+    }
+  ]
+}

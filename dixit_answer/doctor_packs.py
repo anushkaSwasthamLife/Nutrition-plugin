@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from .programme import NEUTRAL, Programme, build as build_programme
+
 TEST_STATUSES = {"TEST ONLY", "STUB", "PARTIAL", "PROPOSED", "DRAFT"}
 
 
@@ -24,19 +26,22 @@ class DoctorPack:
     recipe_books: frozenset = frozenset()            # the programme's recipe books, searched right after the doctor's own list
     signed: bool = False                             # the doctor signed the pack and the file is not test data
     notes: tuple = field(default=())                 # why the pack differs from what was asked for (audit)
+    programme_obj: Programme = NEUTRAL               # identity, own lines and rules of the programme (programme.py)
 
     def as_audit(self) -> dict:
         return {"doctor_id": self.doctor_id, "programme": self.programme, "signed": self.signed,
+                "rules": self.programme_obj.rules.version, "rule_types": sorted(self.programme_obj.rules.types),
                 "never_foods": len(self.never_foods), "limits": len(self.limits), "approved_recipes": len(self.approved_recipes),
                 "notes": list(self.notes)}
 
 
 class DoctorPacks:
-    def __init__(self, data: dict):
+    def __init__(self, data: dict, programme_rules: dict | None = None):
         self.version = data["version"]
         self.default_id = data["default_doctor_id"]
         self.packs = data["packs"]
         self.test_file = str(data.get("status", "")).upper() in TEST_STATUSES
+        self.programme_rules = programme_rules or {}
 
     def resolve(self, doctor_id: str | None = None, programme: str | None = None) -> DoctorPack:
         """The pack for this doctor and programme. An unknown doctor or programme gets the default, and the audit says so."""
@@ -53,4 +58,5 @@ class DoctorPacks:
         return DoctorPack(doctor_id=did, doctor_name=pack["doctor_name"], programme=pid, label=prog["label"],
                           never_foods=frozenset(prog.get("never_foods") or []), limits=tuple(prog.get("limits") or []),
                           approved_recipes=frozenset(prog.get("approved_recipes") or []),
-                          recipe_books=frozenset(prog.get("recipe_books") or []), signed=signed, notes=tuple(notes))
+                          recipe_books=frozenset(prog.get("recipe_books") or []), signed=signed, notes=tuple(notes),
+                          programme_obj=build_programme(pid, prog, self.programme_rules))

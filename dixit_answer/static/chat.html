@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Dixit Nutrition Assistant</title>
+<title>Nutrition Assistant</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
@@ -244,7 +244,7 @@
   <header>
     <div class="logo" aria-hidden="true">D</div>
     <div>
-      <div class="title">Dixit Nutrition Assistant</div>
+      <div class="title" id="appTitle">Nutrition Assistant</div>
       <div class="sub"><span class="dot" id="dot"></span><span id="meta">connecting…</span></div>
     </div>
     <span class="spacer"></span>
@@ -292,7 +292,7 @@
   <aside id="profile" aria-label="Your health profile">
     <button class="close" id="closeProfile" type="button" aria-label="Close profile">×</button>
     <h2>Your health profile</h2>
-    <p class="note">This is what the Dixit app would send. It makes answers safer and more personal.</p>
+    <p class="note">This is what the app would send. It makes answers safer and more personal.</p>
     <div class="banner" id="devBanner" hidden>Development build: food lists, tips and rules are test drafts.</div>
 
     <div class="grp"><b>Food allergies</b>
@@ -340,6 +340,8 @@
   var $ = function (id) { return document.getElementById(id); };
   var stream = $('stream'), scroller = $('scroll'), input = $('input'), form = $('form'), sendBtn = $('send'), jump = $('jump');
   var conversationId = null, busy = false, techOn = false, history = [];
+  var doctorId = new URLSearchParams(location.search).get('doctor') || null;   // ?doctor=<id>: chat as that doctor's patient
+  var programmeName = '';
   var store = {
     get: function (k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } },
     set: function (k, v) { try { sessionStorage.setItem(k, v); } catch (e) {} },
@@ -663,7 +665,7 @@
     scrollDown(true);
     var started = Date.now();
     fetch('/api/chat', {method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({message: text, conversation_id: conversationId, profile: profile(), user_id: uid})})
+      body: JSON.stringify({message: text, conversation_id: conversationId, profile: profile(), user_id: uid, doctor_id: doctorId})})
       .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
       .then(function (r) {
         conversationId = r.conversation_id; store.set('dixit_cid', conversationId);
@@ -699,7 +701,8 @@
   function welcome() {
     var w = document.createElement('div'); w.className = 'welcome'; w.id = 'welcome';
     w.innerHTML = '<h1>Hello! What shall we eat today?</h1>' +
-      '<p>Ask me about food, recipes from what you have at home, or how a meal fits the Dixit programme.</p><div class="cards"></div>';
+      '<p>Ask me about food, recipes from what you have at home, or how a meal fits <span class="progname">your programme</span>.</p><div class="cards"></div>';
+    var pn = w.querySelector('.progname'); if (pn && programmeName) pn.textContent = programmeName;
     var cards = w.querySelector('.cards');
     STARTERS.forEach(function (s) {
       var b = document.createElement('button'); b.type = 'button'; b.className = 'card';
@@ -829,7 +832,10 @@
     });
   });
 
-  fetch('/api/info').then(function (r) { return r.json(); }).then(function (i) {
+  fetch('/api/info' + (doctorId ? '?doctor_id=' + encodeURIComponent(doctorId) : '')).then(function (r) { return r.json(); }).then(function (i) {
+    var who = (i.programme && i.programme.identity) || {};
+    if (who.assistant_title) { $('appTitle').textContent = who.assistant_title; document.title = who.assistant_title; }
+    if (who.programme) { programmeName = who.programme; document.querySelectorAll('.progname').forEach(function (e) { e.textContent = who.programme; }); }
     var dev = i.environment !== 'production';
     $('meta').textContent = (dev ? 'Development build' : 'Live') + ' · AI wording: ' + (i.llm && i.llm.provider === 'mock' ? 'off (templates)' : (i.llm && i.llm.provider) || 'off');
     $('devBanner').hidden = !dev;

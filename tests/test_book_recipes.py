@@ -84,7 +84,9 @@ def test_components_and_one_step_dishes_are_never_offered():
 def test_the_recipe_carries_its_source_credit_kind_diet_and_yield():
     r = convert(mini_book(dish(ingredients=[{"item": "minced chicken", "quantity": 500, "unit": "g"}], category="non_vegetarian")),
                 MAP, FOODS).recipes[0]
-    assert r["source"] == "healthful_diet_book" and r["book"] == {"id": "HD-T-01", "page": 120, "title": "Healthful Diet", "signed": False}
+    assert r["source"] == "healthful_diet_book" and r["book"] == {
+        "id": "HD-T-01", "page": 120, "title": "Healthful Diet", "signed": False, "source_book": "healthful_diet",
+        "citation": "Healthful Diet: Think wise. Eat twice. Drop size (ADORE Trust, 2021)"}
     assert (r["kind"], r["diet"], r["main_ingredients"]) == ("protein", "non_vegetarian", ["FOOD-CHICKEN-MINCE"])
     assert r["yield"] == {"count": 4.0, "unit": "vati", "per_serving": 1.0} and "Test bhaji" in r["aliases"]
     assert "per person" not in r["makes"] and r["printed_nutrition"] == {"energy_kcal": 99}

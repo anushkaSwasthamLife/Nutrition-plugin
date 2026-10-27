@@ -32,6 +32,60 @@ The AI only rewords a draft with `{{placeholders}}`. Every number, food list, ap
 question is locked and filled in by code afterwards. A draft that fails the checks is retried once; then the template answer
 is sent.
 
+## Eval set (EV-0.1.0, 26 Oct 2026)
+
+`evals/eval_set.json` holds 152 conversations (166 turns): emergencies and self-harm in English, Hinglish and Hindi, messages
+that only look like emergencies, harmful requests, medicine changes, cure questions, a child's diet, routing, nutrition facts,
+the programme's rules, recipes, allergies and diets, condition cautions, languages, odd input and multi-turn follow-ups. Each turn
+says what must hold, in terms any pipeline can be scored on: a safety label, who handled it (`safety`, `main`, `plugin`,
+`router`), the kind of answer, phrases that must or must not appear, and a rubric for an LLM judge. Safety turns are critical.
+
+    python -m dixit_answer.evals                      # score the current pipeline; exit 1 on any critical failure
+    python -m dixit_answer.evals --area emergency -v  # one area, every failed check
+    python -m dixit_answer.evals --out report.json
+
+`evals/baselines/rules-EV-0.1.0.json` is the current rule-based pipeline's score (154/166; 8 critical failures, all of them
+paraphrases the word lists don't hold, such as "I don't see the point of living anymore"). The LLM pipeline is measured against
+it: it replaces a rule only where it scores better. Rubrics are counted as "not judged" until the judge is built. Add every miss
+found in review as a new case.
+
+## One plugin, many doctors (26 Oct 2026)
+
+Only the **doctor pack** (`data/doctor_packs.json`) differs between doctors. Everything else is shared: emergency and
+harmful-intent safety, the food table, allergens and USDA maths, the condition limits, the router and main assistant, recipes, the
+gate, checks, audit and memory.
+
+A pack's programme entry holds:
+
+| Field | What it sets | Without it |
+|---|---|---|
+| `identity` | Names used in all wording: `programme`, `assistant`, `assistant_title`, `coach`, `coach_bare`, `app`, `meals_heading` | Neutral names ("your programme", "your doctor") |
+| `texts` | Lines the programme words its own way: `choice_intro`, `explain_intro`, `portion`, `plan_refusal`, `frequency_note`, `draft_meal_place` | Neutral defaults in `programme.py` |
+| `rules.data` | The programme's rules file, named in the manifest's `programme_rules` | No programme rules |
+| `rules.rule_types` | The rule types it switches on: `meal_order`, `food_positions`, `status_food_rule`, `between_meals`, `home_meal_kinds`, `no_sweets_in_recipes`, `forbidden_claims` | That rule is off and adds no wording |
+| `recipe_books` | The recipe books its patients get (programme tier) | No book recipes |
+| `never_foods`, `limits`, `approved_recipes` | Its blocks, tighter limits and the doctor's own recipe picks | Shared data only |
+
+Each request runs inside its patient's programme (`programme.use`, a context variable, so two doctors' patients can chat at the
+same time). Shared wording carries `{programme}` / `{coach}` placeholders. LLM prompts, the main assistant's templates and recipe
+credits are filled from the pack. Dixit is the first pack, and its answers are unchanged.
+
+A programme with no rule types still works: plain nutrition, recipes and limits, with "your doctor hasn't set meal rules here"
+where a protocol would be. The start-up check refuses an unknown rule type, identity field or text key, and a rules file missing from
+the manifest.
+
+**Adding a doctor:**
+1. Add a pack to `doctor_packs.json`.
+2. If the programme has rules, add its rules file to `manifest.json` → `programme_rules` and to `data/`.
+3. List the recipe books it uses.
+
+No code changes are needed. The chat page takes `?doctor=<doctor_id>`, `/api/chat` takes `doctor_id`, and `/api/info?doctor_id=`
+returns the programme's names and rule types. Tests: `tests/test_programmes.py`.
+
+Still shared, to revisit if a programme needs its own: the approved food list ("choose more often"), cooking tips, the fixed
+Hindi reply translations (another programme's names show the English reply), and the recognition of "Dixit" in messages
+("what is dixit"), which is harmless for other programmes.
+
 ## The programme's recipe book: Healthful Diet (26 Oct 2026)
 
 The 55 recipes of *Healthful Diet: Think wise. Eat twice. Drop size* (ADORE Trust, Pune, 2021; foreword by Dr Jagannath Dixit) are
@@ -215,7 +269,7 @@ fried dishes calibrated to USDA analogues (proposed, pending dietitian sign-off)
 where USDA does not measure fibre.
 Tests: `tests/test_extra_nutrients.py`.
 
-## Emergency check: how a message is read (EM-0.1.3)
+## Emergency check: how a message is read (EM-0.1.4)
 
 - **Clauses.** A message is split at `. , ; : ! ?`, the Hindi full stop and at "but" or "lekin". A negation counts only inside the clause
   of the symptom, and only when it sits right in front of it ("no chest pain", "without fainting or chest pain"). "There is no point,

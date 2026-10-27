@@ -104,6 +104,53 @@ def test_a_reply_to_the_plugins_question_stays_in_the_plugin_but_a_main_topic_do
     assert other.handled_by == "main" and other.route["intent"] == "exercise"
 
 
+def test_a_no_to_the_plugins_medicine_question_stays_in_the_plugin(talk):
+    asked, reply = talk("how does the programme work", "no I don't take any medicine")
+    assert (asked.plan.get("followup") or {}).get("id") == "FU-SAFETY"
+    assert reply.handled_by == "plugin" and reply.route["intent"] == "plugin_reply" and "Thanks, noted." in reply.answer
+
+
+@pytest.mark.parametrize("message", ["calries in poha", "protien in dal"])
+def test_a_misspelt_nutrition_word_goes_to_the_plugin(talk, message):
+    assert talk(message)[0].handled_by == "plugin"
+
+
+def test_a_near_miss_with_a_different_start_is_not_a_nutrition_word(talk):
+    assert talk("I am looking for a new job")[0].handled_by == "main"
+
+
+@pytest.mark.parametrize("message", ["can I stop metformin if I follow this diet", "I want to stop my insulin and just follow the diet",
+                                     "metformin band kar du kya diet se", "can I stop taking my bp medicine"])
+def test_a_medicine_change_gets_the_medicine_line_even_with_a_food_word(talk, message):
+    r = talk(message, profile={"allergies": [], "conditions": ["type 2 diabetes"]})[0]
+    assert r.handled_by == "main" and r.route["intent"] == "medicine"
+    assert "Please don't start, stop or change a medicine without your doctor." in r.answer
+
+
+@pytest.mark.parametrize("message", ["can I skip lunch, I take insulin", "reduce oil, I take thyroxine", "can I eat mango with metformin"])
+def test_a_food_change_next_to_a_medicine_is_still_a_food_question(talk, message):
+    assert talk(message)[0].handled_by == "plugin"
+
+
+@pytest.mark.parametrize("message", ["will this diet cure my diabetes", "can I reverse diabetes with this diet", "does turmeric cure cancer"])
+def test_a_cure_question_gets_no_promise(talk, message):
+    r = talk(message)[0]
+    assert r.route["intent"] == "cure" and r.answer.startswith("I can't promise that a diet will cure or reverse a condition.")
+
+
+@pytest.mark.parametrize("message", ["what should my 5 year old eat", "can I give honey to my 18 month old baby", "is ghee good for my son",
+                                     "bachche ko kya khilau", "mera beta 5 saal ka hai, use kya khilau"])
+def test_a_childs_diet_gets_the_adults_only_reply(talk, message):
+    r = talk(message)[0]
+    assert r.route["intent"] == "child" and "The programme and my answers are for adults." in r.answer
+
+
+@pytest.mark.parametrize("message", ["what can I make for my kids tiffin", "my son is 25 years old, can he eat poha",
+                                     "I am 40 years old, can I eat mango"])
+def test_cooking_for_the_family_or_an_adult_is_not_a_childs_diet(talk, message):
+    assert talk(message)[0].handled_by == "plugin"
+
+
 def test_short_follow_up_after_a_nutrition_answer_stays_in_the_plugin(talk):
     _r, follow = talk("calories in dal", "why?")
     assert follow.handled_by == "plugin" and follow.route["intent"] == "continuation"
@@ -254,7 +301,8 @@ def test_usda_facts_name_a_trusted_source(talk):
 
 def test_indian_library_facts_are_named_and_marked_as_development_data(talk):
     r = talk("calories in dal")[0]
-    assert r.badge["kind"] == "nutrition_table_dev" and r.badge["text"].endswith("(dev data)") and r.badge["trusted"] is False
+    assert r.badge["kind"] == "nutrition_table_dev" and "dev data" not in r.badge["text"] and r.badge["trusted"] is False
+    assert "dev data" not in r.answer                                      # the Sources panel names and marks it instead
     assert r.sources and all(not g["trusted"] for g in r.sources)
     assert r.sources[0]["name"] == "INDB-derived Swastham Indian Meal Nutrient Library" and "Licence not yet confirmed" in r.sources[0]["note"]
 

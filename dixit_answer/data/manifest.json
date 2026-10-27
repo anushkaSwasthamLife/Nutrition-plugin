@@ -42,6 +42,9 @@
       "recipe_ai_drafting_note": "Off until a dietitian has reviewed a sample of 100 AI-drafted recipes and the limits are signed."
     }
   },
+  "programme_rules": {
+    "dixit_lifestyle": "golden_rules.json"
+  },
   "swastham_data": {
     "food_master": "food_master.json",
     "approved_list": "approved_list_test.json",
@@ -67,6 +70,7 @@
     "decision_logic": "decision_logic_draft.json",
     "doctor_packs": "doctor_packs.json",
     "router_rules": "router_rules.json",
-    "book_ingredient_map": "book_ingredient_map.json"
+    "book_ingredient_map": "book_ingredient_map.json",
+    "food_cautions": "food_cautions_test.json"
   }
 }

@@ -22,6 +22,9 @@
  ],
  "book": {
   "id": "healthful_diet",
+  "short_title": "Healthful Diet",
+  "citation": "Healthful Diet: Think wise. Eat twice. Drop size (ADORE Trust, 2021)",
+  "source_id": "healthful_diet_book",
   "title": "Healthful Diet: Think wise. Eat twice. Drop size",
   "publisher": "Association for Diabetes and Obesity Reversal (ADORE) Trust, Pune",
   "edition": "First edition, 2 June 2021",

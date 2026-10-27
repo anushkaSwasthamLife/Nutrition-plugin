@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from .facts import Fact, make_fact, preferred_records
 from .foods import FoodIndex
 from .golden import GoldenRules, Status
+from .programme import current as programme
 from .loader import Library, SwasthamData
 
 FACT_FIELDS = ("energy_kcal", "carbohydrate_g", "fiber_g", "protein_g")
@@ -29,7 +30,11 @@ class Services:
         self.library = library
         self.data = data
         self.index = index
-        self.golden = GoldenRules(data.golden_rules)
+
+    @property
+    def golden(self) -> GoldenRules:
+        """The rules of the patient's programme (from the doctor pack), for this request."""
+        return programme().rules
 
     # ---------- protocol engine (Golden Rules, phase 6) ----------
     def protocol_full(self) -> list[str]:

@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 
 from .lists import method_allowed
 from .person import Person
+from .programme import current as programme
 from .recipes import _only_minutes, _plain_text
 from .textnorm import clean, has_phrase
 
@@ -55,12 +56,17 @@ class GeneralRecipeService:
     def __init__(self, llm, rules: dict, allergy, index, words: dict, white_lists: dict, environment: str, golden,
                  enabled: bool):
         self.llm, self.rules, self.allergy, self.index = llm, rules, allergy, index
-        self.words, self.white, self.environment, self.golden = words, white_lists, environment, golden
+        self.words, self.white, self.environment = words, white_lists, environment
         self.enabled = enabled
         self.limits = rules["limits"]
         self.diet = rules["diet_words"]
 
     # ------------------------------------------------------------------ what the person must not get
+    @property
+    def golden(self):
+        """The rules of the patient's programme (from the doctor pack), for this request."""
+        return programme().rules
+
     def _diet_words(self, person: Person) -> list[str]:
         if person.diet_type in ("vegetarian", "jain"):
             words = self.diet["meat"] + self.diet["fish"] + self.diet["egg"]

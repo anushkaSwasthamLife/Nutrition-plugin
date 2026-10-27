@@ -88,9 +88,13 @@ def create_app(engine: Engine | None = None, data_dir=None) -> FastAPI:
         return FileResponse(STATIC / "chat.html", headers={"Cache-Control": "no-cache"})     # a changed page shows on a plain reload
 
     @app.get("/api/info")
-    def info():
+    def info(doctor_id: str | None = Query(default=None, max_length=64)):
         eng = get_engine()
-        return {"environment": eng.settings.environment, "llm": {"provider": getattr(eng.llm, "name", "mock"),
+        pack = eng.packs.resolve(doctor_id)
+        programme = {"doctor_id": pack.doctor_id, "doctor_name": pack.doctor_name, "programme": pack.programme,
+                     "identity": pack.programme_obj.identity, "rule_types": sorted(pack.programme_obj.rules.types),
+                     "notes": list(pack.notes)}
+        return {"environment": eng.settings.environment, "programme": programme, "llm": {"provider": getattr(eng.llm, "name", "mock"),
                 "model": getattr(eng.llm, "model", "")}, "versions": eng.versions, "library": eng.library.report,
                 "book": eng.book.summary() if eng.book else {"status": "off"}}
 

@@ -7,14 +7,15 @@ licence is confirmed, and the answer says so instead of hiding it.
 """
 from __future__ import annotations
 
+from .programme import current as programme
+
 USDA, INDIAN, INDB_CALC, BOOK = "usda", "indian", "indb_calc", "book"
 NOTES = {
     USDA: "Official U.S. Department of Agriculture data, public domain.",
     INDIAN: "Derived from the Indian Nutrient Databank (INDB). Licence not yet confirmed, so it is used in development only.",
     INDB_CALC: "An INDB recipe; its values were calculated by us from the ingredients. Licence not yet confirmed, so it is used in "
                "development only.",
-    BOOK: "The Dixit programme's recipe book (ADORE Trust, Pune, 2021): the dish, ingredients and steps. Its printed calories are not "
-          "used; the numbers come from USDA.",
+    BOOK: "{Programme}'s recipe book: the dish, ingredients and steps. Its printed calories are not used; the numbers come from USDA.",
 }
 BOOK_UNSIGNED = " Transcribed for this app; our dietitian has not yet checked the transcription."
 SHORT = {USDA: "USDA FoodData Central", INDIAN: "INDB (Indian library)", INDB_CALC: "INDB recipe, calculated", BOOK: "Healthful Diet book"}
@@ -29,7 +30,7 @@ def answer_sources(draft, library, index, dishes, production_sources) -> list[di
         if trusted is None:
             trusted = (INDIAN if key == INDB_CALC else key) in production_sources
         group = groups.setdefault(name, {"key": key, "name": name, "short": SHORT[key], "trusted": trusted,
-                                         "note": NOTES[key] + note, "used_for": used_for, "records": []})
+                                         "note": programme().fill(NOTES[key]) + note, "used_for": used_for, "records": []})
         if used_for not in group["used_for"]:
             group["used_for"] += f", {used_for}"
         entry = {"id": record_id, "food": food}
@@ -62,7 +63,7 @@ def answer_sources(draft, library, index, dishes, production_sources) -> list[di
         if book:
             signed = bool(getattr(draft.recipe, "source_signed", False))
             page = f", page {book['page']}" if book.get("page") else ""
-            add(BOOK, "Healthful Diet: Think wise. Eat twice. Drop size (ADORE Trust, 2021)", "the recipe",
+            add(BOOK, book.get("citation") or book.get("title", "Recipe book"), "the recipe",
                 f"{book['id']}{page}", draft.recipe.name, trusted=signed, note="" if signed else BOOK_UNSIGNED)
         for item in draft.recipe.ingredients:
             food = index.foods.get(item["food"]) or {}

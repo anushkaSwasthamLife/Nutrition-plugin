@@ -16,6 +16,7 @@ from pathlib import Path
 
 from . import safety as safety_gate
 from .checks import CheckResult, blocking, check_ai_text, check_final
+from .cautions import FoodCautions
 from .compose import Composer
 from .config import Settings, load_settings
 from .consistency import find_problems
@@ -32,6 +33,7 @@ from .harmful import HarmfulRules
 from .memory import MemoryStore, apply_memory, clean_user_id, collect, findings_for
 from .loader import LoadError, load_library, load_manifest, load_swastham_data
 from .doctor_packs import DoctorPacks
+from . import programme as programmes
 from .book_recipes import convert as convert_book, load_book
 from .person import AllergyFilter, apply_profile_safety, build_person, sanitize_profile
 from .planner import make_plan
@@ -141,8 +143,10 @@ class Engine:
         self.general = GeneralRecipeService(self.llm, self.data.general_recipe_rules, self.allergy, self.index, self.words,
                                             self.data.white_lists, self.settings.environment, self.services.golden, ai_drafting)
         self.dishes = build_dish_lookup(self.settings, self.library, self.data.dish_rules, self.words["spelling_map"])
-        self.composer = Composer(self.services, self.index, self.words, self.recipes, self.allergy, self.dishes, self.general)
-        self.packs = DoctorPacks(self.data.doctor_packs)
+        self.cautions = FoodCautions(self.data.food_cautions, self.words, self.index.foods)
+        self.composer = Composer(self.services, self.index, self.words, self.recipes, self.allergy, self.dishes, self.general, self.cautions)
+        self.packs = DoctorPacks(self.data.doctor_packs, self.data.programme_rules)
+        programmes.set_fallback(self.packs.resolve().programme_obj)     # for code that runs outside a request
         self.production_sources = set(manifest["environments"]["production"]["sources"])
         self.versions = {
             "runtime": manifest["runtime_id"],
@@ -151,6 +155,7 @@ class Engine:
             "approved_list": self.data.approved_list["list_version"],
             "cooking_tips": self.data.cooking_tips["version"],
             "golden_rules": self.data.golden_rules["version"],
+            "programme_rules": ",".join(f"{k}:{v.get('version')}" for k, v in sorted(self.data.programme_rules.items())),
             "word_lists": self.data.word_lists["version"],
             "allergen_map": self.data.allergen_map["version"],
             "recipes": self.data.recipes["collection_version"],
@@ -171,6 +176,7 @@ class Engine:
             "doctor_packs": self.data.doctor_packs["version"],
             "router_rules": self.data.router_rules["version"],
             "book_ingredient_map": self.data.book_ingredient_map["version"],
+            "food_cautions": self.data.food_cautions["version"],
             "book_recipes": f"Healthful Diet, {len(self.book.recipes)} dishes" if self.book else "off",
         }
 
@@ -226,12 +232,21 @@ class Engine:
         ctx.original = message
         ctx.text = hindi_translate(message)
 
+    def pack_for(self, ctx: TurnContext, doctor_id: str | None):
+        """The doctor pack for this patient: their doctor's, for the programme in their profile."""
+        return self.packs.resolve(doctor_id, ctx.profile.get("programme"))
+
     def respond(self, ctx: TurnContext, handoff: HandOff | None = None) -> TurnResult:
-        """The nutrition plugin, steps 2-9: doctor pack and profile, understand, plan, fetch, compose, check, log."""
+        """The nutrition plugin, steps 2-9: doctor pack and profile, understand, plan, fetch, compose, check, log. Everything
+        runs inside the pack's programme, so its names, its own lines and only its rule types apply."""
         handoff = handoff or HandOff(ctx.original, ctx.user_id, None, ctx.state.language)
+        pack = self.pack_for(ctx, handoff.doctor_id)
+        with programmes.use(pack.programme_obj):
+            return self._respond(ctx, handoff, pack)
+
+    def _respond(self, ctx: TurnContext, handoff: HandOff, pack) -> TurnResult:
         conversation_id, state, user_id, remembered = ctx.conversation_id, ctx.state, ctx.user_id, ctx.remembered
         profile, original, text, gate, started = ctx.profile, ctx.original, ctx.text, ctx.gate, ctx.started
-        pack = self.packs.resolve(handoff.doctor_id, profile.get("programme"))
 
         # 4 understand (+ apply what a reply tells us)
         u = understand(text, state, self.index, self.words, self.recipes.find_recipes_in_text, self.allergy.read_reply,
@@ -444,8 +459,7 @@ class Engine:
             named = [g for g in sources if "nutrition values" in g["used_for"]] or sources
             trusted = all(g["trusted"] for g in named)
             text = "Nutrition values: " + " and ".join(dict.fromkeys(g["short"] for g in named))
-            return {"kind": "nutrition_table" if trusted else "nutrition_table_dev",
-                    "text": text if trusted else text + " (dev data)", "trusted": trusted}
+            return {"kind": "nutrition_table" if trusted else "nutrition_table_dev", "text": text, "trusted": trusted}
         return None
 
     def finish_main(self, ctx: TurnContext, english: str, kind: str, route: dict, handled_by: str, extra: dict | None = None) -> TurnResult:

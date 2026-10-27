@@ -10,6 +10,9 @@ from __future__ import annotations
 def find_problems(data, library, index, environment: str) -> list[str]:
     problems: list[str] = []
     foods = index.foods
+    if data.food_cautions:
+        from .cautions import FoodCautions
+        problems += FoodCautions(data.food_cautions, data.word_lists, foods).problems()
 
     # ---- food master
     seen_alias: dict[str, str] = {}
@@ -132,6 +135,19 @@ def find_problems(data, library, index, environment: str) -> list[str]:
         if environment == "production" and not (pack.get("approved_by") and pack.get("approved_on")):
             problems.append(f"doctor pack {did}: not signed by the doctor (approved_by, approved_on)")
         for pid, prog in pack.get("programmes", {}).items():
+            from .programme import NEUTRAL_IDENTITY, NEUTRAL_TEXTS, RULE_TYPES
+            rules = prog.get("rules") or {}
+            if rules.get("data") and rules["data"] not in (data.programme_rules or {}):
+                problems.append(f"doctor pack {did}/{pid}: rules data '{rules['data']}' is not in the manifest's programme_rules")
+            for rule_type in rules.get("rule_types") or []:
+                if rule_type not in RULE_TYPES:
+                    problems.append(f"doctor pack {did}/{pid}: unknown rule type '{rule_type}'")
+            for key in prog.get("identity") or {}:
+                if key not in NEUTRAL_IDENTITY:
+                    problems.append(f"doctor pack {did}/{pid}: unknown identity field '{key}'")
+            for key in prog.get("texts") or {}:
+                if key not in NEUTRAL_TEXTS:
+                    problems.append(f"doctor pack {did}/{pid}: unknown text '{key}'")
             for fid in prog.get("never_foods", []):
                 need(fid, f"doctor pack {did}/{pid} never_foods")
             for rid in prog.get("approved_recipes", []):

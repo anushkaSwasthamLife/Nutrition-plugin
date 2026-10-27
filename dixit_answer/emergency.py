@@ -4,7 +4,9 @@ Runs before anything else and never calls the AI. Rules come from `data/emergenc
 
 1. Phrases per category (E1-E7), matched as whole words. A phrase with a negation just before it ("no chest pain") does not
    stop the turn; the answer gets one short line instead ("If that changes ... call 112").
-2. Combinations: two symptom groups in the same message ("shaky" + "sweating", "pregnant" + "bleeding").
+2. Combinations: two symptom groups in the same message ("shaky" + "sweating", "pregnant" + "bleeding"). Clause combinations need
+   both groups in one clause, so other words may stand between them ("सीने में तेज़ दर्द", "seene mein bahut dard") but "my chest is
+   fine, but my knee has pain" does not count.
 3. Blood-sugar readings ("my sugar is 52", "glucose 3.1 mmol"): below the low line -> E1, at or above the high line -> E4.
    A number followed by g, ml, spoons, kcal ... is a food amount, not a reading.
 
@@ -68,8 +70,9 @@ class EmergencyRules:
         for cat in self.categories:
             cat["_phrases"] = [clean(p) for p in cat["phrases"]]
             cat["_combos"] = [[[clean(w) for w in group] for group in combo] for combo in cat.get("combos", [])]
+            cat["_clause_combos"] = [[[clean(w) for w in group] for group in combo] for combo in cat.get("clause_combos", [])]
         self.symptom_words = {w for c in self.categories for p in c["_phrases"] for w in p.split()} | \
-            {w for c in self.categories for combo in c["_combos"] for group in combo for x in group for w in x.split()}
+            {w for c in self.categories for combo in c["_combos"] + c["_clause_combos"] for group in combo for x in group for w in x.split()}
 
     # ------------------------------------------------------------------
     def _negated_before(self, tokens: list[str], negations) -> bool:
@@ -129,6 +132,16 @@ class EmergencyRules:
             pattern = self._patterns[phrase] = re.compile(r"(?<![\w])" + re.escape(phrase) + r"(?![\w])")
         return pattern
 
+    def _combo(self, combo, clauses, negations, negatable) -> list:
+        """The word found for each group, or [] when a group has none."""
+        hits = []
+        for group in combo:
+            hit = next((w for w in group if self._scan(clauses, w, negations, negatable)[0]), None)
+            if hit is None:
+                return []
+            hits.append(hit)
+        return hits
+
     def reading(self, text: str) -> float | None:
         """The lowest or highest blood-sugar reading in the message, in mg/dL (the one furthest from normal)."""
         values = []
@@ -159,15 +172,11 @@ class EmergencyRules:
                     out.matched.append({"category": cat["id"], "how": "phrase", "what": phrase})
                 elif negated:
                     out.negated.append(phrase)
-            for combo in cat["_combos"]:
-                hits = []
-                for group in combo:
-                    hit = next((w for w in group if self._scan(clauses, w, negations, negatable)[0]), None)
-                    if hit is None:
-                        break
-                    hits.append(hit)
-                else:
-                    out.matched.append({"category": cat["id"], "how": "combo", "what": " + ".join(hits)})
+            for combos, scopes in ((cat["_combos"], [clauses]), (cat["_clause_combos"], [[c] for c in clauses])):
+                for combo in combos:
+                    hits = next((h for h in (self._combo(combo, scope, negations, negatable) for scope in scopes) if h), None)
+                    if hits:
+                        out.matched.append({"category": cat["id"], "how": "combo", "what": " + ".join(hits)})
         value = self.reading(text) if self.glucose else None
         if value is not None:
             out.glucose_mg_dl = value
