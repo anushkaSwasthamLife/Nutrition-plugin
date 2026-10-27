@@ -8,6 +8,7 @@ audit record. 10 learn: feedback records in the audit log. `answer` runs both, a
 from __future__ import annotations
 
 import json
+import sys
 import threading
 import time
 import uuid
@@ -43,6 +44,7 @@ from .services import Services
 from .sources import answer_sources
 from .status import apply_status, parse_status
 from .state import ChatState, StateStore, audit_view
+from .unavailable import AuditUnavailable
 from .understand import understand
 
 MAX_MESSAGE_CHARS = 1000
@@ -96,16 +98,41 @@ class HandOff:
 
 
 class AuditLog:
-    """Append-only JSON lines. Records are never edited; feedback is a new record pointing at the turn."""
+    """Append-only JSON lines. Records are never edited; feedback is a new record pointing at the turn.
+
+    If the file cannot be written, lines wait in memory and are written, in order, the next time it can (unavailable.py explains
+    the policy). An emergency or harmful-intent line never makes its reply wait; other lines may wait up to `max_queued`, then
+    AuditUnavailable is raised so the answer is withheld."""
+
+    MAX_QUEUED = 50
+    NEVER_WAIT = {"emergency", "harmful_intent"}
 
     def __init__(self, path: Path):
         path.parent.mkdir(parents=True, exist_ok=True)
         self.path = path
         self._lock = threading.Lock()
+        self._queue: list[str] = []
+        self.max_queued = self.MAX_QUEUED
+        self.failures = 0
+
+    @property
+    def queued(self) -> int:
+        return len(self._queue)
 
     def append(self, record: dict) -> None:
-        with self._lock, open(self.path, "a", encoding="utf-8") as handle:
-            handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+        line = json.dumps(record, ensure_ascii=False) + "\n"
+        with self._lock:
+            self._queue.append(line)
+            try:
+                with open(self.path, "a", encoding="utf-8") as handle:
+                    handle.write("".join(self._queue))
+                self._queue.clear()
+            except OSError as exc:
+                self.failures += 1
+                print(f"audit log cannot be written ({exc.__class__.__name__}); {len(self._queue)} line(s) waiting", file=sys.stderr)
+                if len(self._queue) > self.max_queued and record.get("type") not in self.NEVER_WAIT:
+                    self._queue.pop()
+                    raise AuditUnavailable("the audit log cannot be written and its waiting list is full") from exc
 
 
 class Engine:
