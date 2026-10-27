@@ -53,7 +53,7 @@ found in review as a new case.
 
 EV-0.2.0 (27 Oct 2026) adds the binding's 25 chat tests (`NB-*`) and the misses of the live 25-prompt run with Groq (`LP-*`),
 with profiles `prediabetic`, `hypertension` and `t2_condition_only`. The test suite reads the baseline named after the eval set's
-version: `evals/baselines/rules-EV-0.2.0.json` scores 187/200 with the same single critical failure (NE-08). Write a baseline with
+version: `evals/baselines/rules-EV-0.2.0.json` scores 188/200 with the same single critical failure (NE-08). Write a baseline with
 the recipe books off (`DIXIT_BOOK_RECIPES=off DIXIT_DECK_RECIPES=off`), as the test suite scores, so it holds no private book text. LP-01..03 pass on
 the rules target because the mock model sends the reviewed templates; they fail with Groq and are there for the model target.
 
@@ -89,6 +89,14 @@ reviewed reply. Cure and child can never be model-worded: the code ignores them 
 them. The main prompt (`llm.py`) no longer claims any scope beyond food, and tells the model to give no advice of any kind.
 Checked live with Groq on 27 Oct 2026: the three prompts get the reviewed replies; medicine and symptom replies are still
 model-worded and end with the locked safety line.
+
+## A dish we don't hold is never substituted silently (27 Oct 2026)
+
+"Recipe for paneer tikka masala" used to get Paneer Salad as "With paneer you can make this", with no word that we don't hold
+paneer tikka masala (eval LP-05, binding check NUT-MATCH-001). A dish name now counts as a named dish when it has a word beyond
+its foods and the generic dish words (`understand.DISH_KIND`: sabji, curry, dry...): "paneer tikka masala" and "dal makhani" are
+named and the answer starts with "I don't have a checked recipe for ..." (and the dish goes to the dietitian's queue); "recipe
+for paneer", "aloo sabji recipe" and "how to cook bhindi" still ask for a dish with those foods. Tests: `tests/test_phase5.py`.
 
 ## Recipe books are data: adding one needs no code (27 Oct 2026)
 

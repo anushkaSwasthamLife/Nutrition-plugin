@@ -69,7 +69,7 @@
     "NUT-MATCH-001": {
       "status": "partial",
       "where": "planner.py, compose.py",
-      "note": "25-prompt run #20: 'paneer tikka masala' got Paneer Salad without saying it was a different dish."
+      "note": "A named dish we don't hold is said first, then dishes with its foods (fixed 27 Oct 2026, eval LP-05); the reconstruction half of the check (prepared record before ingredients) is still partial."
     },
     "NUT-HIER-001": {
       "status": "partial",
