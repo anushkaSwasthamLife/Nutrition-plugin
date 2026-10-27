@@ -6,7 +6,7 @@ from datetime import date
 
 import pytest
 
-from dixit_answer import readiness
+from dixit_answer import readiness, release
 from dixit_answer.config import DATA_DIR
 from dixit_answer.consistency import find_problems
 from dixit_answer.sign_off import limit_problems
@@ -139,6 +139,7 @@ def signed_copy(tmp_path):
                     e.update(reviewer="Dr Rao", review_date="2026-10-01")
             doc["unsafe_ingredients"].update(reviewed_empty_by="Dr Rao", reviewed_empty_on="2026-10-01")
         (d / name).write_text(json.dumps(doc), encoding="utf-8")
+    release.build(d / "manifest.json", d)       # the signed files are the release
     return d
 
 

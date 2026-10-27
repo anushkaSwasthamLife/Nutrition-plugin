@@ -150,6 +150,7 @@ class Engine:
         self.production_sources = set(manifest["environments"]["production"]["sources"])
         self.versions = {
             "runtime": manifest["runtime_id"],
+            "release": (self.data.release or {}).get("release_id"),
             "library": manifest["library"]["version"],
             "food_master": self.data.food_master["version"],
             "approved_list": self.data.approved_list["list_version"],
@@ -399,7 +400,10 @@ class Engine:
                             sources, handled_by="safety" if state.last_route == "safety" else "plugin")
         record = {
             "kind": "turn", "at": time.strftime("%Y-%m-%dT%H:%M:%S"), "conversation_id": conversation_id, "turn": state.turn,
-            "environment": self.settings.environment, "versions": self.versions, "type": plan.type, "plan": plan.as_dict(),
+            "environment": self.settings.environment, "versions": self.versions,
+            "release": {"id": (self.data.release or {}).get("release_id"), "verified": (self.data.release or {}).get("verified"),
+                        "drifted": (self.data.release or {}).get("drifted", [])},
+            "type": plan.type, "plan": plan.as_dict(),
             "risk_level": state.risk_level(), "records": result.records, "locked": draft.locked, "template": template,
             "checks": all_checks, "ai": {"provider": getattr(self.llm, "name", "mock"), "model": getattr(self.llm, "model", ""),
                                          "used": ai_used, "fallback": fallback},

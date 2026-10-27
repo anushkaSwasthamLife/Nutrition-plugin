@@ -10,6 +10,7 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from . import release as release_record
 from .config import DATA_DIR, Settings
 
 # Indian serving units that are a real measure. A count unit ("4 chapati", "3 parantha") with a quantity other than 1 is
@@ -79,6 +80,7 @@ class SwasthamData:
     manifest: dict
     programme_rules: dict = None          # programme id -> its rules file (manifest "programme_rules"); one per doctor's programme
     food_cautions: dict = None            # condition / medicine / pregnancy food cautions (cautions.py)
+    release: dict | None = None           # result of checking the files against the release record (release.py)
 
 
 def sha256_of(path: Path) -> str:
@@ -202,4 +204,9 @@ def load_swastham_data(settings: Settings, manifest: dict | None = None) -> Swas
         for name, data in checked.items():
             if str(data.get("status", "")).upper() in {"TEST ONLY", "STUB", "PARTIAL", "PROPOSED", "DRAFT"}:
                 raise LoadError(f"Production refuses {name}: status is {data['status']}.")
-    return SwasthamData(manifest=manifest, programme_rules=rules, **loaded)
+    # The release record pins the exact bytes of every file. Development only reports a difference; production refuses it.
+    release = release_record.verify(manifest, DATA_DIR)
+    if not env.get("allow_test_only_data") and not release["verified"]:
+        problems = "; ".join(release["problems"][:20])
+        raise LoadError("Production refuses a set of data files that is not the signed release: " + problems)
+    return SwasthamData(manifest=manifest, programme_rules=rules, release=release, **loaded)
