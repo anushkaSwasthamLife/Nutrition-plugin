@@ -60,6 +60,8 @@ class ChatState:
     emergency_category: str = ""
     language: str = "en"                                     # en | hi | hinglish: the language the chat is in, answers follow it
     emergency_checkin_done: bool = True                      # the one check-in line after an emergency was given
+    last_route: str = ""                                     # who answered the last turn: safety | nutrition | main | clarify (router.py)
+    route_pending: dict | None = None                        # a message the router asked about ("is this about food?"): {"message", "turn"}
 
     def to_json(self) -> str:
         return json.dumps(asdict(self), ensure_ascii=False)
@@ -86,7 +88,7 @@ class ChatState:
         for key in SAFETY_FIELDS:
             if state.safety_status.get(key) not in ("yes", "no", "unknown"):
                 state.safety_status[key] = "unknown"
-        for key in ("last_followup", "last_question", "pending_confirm", "last_explain"):
+        for key in ("last_followup", "last_question", "pending_confirm", "last_explain", "route_pending"):
             if getattr(state, key) is not None and not isinstance(getattr(state, key), dict):
                 setattr(state, key, None)
         for key in ("allergies",):

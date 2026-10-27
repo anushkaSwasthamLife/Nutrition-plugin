@@ -51,7 +51,7 @@
      "decision_needed": "Does a cup in a person-facing answer mean 125 ml (the book) while a cup in a cookbook recipe stays 240 ml?"},
     {"id": "C2", "topic": "vati, katori and bowl",
      "book": "1 vati = 60 g (page 61)",
-     "system": "Dish answers say 'A bowl of poha has about 161 calories' and use INDB's serving, whose bowl is about 249 g (median of 253 recipes); white_lists.json katori uses NIN sizes of 115 to 360 ml, development only",
+     "system": "Dish answers say 'A bowl of poha has about 161 calories' and use INDB's serving, whose bowl is about 249 g (median of 253 recipes); white_lists.json katori uses NIN sizes of 115 to 360 ml, development only. Since 26 Oct 2026, white_lists.json also has vati = 60 g (development only), used only to show the Healthful Diet book's own recipes ('about 200 kcal in each vati'); dish answers are unchanged",
      "effect": "A person who thinks in vati (60 g) could read a bowl of about 249 g as one vati. The calories per bowl are right for the INDB bowl, but the wording invites the wrong comparison.",
      "decision_needed": "Say the serving in grams as well, show answers per vati, or keep per bowl?"},
     {"id": "C3", "topic": "one chapati",

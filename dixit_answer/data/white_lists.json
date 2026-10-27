@@ -1,5 +1,5 @@
 {
-  "version": "WL-0.1.0",
+  "version": "WL-0.2.0",
   "status": "PROPOSED",
   "note": "Allow lists: only what is written here may be used. Every entry needs approved_by and approved_on from a dietitian before production (the readiness report counts the ones that are empty). allowed_in says where an entry may be used. Anything not listed is refused or sent to the review queue, never guessed.",
   "recipe_sources": {
@@ -8,7 +8,8 @@
       {"id": "swastham_dietitian", "label": "Written and signed by the Swastham dietitian", "allowed_in": ["development", "production"], "approved_by": null, "approved_on": null},
       {"id": "swastham_dev_draft", "label": "Draft written for development, not signed", "allowed_in": ["development"], "approved_by": null, "approved_on": null},
       {"id": "ai_draft_gated", "label": "Drafted by the AI and passed by the checks", "allowed_in": ["development"], "note": "AI drafting stays off in production until the 100-recipe dietitian review (item G) has passed.", "approved_by": null, "approved_on": null},
-      {"id": "indb_recipes", "label": "INDB recipes (Art & Science of Cooking, Basic Food Preparation, web recipes)", "allowed_in": ["development"], "note": "INDB is derived from ICMR-NIN data; development only until a licence or ownership is confirmed.", "approved_by": null, "approved_on": null}
+      {"id": "indb_recipes", "label": "INDB recipes (Art & Science of Cooking, Basic Food Preparation, web recipes)", "allowed_in": ["development"], "note": "INDB is derived from ICMR-NIN data; development only until a licence or ownership is confirmed.", "approved_by": null, "approved_on": null},
+      {"id": "healthful_diet_book", "label": "Healthful Diet: Think wise. Eat twice. Drop size (ADORE Trust, Pune, 2021), the Dixit programme's recipe book", "allowed_in": ["development"], "note": "Unverified transcription of a book for private circulation; development only until the dietitian has checked the import (book_ingredient_map.json).", "approved_by": null, "approved_on": null}
     ]
   },
   "cooking_methods": {
@@ -40,7 +41,12 @@
       {"id": "clove", "aliases": ["clove", "cloves"], "fixed_ml": null, "source": "USDA portion weight, per food", "allowed_in": ["development", "production"], "approved_by": null, "approved_on": null},
       {"id": "inch", "aliases": ["inch", "inches"], "fixed_ml": null, "source": "USDA portion weight, per food", "allowed_in": ["development", "production"], "approved_by": null, "approved_on": null},
       {"id": "half", "aliases": ["half"], "fixed_ml": null, "source": "half of the food's medium or whole unit", "allowed_in": ["development", "production"], "approved_by": null, "approved_on": null},
-      {"id": "squeeze", "aliases": ["squeeze"], "fixed_ml": null, "approximate": true, "source": "no standard measure; a dietitian should replace it with a spoon measure", "allowed_in": ["development"], "approved_by": null, "approved_on": null}
+      {"id": "squeeze", "aliases": ["squeeze"], "fixed_ml": null, "approximate": true, "source": "no standard measure; a dietitian should replace it with a spoon measure", "allowed_in": ["development"], "approved_by": null, "approved_on": null},
+      {"id": "vati", "aliases": ["vati", "vatis"], "fixed_ml": null, "grams": 60, "source": "Healthful Diet book: 1 vati = 60 g (book page 152)", "allowed_in": ["development"], "approved_by": null, "approved_on": null},
+      {"id": "count", "aliases": ["count"], "fixed_ml": null, "source": "Healthful Diet import: a whole item (one onion, one chilli), weighed per food", "allowed_in": ["development"], "approved_by": null, "approved_on": null},
+      {"id": "stalk", "aliases": ["stalk", "stalks", "sprig", "sprigs"], "fixed_ml": null, "source": "Healthful Diet import: a herb stalk, weighed per food", "allowed_in": ["development"], "approved_by": null, "approved_on": null},
+      {"id": "lemon", "aliases": ["lemon", "lemons"], "fixed_ml": null, "source": "Healthful Diet import: the juice of one lemon, weighed per food", "allowed_in": ["development"], "approved_by": null, "approved_on": null},
+      {"id": "packet", "aliases": ["packet", "packets"], "fixed_ml": null, "source": "Healthful Diet import: one packet of pav, weighed per food", "allowed_in": ["development"], "approved_by": null, "approved_on": null}
     ]
   },
   "ingredient_aliases": {

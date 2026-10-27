@@ -173,7 +173,8 @@ def client(engine):
 
 
 def test_http_happy_path_and_static_page(client):
-    assert client.get("/").status_code == 200 and "Dixit" in client.get("/").text
+    assert client.get("/").status_code == 200 and "Nutrition Assistant" in client.get("/").text
+    assert client.get("/api/info").json()["programme"]["identity"]["assistant_title"] == "Dixit Nutrition Assistant"   # named by the doctor's pack
     r = client.post("/api/chat", json={"message": "I have aloo and onion, what can I make?", "profile": {"allergies": []}})
     assert r.status_code == 200 and r.json()["type"] == "meal_from_ingredients"
 

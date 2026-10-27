@@ -93,7 +93,8 @@ def test_conflicts_name_a_decision_and_are_still_true():
     white = json.loads((DATA_DIR / "white_lists.json").read_text(encoding="utf-8"))
     cup = by_id(white["units"]["entries"])["cup"]
     assert cup["fixed_ml"] == 240 and by_id(BOOK["household_measures"])["cup"]["amount"] == 125          # C1: change either and update this
-    assert "vati" not in by_id(white["units"]["entries"])                                                  # C2: the system has no vati yet
+    vati = by_id(white["units"]["entries"])["vati"]                                                       # C2: vati only for the book's recipes
+    assert vati["grams"] == 60 and vati["allowed_in"] == ["development"]
     limits = json.loads((DATA_DIR / "condition_limits_test.json").read_text(encoding="utf-8"))["limits"]
     assert any(r["condition"] == "general" and r["nutrient"] == "energy_kcal" and r["daily_max"] == 2000 for r in limits)   # C4
     food = json.loads((DATA_DIR / "food_master.json").read_text(encoding="utf-8"))["foods"]

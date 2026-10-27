@@ -27,6 +27,7 @@ MEDICINE_RISK = {"insulin": "diabetes_medicine", "sugar tablets": "diabetes_medi
                  "sulfonylurea": "diabetes_medicine", "bp": "bp_medicine", "amlodipine": "bp_medicine", "telmisartan": "bp_medicine",
                  "losartan": "bp_medicine", "blood pressure": "bp_medicine"}
 DIET_TYPES = {"vegetarian", "egg", "non_vegetarian", "jain"}
+VEGAN = {"vegan", "plant_based", "plant based"}                     # read as vegetarian with milk and egg left out
 STATUS_VALUES = {"unknown", "diabetic", "prediabetic", "non_diabetic", "currently_non_diabetic"}
 TARGET_NUTRIENTS = {"energy_kcal", "carbohydrate_g", "fiber_g", "protein_g", "fat_g", "sodium_mg", "added_sugar_g", "sugars_g",
                     "saturated_fat_g", "cholesterol_mg", "potassium_mg", "phosphorus_mg"}
@@ -71,6 +72,9 @@ def sanitize_profile(profile) -> dict:
     diet = profile.get("diet_type")
     if isinstance(diet, str) and diet.strip().lower() in DIET_TYPES:
         out["diet_type"] = diet.strip().lower()
+    elif isinstance(diet, str) and diet.strip().lower() in VEGAN:       # as when the person says "I am vegan" in the chat
+        out["diet_type"] = "vegetarian"
+        out["allergies"] = sorted(set(out.get("allergies", [])) | {"milk", "egg"})
     status = profile.get("diabetes_status")
     if isinstance(status, str) and status.strip().lower() in STATUS_VALUES:
         out["diabetes_status"] = status.strip().lower()
@@ -95,6 +99,9 @@ def sanitize_profile(profile) -> dict:
                                           if isinstance(k, str) and k in TARGET_NUTRIENTS) if v is not None}
         if clean_intake:
             out["intake_today"] = clean_intake
+    programme = profile.get("programme")
+    if isinstance(programme, str) and 0 < len(programme.strip()) <= MAX_TEXT:
+        out["programme"] = programme.strip().lower()
     logged = profile.get("intake_logged_at")
     if isinstance(logged, str) and len(logged) <= 40:
         out["intake_logged_at"] = logged
@@ -112,6 +119,9 @@ class Person:
     intake_today: dict = field(default_factory=dict)        # nutrient -> amount, only used if logged recently
     intake_logged_at: str | None = None
     status: Status = field(default_factory=Status)          # diabetes status for the Golden Rules (fruit)
+    doctor_pack: object = None                              # DoctorPack: the doctor's layer, merged first (doctor_packs.py)
+    medicines: list = field(default_factory=list)          # as the app sends them; only for food cautions (cautions.py)
+    pregnant: bool | None = None                            # None = unknown
 
     @property
     def allergies_known(self) -> bool:
@@ -152,9 +162,9 @@ class AllergyFilter:
         return blocked
 
     def blocked_foods(self, person: Person) -> set[str]:
-        """Food IDs this person must never be offered: allergies (with derivatives), avoid list, diet type."""
+        """Food IDs this person must never be offered: the doctor pack's never-foods, allergies (with derivatives), avoid list, diet type."""
         allergens = person.allergies if person.allergies is not None else []
-        blocked = self.foods_for(allergens) | set(person.avoid_foods) | lists.condition_blocked_foods(self.black, person.conditions)
+        blocked = set(person.doctor_pack.never_foods if person.doctor_pack is not None else ()) | self.foods_for(allergens) | set(person.avoid_foods) | lists.condition_blocked_foods(self.black, person.conditions)
         if person.unmapped_allergies:                       # an allergy we can't map: stay clear of every common allergen
             blocked |= self.major_allergen_foods()
         if person.diet_type in ("vegetarian", "jain"):
@@ -228,10 +238,13 @@ def build_person(profile: dict | None, state: ChatState, index: FoodIndex, aller
     status = Status(value, prior if isinstance(prior, bool) else None, validated if isinstance(validated, bool) else None)
     if status.value in ("diabetic", "prediabetic") and "diabetes" not in conditions:
         conditions.append("diabetes")
+    told = (state.safety_status or {}).get("pregnancy")                # the profile, or the answer to our medicines question
+    pregnant = profile["pregnant"] if "pregnant" in profile else {"yes": True, "no": False}.get(told)
     return Person(allergies=list(allergies) if allergies is not None else None, unmapped_allergies=unmapped, avoid_foods=avoid,
                   diet_type=diet, status=status, conditions=conditions,
                   clinician_targets=dict(profile.get("clinician_targets") or {}),
-                  intake_today=dict(profile.get("intake_today") or {}), intake_logged_at=profile.get("intake_logged_at"))
+                  intake_today=dict(profile.get("intake_today") or {}), intake_logged_at=profile.get("intake_logged_at"),
+                  medicines=list(profile.get("medicines") or []), pregnant=pregnant)
 
 
 def apply_profile_safety(profile: dict | None, state: ChatState) -> None:

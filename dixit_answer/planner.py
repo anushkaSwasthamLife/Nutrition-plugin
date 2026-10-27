@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 
+from .programme import current as programme
 from .state import ChatState
 from .understand import Understanding
 
@@ -28,6 +29,7 @@ REPLY_RECIPE_SLOTS = {"allergies", "confirm_food", "recipe_choice"}
 
 FOOD_TYPES = {"food_choice_guidance", "food_allowed", "protocol_permission", "neutral_food_comparison"}
 RECIPE_TYPES = {"recipe_request", "meal_from_ingredients"}
+PROTOCOL_BLOCKS = {"protocol_full", "protocol_reminder", "protocol_amounts", "protocol_amount", "meal_place"}
 TIMING_TYPES = {"protocol_explain", "meal_protocol_application"}
 WEIGHT_CONDITIONS = {"obesity"}
 
@@ -98,7 +100,7 @@ def _choose_followup(plan: AnswerPlan, state: ChatState, allergies_known: bool =
     if plan.type == "recipe_request" and not plan.ingredients and not state.ingredients_on_hand and not plan.recipe_ids \
             and not plan.wants_list:
         ladder.append("FU-INGREDIENTS")
-    if plan.type in RECIPE_TYPES or plan.protocol_level in {"full", "meal_place"}:
+    if (plan.type in RECIPE_TYPES or plan.protocol_level in {"full", "meal_place"}) and programme().uses("meal_order"):
         ladder.append("FU-SPROUTS")
     for fid in ladder:
         if fid in asked and fid not in {"FU-SAFETY", "FU-ALLERGY", "FU-STATUS", "FU-CONSULTANT"}:
@@ -109,6 +111,23 @@ def _choose_followup(plan: AnswerPlan, state: ChatState, allergies_known: bool =
         plan.followup = {"id": fid, "slot": slot, "text": text}
         plan.rules.append("R8")
         return
+
+
+def _fit_programme(plan: AnswerPlan, blocks: list) -> list:
+    """Only the rule types the patient's programme uses. Without a meal order there is no protocol to explain or place a dish in
+    (a question about it is told so); without a status food rule there is nothing to ask the diabetes status for."""
+    rules = programme().rules
+    if not rules.uses("meal_order"):
+        about_it = plan.type in TIMING_TYPES | {"protocol_permission"} and any(b in PROTOCOL_BLOCKS for b in blocks)
+        first = next((i for i, b in enumerate(blocks) if b in PROTOCOL_BLOCKS), len(blocks))
+        blocks = [b for b in blocks if b not in PROTOCOL_BLOCKS]
+        if about_it:
+            blocks.insert(min(first, len(blocks)), "no_meal_rules")
+        plan.protocol_level, plan.timing_advice = "none", False
+    if not rules.uses("status_food_rule"):
+        blocks = [b for b in blocks if b != "status_position"]
+        plan.needs_status = False
+    return blocks
 
 
 def _protocol_level(plan: AnswerPlan, u: Understanding, state: ChatState) -> None:
@@ -301,6 +320,8 @@ def make_plan(u: Understanding, state: ChatState, emergency: bool = False, aller
         plan.wants_list = plan.type == "recipe_request" and not plan.recipe_ids and not plan.ingredients
         plan.time_wish = u.time_wish
         blocks += ["recipe", "meal_place"]
+
+    blocks = _fit_programme(plan, blocks)
 
     # R2/R3: caution goes before the protocol whenever meal-timing advice is given and risk isn't "none".
     if plan.timing_advice and state.risk_level() != "none":

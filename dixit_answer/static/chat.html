@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Dixit Nutrition Assistant</title>
+<title>Nutrition Assistant</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
@@ -33,7 +33,7 @@
 
   header { display: flex; align-items: center; gap: 12px; padding: 10px max(16px, env(safe-area-inset-left)) 10px; background: var(--surface);
     border-bottom: 1px solid var(--line); position: relative; z-index: 5; }
-  .logo { width: 40px; height: 40px; border-radius: 12px; background: var(--green); color: #fff; display: grid; place-items: center; font-size: 22px; flex: none; }
+  .logo { width: 40px; height: 40px; border-radius: 12px; background: var(--green); color: #fff; display: grid; place-items: center; font-size: 20px; font-weight: 700; font-family: var(--serif); flex: none; }
   .title { font-family: var(--serif); font-weight: 800; font-size: 1.15rem; line-height: 1.1; }
   .sub { font-size: .8rem; color: var(--muted); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
   .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); display: inline-block; }
@@ -51,7 +51,6 @@
   .stream { display: flex; flex-direction: column; gap: 14px; max-width: 760px; margin: 0 auto; padding-bottom: 8px; }
 
   .welcome { text-align: center; padding: 28px 8px 8px; }
-  .welcome .big { font-size: 46px; }
   .welcome h1 { font-family: var(--serif); font-weight: 800; font-size: clamp(1.6rem, 5vw, 2.2rem); line-height: 1.1; margin: 8px 0 8px; text-wrap: balance; }
   .welcome p { color: var(--muted); margin: 0 auto 20px; max-width: 46ch; }
   .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; text-align: left; }
@@ -59,14 +58,13 @@
     transition: border-color .15s, transform .15s, box-shadow .15s; box-shadow: var(--shadow); }
   .card:hover { border-color: var(--green); transform: translateY(-1px); }
   .card { text-align: left; width: 100%; }
-  .card .ico { font-size: 22px; line-height: 1.2; }
   .card b { display: block; font-size: .95rem; }
   .card span.s { font-size: .82rem; color: var(--muted); line-height: 1.35; display: block; }
 
   .row { display: flex; gap: 10px; align-items: flex-end; animation: rise .22s ease-out; }
   .row.me { justify-content: flex-end; }
   @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-  .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--green-soft); display: grid; place-items: center; font-size: 18px; flex: none; border: 1px solid var(--line); }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--green-soft); display: grid; place-items: center; font-size: 15px; font-weight: 700; font-family: var(--serif); color: var(--green-dark); flex: none; border: 1px solid var(--line); }
   .bubble { max-width: min(86%, 620px); padding: 11px 15px; border-radius: 18px; overflow-wrap: anywhere; position: relative; }
   .me .bubble { background: var(--green); color: #fff; border-bottom-right-radius: 5px; white-space: pre-wrap; }
   .bot .bubble { background: var(--surface); border: 1px solid var(--line); border-bottom-left-radius: 5px; box-shadow: var(--shadow); }
@@ -122,6 +120,22 @@
   details.tech summary { cursor: pointer; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
   details.tech pre { background: var(--code-bg); padding: 8px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; font-size: .74rem; }
   .tag { border-radius: 999px; padding: 0 8px; font-size: .74rem; font-weight: 700; background: var(--code-bg); }
+  .badge { display: inline-block; margin: 0 0 6px; border-radius: 999px; padding: 1px 10px; font-size: .74rem; font-weight: 700; background: var(--green-soft); color: var(--green-dark); }
+  .badge.adapted, .badge.reference, .badge.nutrition_table { background: var(--code-bg); color: var(--ink); }
+  .badge.ai_checked, .badge.ai_general, .badge.nutrition_table_dev { background: var(--amber-soft); color: var(--amber); }
+  .sources { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 8px; font-size: .78rem; }
+  .sources .sh { font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; font-size: .68rem; margin-bottom: 4px; }
+  .sources details { margin: 4px 0; }
+  .sources summary { cursor: pointer; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; list-style: none; }
+  .sources summary::-webkit-details-marker { display: none; }
+  .sources .trust { border-radius: 999px; padding: 0 8px; font-weight: 700; font-size: .7rem; white-space: nowrap; }
+  .sources .trust.ok { background: var(--green-soft); color: var(--green-dark); }
+  .sources .trust.dev { background: var(--amber-soft); color: var(--amber); }
+  .sources .sname { font-weight: 700; color: var(--ink); }
+  .sources .scount { color: var(--muted); }
+  .sources .snote { color: var(--muted); margin: 4px 0 2px; }
+  .sources ul { margin: 2px 0 0; padding-left: 18px; color: var(--muted); }
+  .sources code { font-size: .72rem; background: var(--code-bg); border-radius: 4px; padding: 0 4px; }
   .tag.ok { background: var(--green-soft); color: var(--green-dark); } .tag.warn { background: var(--amber-soft); color: var(--amber); } .tag.bad { background: var(--red-soft); color: var(--red); }
 
   .jump { position: absolute; right: 18px; bottom: 112px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface);
@@ -146,7 +160,8 @@
   .search .s { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--green); background: var(--surface, #fff); color: var(--green-dark);
                border-radius: 999px; padding: 2px 4px 2px 9px; font: inherit; font-weight: 700; cursor: pointer; }
   .search .s:hover, .search .s:focus-visible { background: var(--green-soft); }
-  .search .s b { font-weight: 700; opacity: .7; padding: 0 4px; }
+  .search .s .icon { opacity: .7; margin-left: 4px; }
+  .icon { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vertical-align: -0.125em; }
   .search .clear { border: 0; background: transparent; color: var(--muted); text-decoration: underline; font: inherit; cursor: pointer; padding: 2px 4px; }
   .hint { display: flex; justify-content: space-between; gap: 10px; font-size: .74rem; color: var(--muted); padding: 5px 8px 0; }
   .hint .count.warn { color: var(--red); font-weight: 700; }
@@ -227,27 +242,27 @@
 <body>
 <div class="shell nomem" id="shell">
   <header>
-    <div class="logo" aria-hidden="true">🥗</div>
+    <div class="logo" aria-hidden="true">D</div>
     <div>
-      <div class="title">Dixit Nutrition Assistant</div>
+      <div class="title" id="appTitle">Nutrition Assistant</div>
       <div class="sub"><span class="dot" id="dot"></span><span id="meta">connecting…</span></div>
     </div>
     <span class="spacer"></span>
-    <button class="hbtn only-small" id="openHistory" type="button" aria-label="Past conversations" hidden>🕘 <span class="lbl">History</span></button>
-    <button class="hbtn" id="exportChat" type="button" aria-label="Export this conversation" title="Download this conversation" hidden>⬇️ <span class="lbl">Export</span></button>
-    <button class="hbtn only-small" id="openProfile" type="button" aria-label="Your profile">👤 <span class="lbl">Profile</span></button>
-    <button class="hbtn" id="tech" type="button" aria-pressed="false" title="Show the checks behind each answer (for the care team)" aria-label="Details">🔍 <span class="lbl">Details</span></button>
-    <button class="hbtn" id="newchat" type="button" aria-label="New chat">✨ <span class="lbl">New chat</span></button>
+    <button class="hbtn only-small" id="openHistory" type="button" aria-label="Past conversations" hidden><span class="lbl">History</span></button>
+    <button class="hbtn" id="exportChat" type="button" aria-label="Export this conversation" title="Download this conversation" hidden><span class="lbl">Export</span></button>
+    <button class="hbtn only-small" id="openProfile" type="button" aria-label="Your profile"><span class="lbl">Profile</span></button>
+    <button class="hbtn" id="tech" type="button" aria-pressed="false" title="Show the checks behind each answer (for the care team)" aria-label="Details"><span class="lbl">Details</span></button>
+    <button class="hbtn" id="newchat" type="button" aria-label="New chat"><span class="lbl">New chat</span></button>
   </header>
 
   <nav class="side" id="side" aria-label="Past conversations">
-    <button class="newbtn" id="newchat2" type="button">✨ New chat</button>
+    <button class="newbtn" id="newchat2" type="button">New chat</button>
     <section aria-labelledby="hConv">
-      <h3 id="hConv">🕘 Past conversations</h3>
+      <h3 id="hConv">Past conversations</h3>
       <div class="convs" id="convs"></div>
     </section>
     <section aria-labelledby="hMem">
-      <h3 id="hMem">🧠 What I remember</h3>
+      <h3 id="hMem">What I remember</h3>
       <button class="repeat" id="repeat" type="button" hidden></button>
       <ul class="facts" id="facts"></ul>
       <button class="linkbtn" id="forgetAll" type="button" hidden>Forget everything about me</button>
@@ -259,59 +274,59 @@
     <div class="scroll" id="scroll">
       <div class="stream" id="stream" aria-live="polite" aria-label="Conversation"></div>
     </div>
-    <button class="jump" id="jump" type="button" aria-label="Scroll to the latest message">⬇️</button>
+    <button class="jump" id="jump" type="button" aria-label="Scroll to the latest message"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v9M4.5 8.5L8 12l3.5-3.5"/></svg></button>
     <div class="composer">
       <div class="composer-in">
         <div class="search" id="search" role="group" aria-label="What this dish search is looking for" hidden></div>
         <button class="using" id="using" type="button" aria-label="Your profile in use. Open to change"></button>
         <form id="form" autocomplete="off">
-          <textarea id="input" rows="1" maxlength="2000" placeholder="Ask about food or meals… 🍛" aria-label="Your message"></textarea>
-          <button class="send" id="send" type="submit" aria-label="Send message">➤</button>
+          <textarea id="input" rows="1" maxlength="2000" placeholder="Ask about food or meals…" aria-label="Your message"></textarea>
+          <button class="send" id="send" type="submit" aria-label="Send message"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h9M8.5 4.5L12 8l-3.5 3.5"/></svg></button>
         </form>
         <div class="hint long"><span>Enter to send · Shift+Enter for a new line</span><span class="count" id="count"></span></div>
-        <div class="hint"><span>ℹ️ Food information only, not medical advice. In an emergency call <b>112</b>.</span></div>
+        <div class="hint"><span>Food information only, not medical advice. In an emergency call <b>112</b>.</span></div>
       </div>
     </div>
   </main>
 
   <aside id="profile" aria-label="Your health profile">
     <button class="close" id="closeProfile" type="button" aria-label="Close profile">×</button>
-    <h2>👤 Your health profile</h2>
-    <p class="note">This is what the Dixit app would send. It makes answers safer and more personal.</p>
-    <div class="banner" id="devBanner" hidden>🧪 Development build: food lists, tips and rules are test drafts.</div>
+    <h2>Your health profile</h2>
+    <p class="note">This is what the app would send. It makes answers safer and more personal.</p>
+    <div class="banner" id="devBanner" hidden>Development build: food lists, tips and rules are test drafts.</div>
 
-    <div class="grp"><b>🥜 Food allergies</b>
+    <div class="grp"><b>Food allergies</b>
       <div class="opts" id="allergyMode">
         <label class="opt"><input type="radio" name="am" value="unknown" checked><span>Not told yet</span></label>
         <label class="opt"><input type="radio" name="am" value="none"><span>None</span></label>
         <label class="opt"><input type="radio" name="am" value="list"><span>Allergic to…</span></label>
       </div>
       <div class="opts" id="allergyList" style="margin-top:8px">
-        <label class="opt"><input type="checkbox" class="al" value="milk"><span>🥛 Milk</span></label>
-        <label class="opt"><input type="checkbox" class="al" value="peanut"><span>🥜 Peanuts</span></label>
-        <label class="opt"><input type="checkbox" class="al" value="tree_nut"><span>🌰 Nuts</span></label>
-        <label class="opt"><input type="checkbox" class="al" value="gluten"><span>🌾 Gluten</span></label>
-        <label class="opt"><input type="checkbox" class="al" value="egg"><span>🥚 Eggs</span></label>
-        <label class="opt"><input type="checkbox" class="al" value="soy"><span>🫘 Soy</span></label>
-        <label class="opt"><input type="checkbox" class="al" value="sesame"><span>🌱 Sesame</span></label>
-        <label class="opt"><input type="checkbox" class="al" value="chickpea"><span>🟤 Chickpea</span></label>
+        <label class="opt"><input type="checkbox" class="al" value="milk"><span>Milk</span></label>
+        <label class="opt"><input type="checkbox" class="al" value="peanut"><span>Peanuts</span></label>
+        <label class="opt"><input type="checkbox" class="al" value="tree_nut"><span>Nuts</span></label>
+        <label class="opt"><input type="checkbox" class="al" value="gluten"><span>Gluten</span></label>
+        <label class="opt"><input type="checkbox" class="al" value="egg"><span>Eggs</span></label>
+        <label class="opt"><input type="checkbox" class="al" value="soy"><span>Soy</span></label>
+        <label class="opt"><input type="checkbox" class="al" value="sesame"><span>Sesame</span></label>
+        <label class="opt"><input type="checkbox" class="al" value="chickpea"><span>Chickpea</span></label>
       </div>
     </div>
 
-    <div class="grp"><b>🍽️ Diet</b>
+    <div class="grp"><b>Diet</b>
       <select id="diet" aria-label="Diet">
-        <option value="">Not told</option><option value="vegetarian">🥦 Vegetarian</option><option value="egg">🥚 Eats eggs</option>
-        <option value="non_vegetarian">🍗 Non-vegetarian</option><option value="jain">🪷 Jain</option>
+        <option value="">Not told</option><option value="vegetarian">Vegetarian</option><option value="egg">Eats eggs</option>
+        <option value="non_vegetarian">Non-vegetarian</option><option value="jain">Jain</option>
       </select>
     </div>
 
-    <div class="grp"><b>🩺 Health</b>
+    <div class="grp"><b>Health</b>
       <div class="opts">
-        <label class="opt"><input type="checkbox" id="diabetes"><span>🩸 Diabetes</span></label>
-        <label class="opt"><input type="checkbox" id="insulin"><span>💉 Insulin or diabetes medicine</span></label>
-        <label class="opt"><input type="checkbox" id="obesity"><span>⚖️ Obesity</span></label>
-        <label class="opt"><input type="checkbox" id="hbp"><span>❤️ High blood pressure</span></label>
-        <label class="opt"><input type="checkbox" id="pregnant"><span>🤰 Pregnant</span></label>
+        <label class="opt"><input type="checkbox" id="diabetes"><span>Diabetes</span></label>
+        <label class="opt"><input type="checkbox" id="insulin"><span>Insulin or diabetes medicine</span></label>
+        <label class="opt"><input type="checkbox" id="obesity"><span>Obesity</span></label>
+        <label class="opt"><input type="checkbox" id="hbp"><span>High blood pressure</span></label>
+        <label class="opt"><input type="checkbox" id="pregnant"><span>Pregnant</span></label>
       </div>
     </div>
     <p class="fine">Your choices stay in this browser tab only. The assistant never gives a diet plan or changes medicines. Ask your doctor or dietitian about those.</p>
@@ -325,6 +340,8 @@
   var $ = function (id) { return document.getElementById(id); };
   var stream = $('stream'), scroller = $('scroll'), input = $('input'), form = $('form'), sendBtn = $('send'), jump = $('jump');
   var conversationId = null, busy = false, techOn = false, history = [];
+  var doctorId = new URLSearchParams(location.search).get('doctor') || null;   // ?doctor=<id>: chat as that doctor's patient
+  var programmeName = '';
   var store = {
     get: function (k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } },
     set: function (k, v) { try { sessionStorage.setItem(k, v); } catch (e) {} },
@@ -341,12 +358,12 @@
   }
 
   var STARTERS = [
-    ['🍲', 'What can I cook?', 'I have lauki and tomato, what can I cook?'],
-    ['🥘', 'Get a recipe', 'how do I make palak paneer?'],
-    ['🫓', 'Carbs in a food', 'How many carbs in one chapati?'],
-    ['⏰', 'Snacking', 'Can I snack between meals?'],
-    ['😋', 'Feeling hungry', 'I feel very hungry between meals'],
-    ['⚖️', 'Weight loss eating', 'i have obesity. so what should i eat to reduce it']
+    ['', 'What can I cook?', 'I have lauki and tomato, what can I cook?'],
+    ['', 'Get a recipe', 'how do I make palak paneer?'],
+    ['', 'Carbs in a food', 'How many carbs in one chapati?'],
+    ['', 'Snacking', 'Can I snack between meals?'],
+    ['', 'Feeling hungry', 'I feel very hungry between meals'],
+    ['', 'Weight loss eating', 'i have obesity. so what should i eat to reduce it']
   ];
 
   /* ---------- safe text helpers (everything is escaped before any markup is added) ---------- */
@@ -354,8 +371,8 @@
   function inline(s) { return esc(s).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>'); }
   function clock() { var d = new Date(); return d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}); }
 
-  var SECTION_ICON = [[/^you need/i, '🛒', 'You need'], [/^how/i, '👩‍🍳', 'How to make it'], [/^whole dish/i, '📊', 'Nutrition, whole dish'],
-                      [/^in your meal/i, '🍽️', 'Where it fits in your meal']];
+  var SECTION_ICON = [[/^you need/i, '', 'You need'], [/^how/i, '', 'How to make it'], [/^whole dish/i, '', 'Nutrition, whole dish'],
+                      [/^in your meal/i, '', 'Where it fits in your meal']];
 
   /* The answer text is the pipeline's own markdown; this only styles it, it never changes the words. */
   function render(text) {
@@ -377,17 +394,17 @@
           if (sec[2] === 'Nutrition, whole dish') {
             var chips = rest.replace(/\bfor the whole dish.*$/i, '').replace(/^about\s+/i, '').split(/,\s*|\s+and\s+/).filter(Boolean);
             var src = (rest.match(/\(calculated[^)]*\)/i) || [''])[0];
-            out.push('<div class="sect"><h4>' + sec[1] + ' ' + sec[2] + '</h4><div class="nutri">' + chips.map(function (c) { return '<span class="chip">' + esc(c.replace(/\(calculated[^)]*\)/i, '').trim()) + '</span>'; }).join('') + '</div>' +
+            out.push('<div class="sect"><h4>' + sec[2] + '</h4><div class="nutri">' + chips.map(function (c) { return '<span class="chip">' + esc(c.replace(/\(calculated[^)]*\)/i, '').trim()) + '</span>'; }).join('') + '</div>' +
                      (src ? '<div class="src">' + esc(src.replace(/[()]/g, '')) + '</div>' : '') + '</div>');
           } else {
-            out.push('<div class="sect"><h4>' + sec[1] + ' ' + sec[2] + '</h4>' + (rest ? '<div>' + inline(rest) + '</div>' : ''));
+            out.push('<div class="sect"><h4>' + sec[2] + '</h4>' + (rest ? '<div>' + inline(rest) + '</div>' : ''));
             var j = i + 1, items = [];
             while (j < lines.length && /^\s*- /.test(lines[j])) { items.push(lines[j].replace(/^\s*- /, '')); j++; }
             if (items.length) { out.push('<ul>' + items.map(function (t) { return '<li>' + inline(t) + '</li>'; }).join('') + '</ul>'); i = j - 1; }
             out.push('</div>');
           }
         } else if (firstBold && !rest) {
-          out.push('<div class="dish">🥘 ' + esc(head) + '</div>'); firstBold = false;
+          out.push('<div class="dish">' + esc(head) + '</div>'); firstBold = false;
         } else {
           out.push('<p><strong>' + esc(head) + '</strong> ' + inline(rest) + '</p>');
         }
@@ -395,7 +412,7 @@
       }
       if (/^\s*- /.test(line)) { if (!list) { out.push('<ul>'); list = true; } out.push('<li>' + inline(line.replace(/^\s*- /, '')) + '</li>'); continue; }
       closeList();
-      if (/^Kept in mind for you/.test(line)) { out.push('<p class="kept">✅ ' + inline(line) + '</p>'); continue; }
+      if (/^Kept in mind for you/.test(line)) { out.push('<p class="kept">' + inline(line) + '</p>'); continue; }
       out.push('<p>' + inline(line) + '</p>');
     }
     closeList();
@@ -404,10 +421,10 @@
 
   function alertHtml(text, kind) {
     var care = kind === 'care', soft = kind === 'support',
-        head = soft ? '💚 You are not alone in this' : care ? '💛 You are not alone' : (kind === 'sugar' ? '⚠️ Blood sugar alert' : '🚨 This could be an emergency');
+        head = soft ? 'You are not alone in this' : care ? 'You are not alone' : (kind === 'sugar' ? 'Blood sugar alert' : 'This could be an emergency');
     var calls = [];
-    if (/tele-manas|14416/i.test(text)) calls.push(['tel:14416', '💛 Call Tele-MANAS 14416']);
-    if (/\b112\b/.test(text)) calls.push(['tel:112', '📞 Call 112']);
+    if (/tele-manas|14416/i.test(text)) calls.push(['tel:14416', 'Call Tele-MANAS 14416']);
+    if (/\b112\b/.test(text)) calls.push(['tel:112', 'Call 112']);
     return '<div class="alert' + (care ? ' care' : '') + (soft ? ' soft' : '') + '" role="' + (soft ? 'note' : 'alert') + '"><div class="head">' + head + '</div>' + render(text) +
       calls.map(function (c) { return '<a class="call" href="' + c[0] + '">' + c[1] + '</a>'; }).join('') + '</div>';
   }
@@ -424,7 +441,7 @@
 
   function addRow(kind, html, time) {
     var row = document.createElement('div'); row.className = 'row ' + kind;
-    if (kind === 'bot') row.innerHTML = '<div class="avatar" aria-hidden="true">🥗</div><div><div class="bubble"></div><div class="time"></div></div>';
+    if (kind === 'bot') row.innerHTML = '<div class="avatar" aria-hidden="true">D</div><div><div class="bubble"></div><div class="time"></div></div>';
     else row.innerHTML = '<div><div class="bubble"></div><div class="time"></div></div>';
     row.querySelector('.bubble').innerHTML = html;
     row.querySelector('.time').textContent = time || clock();
@@ -458,26 +475,26 @@
       var dishes = [];
       a.split(/\r?\n/).forEach(function (line) {
         var m = line.match(/^- (.+?)(?: \(also needs [^)]*\))?$/);
-        if (m && dishes.length < 6 && !/^\*\*/.test(line.slice(2))) dishes.push(['🍲 ' + line.slice(2), m[1]]);
+        if (m && dishes.length < 6 && !/^\*\*/.test(line.slice(2))) dishes.push([line.slice(2), m[1]]);
       });
       if (dishes.length) return dishes;
     }
-    if (t === 'support_wellbeing') return [['🍽️ Meals that fit the programme', 'what should I eat?'], ['🙏 Thank you', 'thanks']];
-    if (asksAllergy) return [['🚫 No allergies', 'No allergies'], ['🥛 Milk', 'I am allergic to milk'], ['🥜 Peanuts', 'I am allergic to peanuts'], ['🌾 Gluten', 'I am allergic to gluten']];
-    if (/sprouts step/i.test(a)) return [['🌱 I have moong', 'I have moong'], ['🥚 Eggs instead', 'I would prefer eggs']];
-    if (t === 'meal_from_ingredients' || t === 'recipe_request') return [['🔁 Another recipe', 'give me recipes'], ['🥦 Use different vegetables', 'bhindi, aloo, cauliflower']];
-    if (t === 'out_of_scope') return [['🍲 What can I cook?', 'I have lauki and tomato, what can I cook?'], ['🫓 Carbs in a food', 'How many carbs in one chapati?']];
-    if (t === 'greeting_thanks') return [['🍲 What can I cook?', 'I have lauki and tomato, what can I cook?'], ['⏰ Snacking', 'Can I snack between meals?']];
-    return [['🍲 What can I cook?', 'I have lauki and tomato, what can I cook?']];
+    if (t === 'support_wellbeing') return [['Meals that fit the programme', 'what should I eat?'], ['Thank you', 'thanks']];
+    if (asksAllergy) return [['No allergies', 'No allergies'], ['Milk', 'I am allergic to milk'], ['Peanuts', 'I am allergic to peanuts'], ['Gluten', 'I am allergic to gluten']];
+    if (/sprouts step/i.test(a)) return [['I have moong', 'I have moong'], ['Eggs instead', 'I would prefer eggs']];
+    if (t === 'meal_from_ingredients' || t === 'recipe_request') return [['Another recipe', 'give me recipes'], ['Use different vegetables', 'bhindi, aloo, cauliflower']];
+    if (t === 'out_of_scope') return [['What can I cook?', 'I have lauki and tomato, what can I cook?'], ['Carbs in a food', 'How many carbs in one chapati?']];
+    if (t === 'greeting_thanks') return [['What can I cook?', 'I have lauki and tomato, what can I cook?'], ['Snacking', 'Can I snack between meals?']];
+    return [['What can I cook?', 'I have lauki and tomato, what can I cook?']];
   }
 
   function feedbackTools(row, r) {
     var tools = document.createElement('div'); tools.className = 'tools';
-    var up = mk('👍 Helpful', function () { post('helpful', up, '👍 Thanks'); });
-    var down = mk('👎 Not right', function () { why.hidden = !why.hidden; });
+    var up = mk('Helpful', function () { post('helpful', up, 'Thanks'); });
+    var down = mk('Not right', function () { why.hidden = !why.hidden; });
     var why = document.createElement('div'); why.className = 'why'; why.hidden = true;
     [['not_what_i_asked', 'Not what I asked'], ['cant_get_this', "Can't get / don't eat this"], ['something_wrong', 'Something is wrong']].forEach(function (k) {
-      why.appendChild(mk(k[1], function (b) { post(k[0], b, '✓ Noted'); why.hidden = true; down.classList.add('done'); down.textContent = '👎 Noted'; }));
+      why.appendChild(mk(k[1], function (b) { post(k[0], b, 'Noted'); why.hidden = true; down.classList.add('done'); down.textContent = 'Noted'; }));
     });
     function mk(label, fn) { var b = document.createElement('button'); b.type = 'button'; b.className = 'tbtn'; b.textContent = label; b.addEventListener('click', function () { fn(b); }); return b; }
     function post(kind, btn, done) {
@@ -495,16 +512,17 @@
     det.innerHTML = '<summary><span class="tag ok">' + esc(r.type || '') + '</span>' +
       (r.ai_used ? '<span class="tag ok">AI wording</span>' : '<span class="tag warn">template</span>') +
       (r.fallback ? '<span class="tag warn">fallback</span>' : '') +
+      (r.handled_by ? '<span class="tag">' + esc(r.handled_by) + (r.route && r.route.intent ? ': ' + esc(r.route.intent) : '') + '</span>' : '') +
       (failed.length ? '<span class="tag bad">' + failed.length + ' check(s) failed</span>' : '<span class="tag ok">checks passed</span>') +
       '<span class="tag">' + esc(r.ms) + ' ms</span></summary><pre></pre>';
     det.querySelector('pre').textContent = JSON.stringify({rules: r.plan && r.plan.rules, blocks: r.plan && r.plan.blocks, records: r.records, checks: r.checks}, null, 2);
     row.querySelector('.bubble').appendChild(det);
   }
 
-  /* ---------- the dish search being refined: one chip per part, ✕ sends a plain message the chat understands ---------- */
+  /* ---------- the dish search being refined: one chip per part, the close icon sends a plain message the chat understands ---------- */
   var NOUN = {energy_kcal: 'calories', protein_g: 'protein', carb_g: 'carbs', fat_g: 'fat', fibre_g: 'fibre'};
   var UNIT = {energy_kcal: ' kcal', protein_g: ' g protein', carb_g: ' g carbs', fat_g: ' g fat', fibre_g: ' g fibre'};
-  var SEARCH_DIET = {non_vegetarian: ['🍗 non-veg only', 'non veg'], vegetarian: ['🥦 veg only', 'veg'], egg: ['🥚 veg + egg', 'egg'], jain: ['🪷 Jain', 'jain']};
+  var SEARCH_DIET = {non_vegetarian: ['non-veg only', 'non veg'], vegetarian: ['veg only', 'veg'], egg: ['veg + egg', 'egg'], jain: ['Jain', 'jain']};
   var KEEPS_SEARCH = {greeting_thanks: 1, out_of_scope: 1, explain_last: 1};
   function targetLabel(t) {
     var n = NOUN[t.field] || t.field, kcal = t.field === 'energy_kcal';
@@ -518,13 +536,13 @@
     if (!r || KEEPS_SEARCH[r.type]) return;                       // these leave the search as it was (as the server does)
     var p = r.type === 'target_meal_search' ? (r.plan || {}) : {}, parts = [];
     (p.targets || []).forEach(function (t) { parts.push([targetLabel(t), 'forget ' + (t.field === 'energy_kcal' ? 'calories' : NOUN[t.field])]); });
-    (p.target_include || []).forEach(function (w) { parts.push(['🍗 ' + w, 'forget ' + w]); });
+    (p.target_include || []).forEach(function (w) { parts.push([w, 'forget ' + w]); });
     if (p.target_diet && SEARCH_DIET[p.target_diet]) parts.push([SEARCH_DIET[p.target_diet][0], 'forget ' + SEARCH_DIET[p.target_diet][1]]);
     var gone = (p.target_exclude || []).slice(0, 4);
     gone.forEach(function (w) { parts.push(['without ' + w, 'forget without ' + w]); });
     if (!(p.targets || []).length && !(p.target_include || []).length) { box.hidden = true; box.innerHTML = ''; return; }
     box.innerHTML = '<span>Searching for:</span>' + parts.map(function (c) {
-      return '<button type="button" class="s" data-say="' + esc(c[1]) + '" aria-label="Remove ' + esc(c[0]) + ' from the search">' + esc(c[0]) + '<b aria-hidden="true">✕</b></button>';
+      return '<button type="button" class="s" data-say="' + esc(c[1]) + '" aria-label="Remove ' + esc(c[0]) + ' from the search">' + esc(c[0]) + '<svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>';
     }).join('') + '<button type="button" class="clear" data-say="start over">clear search</button>';
     box.hidden = false;
   }
@@ -532,6 +550,21 @@
     var b = e.target.closest('[data-say]');
     if (b) send(b.getAttribute('data-say'));
   });
+
+  /* ---------- the named sources behind the numbers: trusted (allowed in production) or development data ---------- */
+  function sourcesBox(list) {
+    var box = document.createElement('div'); box.className = 'sources';
+    box.innerHTML = '<div class="sh">Sources</div>' + list.map(function (g) {
+      var n = (g.records || []).length;
+      return '<details><summary>' +
+        (g.trusted ? '<span class="trust ok">Trusted source</span>' : '<span class="trust dev">Development data</span>') +
+        '<span class="sname">' + esc(g.name) + '</span><span class="scount">Used for ' + esc(g.used_for) + ' · ' + n + ' record' + (n === 1 ? '' : 's') + '</span></summary>' +
+        '<div class="snote">' + esc(g.note) + '</div><ul>' + (g.records || []).map(function (rec) {
+          return '<li>' + esc(rec.food) + ' <code>' + esc(rec.id) + '</code></li>';
+        }).join('') + '</ul></details>';
+    }).join('');
+    return box;
+  }
 
   function showAnswer(waitRow, r) {
     renderSearch(r);
@@ -544,10 +577,15 @@
     } else if (r.type === 'support_wellbeing') {
       bubble.innerHTML = alertHtml(text, 'support'); bubble.classList.add('plain');
     } else if (r.type === 'out_of_scope') {
-      bubble.innerHTML = '<p>🙂 ' + inline(text) + '</p>';
+      bubble.innerHTML = '<p>' + inline(text) + '</p>';
     } else {
       bubble.innerHTML = render(text);
     }
+    if (r.badge && r.badge.text) {                                   // where the answer comes from (plugin step 8)
+      var badge = document.createElement('div'); badge.className = 'badge ' + (r.badge.kind || ''); badge.textContent = r.badge.text;
+      bubble.insertBefore(badge, bubble.firstChild);
+    }
+    if (r.sources && r.sources.length) bubble.appendChild(sourcesBox(r.sources));
     waitRow.querySelector('.time').textContent = clock();
     if (r.type !== 'emergency') feedbackTools(waitRow, r);
     if (techOn) techBlock(waitRow, r);
@@ -593,15 +631,15 @@
   Array.prototype.forEach.call(document.querySelectorAll('#profile input, #profile select'), function (el) {
     el.addEventListener('change', function () { syncAllergyUi(); saveProfile(); renderUsing(); });
   });
-  var USING_NAMES = {milk: '🥛 milk', peanut: '🥜 peanuts', tree_nut: '🌰 nuts', gluten: '🌾 gluten', egg: '🥚 eggs', soy: '🫘 soy', sesame: '🌱 sesame', chickpea: '🟤 chickpea'};
-  var DIET_NAMES = {vegetarian: '🥦 vegetarian', egg: '🥚 eats eggs', non_vegetarian: '🍗 non-vegetarian', jain: '🪷 Jain'};
+  var USING_NAMES = {milk: 'milk', peanut: 'peanuts', tree_nut: 'nuts', gluten: 'gluten', egg: 'eggs', soy: 'soy', sesame: 'sesame', chickpea: 'chickpea'};
+  var DIET_NAMES = {vegetarian: 'vegetarian', egg: 'eats eggs', non_vegetarian: 'non-vegetarian', jain: 'Jain'};
   function renderUsing() {
     var p = profile(), box = $('using'), chips = [];
     if (p.allergies && p.allergies.length) p.allergies.forEach(function (a) { chips.push('no ' + (USING_NAMES[a] || a)); });
-    else if (p.allergies) chips.push('🚫 no allergies');
-    (p.conditions || []).forEach(function (c) { chips.push({obesity: '⚖️ weight goal', hypertension: '❤️ high blood pressure', diabetes: '🩸 diabetes'}[c] || c); });
-    if (p.medicines) chips.push('💉 diabetes medicine');
-    if (p.pregnant) chips.push('🤰 pregnant');
+    else if (p.allergies) chips.push('no allergies');
+    (p.conditions || []).forEach(function (c) { chips.push({obesity: 'weight goal', hypertension: 'high blood pressure', diabetes: 'diabetes'}[c] || c); });
+    if (p.medicines) chips.push('diabetes medicine');
+    if (p.pregnant) chips.push('pregnant');
     if (p.diet_type) chips.push(DIET_NAMES[p.diet_type] || p.diet_type);
     box.classList.toggle('empty', !chips.length);
     box.innerHTML = '<span>Answers are checked for:</span>' + (chips.length ? chips.map(function (c) { return '<span class="u">' + esc(c) + '</span>'; }).join('')
@@ -627,21 +665,21 @@
     scrollDown(true);
     var started = Date.now();
     fetch('/api/chat', {method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({message: text, conversation_id: conversationId, profile: profile(), user_id: uid})})
+      body: JSON.stringify({message: text, conversation_id: conversationId, profile: profile(), user_id: uid, doctor_id: doctorId})})
       .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
       .then(function (r) {
         conversationId = r.conversation_id; store.set('dixit_cid', conversationId);
         if (r.remembered && r.remembered.length) {                    // a new chat that started from what is already known
           var note = document.createElement('div'); note.className = 'remnote';
-          note.textContent = '🧠 Remembered from earlier chats: ' + r.remembered.map(function (x) { return x.label + ' (' + dayName(x.at) + ')'; }).join(' · ');
+          note.textContent = 'Remembered from earlier chats: ' + r.remembered.map(function (x) { return x.label + ' (' + dayName(x.at) + ')'; }).join(' · ');
           stream.insertBefore(note, wait);
         }
         var delay = Math.max(0, 450 - (Date.now() - started));       // a short pause so the typing dots are seen, never a long one
         setTimeout(function () { showAnswer(wait, r); setBusy(false); input.focus(); refreshSide(); }, delay);
       })
       .catch(function () {
-        wait.querySelector('.bubble').innerHTML = '<p>😕 I could not get an answer just now. Your message was not lost.</p>';
-        var b = document.createElement('button'); b.type = 'button'; b.className = 'tbtn retry'; b.textContent = '🔄 Try again';
+        wait.querySelector('.bubble').innerHTML = '<p>I could not get an answer just now. Your message was not lost.</p>';
+        var b = document.createElement('button'); b.type = 'button'; b.className = 'tbtn retry'; b.textContent = 'Try again';
         b.addEventListener('click', function () { wait.remove(); setBusy(false); send(text); });
         wait.querySelector('.bubble').appendChild(b);
         setBusy(false);
@@ -662,12 +700,13 @@
   /* ---------- welcome, history, new chat ---------- */
   function welcome() {
     var w = document.createElement('div'); w.className = 'welcome'; w.id = 'welcome';
-    w.innerHTML = '<div class="big" aria-hidden="true">🥗</div><h1>Hello! 👋 What shall we eat today?</h1>' +
-      '<p>Ask me about food, recipes from what you have at home, or how a meal fits the Dixit programme.</p><div class="cards"></div>';
+    w.innerHTML = '<h1>Hello! What shall we eat today?</h1>' +
+      '<p>Ask me about food, recipes from what you have at home, or how a meal fits <span class="progname">your programme</span>.</p><div class="cards"></div>';
+    var pn = w.querySelector('.progname'); if (pn && programmeName) pn.textContent = programmeName;
     var cards = w.querySelector('.cards');
     STARTERS.forEach(function (s) {
       var b = document.createElement('button'); b.type = 'button'; b.className = 'card';
-      b.innerHTML = '<span class="ico" aria-hidden="true">' + s[0] + '</span><span><b></b><span class="s"></span></span>';
+      b.innerHTML = '<span><b></b><span class="s"></span></span>';
       b.querySelector('b').textContent = s[1]; b.querySelector('.s').textContent = s[2];
       b.addEventListener('click', function () { send(s[2]); }); cards.appendChild(b);
     });
@@ -727,7 +766,7 @@
       var g = dayGroup(c.updated);
       if (g !== lastGroup) { var l = document.createElement('div'); l.className = 'daylabel'; l.textContent = g; convs.appendChild(l); lastGroup = g; }
       var row = document.createElement('div'); row.className = 'conv'; row.setAttribute('data-cid', c.conversation_id);
-      row.innerHTML = '<button type="button" class="open"><span class="t"></span><span class="m"></span></button><button type="button" class="del" aria-label="Delete this conversation" title="Delete">🗑</button>';
+      row.innerHTML = '<button type="button" class="open"><span class="t"></span><span class="m"></span></button><button type="button" class="del" aria-label="Delete this conversation" title="Delete"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>';
       row.querySelector('.t').textContent = c.title || 'Conversation';
       row.querySelector('.m').innerHTML = esc(dayName(c.updated) + ' · ' + c.turns + (c.turns === 1 ? ' question' : ' questions')) + (c.needs_look ? '<span class="flag"> · needs a look</span>' : '');
       row.querySelector('.open').addEventListener('click', function () { openConversation(c.conversation_id); });
@@ -737,7 +776,7 @@
     var facts = $('facts'); facts.innerHTML = '';
     data.facts.forEach(function (f) {
       var li = document.createElement('li');
-      li.innerHTML = '<span class="x"></span><button type="button" aria-label="Forget this">✕</button>';
+      li.innerHTML = '<span class="x"></span><button type="button" aria-label="Forget this"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>';
       li.querySelector('.x').innerHTML = esc(f.text) + '<span class="d">learned ' + esc(f.date) + '</span>' + (f.stale ? '<span class="stale">old, so I will ask again</span>' : '');
       li.querySelector('button').addEventListener('click', function () {
         fetch(apiMem('/fact/' + encodeURIComponent(f.key)), {method: 'DELETE'}).then(refreshSide);
@@ -748,7 +787,7 @@
     $('forgetAll').hidden = !(data.facts.length || data.conversations.length);
     var rep = $('repeat');
     rep.hidden = !data.suggest;
-    if (data.suggest) { rep.textContent = '🔁 Repeat my last search: ' + data.suggest.label; rep.onclick = function () { newChat(); send(data.suggest.message); }; }
+    if (data.suggest) { rep.textContent = 'Repeat my last search: ' + data.suggest.label; rep.onclick = function () { newChat(); send(data.suggest.message); }; }
     markActive();
   }
   function refreshSide() {
@@ -762,7 +801,7 @@
       $('search').hidden = true; $('search').innerHTML = '';
       stream.innerHTML = ''; history = [];
       var old = document.createElement('div'); old.className = 'oldnote';
-      old.textContent = '🕘 Earlier chat from ' + dayName(data.turns[0].at) + '. Type below to carry on.'; stream.appendChild(old);
+      old.textContent = 'Earlier chat from ' + dayName(data.turns[0].at) + '. Type below to carry on.'; stream.appendChild(old);
       data.turns.forEach(function (t) {
         var t1 = new Date(t.at * 1000).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
         var a = {role: 'me', text: t.question, time: t1}, b = {role: 'bot', text: t.answer, type: t.type, time: t1};
@@ -793,7 +832,10 @@
     });
   });
 
-  fetch('/api/info').then(function (r) { return r.json(); }).then(function (i) {
+  fetch('/api/info' + (doctorId ? '?doctor_id=' + encodeURIComponent(doctorId) : '')).then(function (r) { return r.json(); }).then(function (i) {
+    var who = (i.programme && i.programme.identity) || {};
+    if (who.assistant_title) { $('appTitle').textContent = who.assistant_title; document.title = who.assistant_title; }
+    if (who.programme) { programmeName = who.programme; document.querySelectorAll('.progname').forEach(function (e) { e.textContent = who.programme; }); }
     var dev = i.environment !== 'production';
     $('meta').textContent = (dev ? 'Development build' : 'Live') + ' · AI wording: ' + (i.llm && i.llm.provider === 'mock' ? 'off (templates)' : (i.llm && i.llm.provider) || 'off');
     $('devBanner').hidden = !dev;

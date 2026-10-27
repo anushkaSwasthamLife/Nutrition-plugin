@@ -24,8 +24,12 @@ class FoodIndex:
     def __init__(self, food_master: dict, spelling_map: dict[str, str] | None = None):
         self.spelling_map = spelling_map or {}
         self.foods: dict[str, dict] = {f["id"]: f for f in food_master["foods"]}
+        # Foods added only so book recipes can be calculated (match_in_chat false) are never read from a message.
+        self.book_only: set[str] = {f["id"] for f in food_master["foods"] if f.get("match_in_chat") is False}
         self.alias_to_id: dict[str, str] = {}
         for food in food_master["foods"]:
+            if food["id"] in self.book_only:
+                continue
             for alias in [food["name"], *food.get("aliases", [])]:
                 self.alias_to_id.setdefault(clean(alias, self.spelling_map), food["id"])
         # Longest aliases first, so "sweet potato" wins over "potato" and "moong dal" over "dal".

@@ -1,11 +1,13 @@
 {
-  "version": "SW-0.1.0",
+  "version": "SW-0.2.0",
   "status": "TEST ONLY",
   "note": "Fixed repairs (R8): change ONE problem ingredient; never scale the whole dish (that would be a hidden portion). Needs dietitian sign-off.",
   "repairs": [
     {"food": "FOOD-GHEE", "action": "swap", "to": "FOOD-OIL", "fixes": ["fat_g", "energy_kcal", "allergen:milk"], "step_words": {"ghee": "oil"}},
     {"food": "FOOD-OIL", "action": "reduce", "to_g": 8, "fixes": ["fat_g", "energy_kcal"]},
     {"food": "FOOD-SUGAR", "action": "remove", "fixes": ["carbohydrate_g", "energy_kcal", "added_sugar_g", "golden_rule:sugar"], "step_words": {"sugar": ""}},
+    {"food": "FOOD-JAGGERY", "action": "remove", "fixes": ["carbohydrate_g", "energy_kcal", "added_sugar_g", "golden_rule:sugar"], "step_words": {"jaggery": ""}},
+    {"food": "FOOD-HONEY", "action": "remove", "fixes": ["carbohydrate_g", "energy_kcal", "added_sugar_g", "golden_rule:sugar"], "step_words": {"honey": ""}},
     {"food": "FOOD-SALT", "action": "reduce", "factor": 0.5, "fixes": ["sodium_mg"]}
   ]
 }

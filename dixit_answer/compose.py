@@ -13,6 +13,7 @@ from .dish_lookup import AMBIGUOUS, FOUND, fact_text as dish_fact_text, find_all
 from .facts import Fact, fact_sentence
 from .foods import FoodIndex
 from .golden import Status
+from .programme import current as programme
 from .person import Person
 from .planner import AnswerPlan
 from .safety import EMERGENCY_ANSWER, safety_caution
@@ -54,10 +55,16 @@ class Draft:
         return PLACEHOLDER_RE.sub(lambda m: self.locked.get(m.group(1), m.group(0)), text)
 
 
-def _short_source(fact: Fact) -> str:
+def _grams(value) -> str:
+    return f"{float(value):g} g"
+
+
+def _src(fact: Fact) -> str:
+    """The source after a number: "(USDA)", or "(calculated from ingredients)" for a dish worked out from its ingredients. The
+    development-only Indian data gets no label here; the Sources panel beside the answer names it and marks it."""
     if fact.source == "USDA":
-        return "USDA"
-    return "calculated from ingredients, dev data" if fact.source.startswith("calculated") else "dev data"
+        return " (USDA)"
+    return " (calculated from ingredients)" if fact.source.startswith("calculated") else ""
 
 
 def _dish(fact: Fact) -> str:
@@ -96,7 +103,8 @@ def _cap(text: str) -> str:
 
 
 class Composer:
-    def __init__(self, services: Services, index: FoodIndex, word_lists: dict, recipes=None, allergy=None, dishes=None, general=None):
+    def __init__(self, services: Services, index: FoodIndex, word_lists: dict, recipes=None, allergy=None, dishes=None, general=None,
+                 cautions=None):
         self.dishes = dishes
         self.general = general
         self.s = services
@@ -104,6 +112,7 @@ class Composer:
         self.words = word_lists
         self.recipes = recipes
         self.allergy = allergy
+        self.cautions = cautions                     # FoodCautions: condition, medicine and pregnancy lines (cautions.py)
 
     def build(self, plan: AnswerPlan, state: ChatState, u, person=None) -> Draft:
         d = Draft()
@@ -122,13 +131,13 @@ class Composer:
             d.facts.append(fact)
             given.add(f"{fact.record_id}:{fact.field}")
             prefix = f"{_dish(fact)}: " if with_dish else ""
-            return lock("F", f"{prefix}{fact.text} ({_short_source(fact)})")
+            return lock("F", f"{prefix}{fact.text}{_src(fact)}")
 
         def fact_line(fact: Fact, fid: str | None = None) -> str:
             """One locked sentence for a fact: "A bowl of dal has about 139 calories. (USDA)"."""
             d.facts.append(fact)
             given.add(f"{fact.record_id}:{fact.field}")
-            return lock("F", f"{fact_sentence(fact, self.index.name(fid) if fid else '')} ({_short_source(fact)})")
+            return lock("F", f"{fact_sentence(fact, self.index.name(fid) if fid else '')}{_src(fact)}")
 
         def free(text: str) -> None:
             d.free_lines.append(len(d.lines))
@@ -138,6 +147,7 @@ class Composer:
             d.foods_named.add(fid)
             return self.index.name(fid)
 
+        P = programme()                                   # the patient's programme: its names, own lines and rules
         for block in plan.blocks:
             if block in d.suppress:
                 continue
@@ -149,37 +159,35 @@ class Composer:
                 d.lines.append(lock("S", plan.emergency_lines[block]))
             elif block == "greeting":
                 if "thank" in u.cleaned or u.cleaned in {"thx", "ty", "ok thanks", "okay thanks"}:
-                    free("You're welcome! Ask me anything about food, meals or the Dixit programme.")
+                    free(P.fill("You're welcome! Ask me anything about food, meals or {programme}."))
                 elif u.cleaned in {"ok", "okay"}:
-                    free("Okay! Ask me anything about food, meals or the Dixit programme.")
+                    free(P.fill("Okay! Ask me anything about food, meals or {programme}."))
                 elif re.match(r"(?:bye|goodbye|good bye|see you|take care|good night)", u.cleaned):
-                    free("Take care! Come back any time with a question about food, meals or the Dixit programme.")
+                    free(P.fill("Take care! Come back any time with a question about food, meals or {programme}."))
                 else:
-                    free("Hello! Ask me anything about food, meals or the Dixit programme.")
+                    free(P.fill("Hello! Ask me anything about food, meals or {programme}."))
             elif block == "definition":
-                d.lines.append(lock("T", "I can tell you how much protein, carbohydrate, fat, fibre or calories a food or dish has, for example \"protein in dal\". "
-                                         "For what they mean for your health, please ask your Dixit coach or dietitian."))
+                d.lines.append(lock("T", P.fill("I can tell you how much protein, carbohydrate, fat, fibre or calories a food or dish has, for example \"protein in dal\". "
+                                                "For what they mean for your health, please ask {coach} or dietitian.")))
             elif block == "phrase_compare":
                 self._compare_phrases(plan, u, d, lock, given, person)
             elif block == "portion":
-                d.lines.append(lock("T", "I can't give amounts to eat or drink. In the programme you eat until you feel satisfied, not overfull, and finish each meal "
-                                         "within 55 minutes. Ask your Dixit coach if you want to talk about amounts."))
+                d.lines.append(lock("T", P.text("portion")))
             elif block == "reading":
                 d.lines.append(lock("T", f"Thank you for sharing your reading of {plan.reading:g} mg/dL. I can't judge a reading or change your care. "
                                          "Please talk to your doctor or dietitian about it."))
             elif block == "about":
-                d.lines.append(lock("T", "I'm the Dixit nutrition assistant, an automated helper, not a doctor and not a person. I can look up the nutrition of foods and dishes, "
-                                         "suggest dishes from what you have, find dishes near an amount you want, and explain how the programme works. "
-                                         "For medical advice please talk to your doctor."))
+                d.lines.append(lock("T", P.fill("I'm {assistant}, an automated helper, not a doctor and not a person. I can look up the nutrition of foods and dishes, "
+                                                "suggest dishes from what you have, find dishes near an amount you want, and explain how the programme works. "
+                                                "For medical advice please talk to your doctor.")))
             elif block == "body_info":
                 d.lines.append(lock("T", "Thank you. I can't work out calorie needs, a target weight or a plan from body measurements; please talk to your doctor or "
                                          "dietitian about that. I can still look up foods and dishes for you."))
             elif block == "special_diet":
-                d.lines.append(lock("T", "I don't have guidance for fasting or special diets such as keto yet. "
-                                         "Please ask your Dixit coach how to fit the programme with what you follow."))
+                d.lines.append(lock("T", P.fill("I don't have guidance for fasting or special diets such as keto yet. "
+                                                "Please ask {coach} how to fit the programme with what you follow.")))
             elif block == "plan_refusal":
-                d.lines.append(lock("T", "I can't write a meal plan or diet chart. The programme doesn't use fixed menus; this is how it works, and I can suggest dishes "
-                                         "for a meal if you tell me what you have."))
+                d.lines.append(lock("T", P.text("plan_refusal")))
             elif block == "safety_ack":
                 d.lines.append(lock("T", "Thank you for telling me. I've noted it and I'll keep it in mind. Please talk to your doctor before you change when you eat. "
                                          "You can ask me about any food or meal."))
@@ -210,7 +218,7 @@ class Composer:
             elif block == "more_unclear":
                 d.lines.append(lock("T", "I'm not sure what to show more of. Tell me what you'd like, for example high protein dishes, fewer calories, or what you have at home."))
             elif block == "out_of_scope":
-                free("I can only help with food, meals and the Dixit programme. Is there something about your meals I can help with?")
+                free(P.fill("I can only help with food, meals and {programme}. Is there something about your meals I can help with?"))
             elif block == "opening":
                 free("Thank you for asking. Many people work on their weight, and steady changes work best.")
             elif block == "ack":
@@ -231,23 +239,27 @@ class Composer:
                 if text:
                     d.lines.append("**First, a quick check:** " + lock("C", text))
             elif block == "protocol_full":
-                d.lines.append("**How Dixit meals work:**")
+                d.lines.append(P.fill("**{meals_heading}:**"))
                 for line in self.s.protocol_full():
                     d.lines.append("- " + lock("P", line))
+            elif block == "no_meal_rules":                    # a programme without a meal order: said, never filled in
+                d.lines.append(lock("T", P.text("no_meal_rules")))
             elif block == "protocol_reminder":
                 d.lines.append(lock("P", self.s.protocol_reminder()))
             elif block == "protocol_amounts":
-                for step in ("nuts", "salad", "sprouts"):
+                for step in self.s.golden.steps():
                     d.lines.append(f"- **{_cap(step)}:** " + lock("P", self.s.protocol_amount(step, blocked)))
             elif block == "protocol_amount":
-                d.lines.append("**For the sprouts step:** " + lock("P", self.s.protocol_amount("sprouts", blocked)))
+                amount = self.s.protocol_amount("sprouts", blocked)
+                if amount:
+                    d.lines.append("**For the sprouts step:** " + lock("P", amount))
             elif block == "meal_place":
-                d.lines.append("**In your meal:** " + lock("P", self.s.meal_place()))
+                if self.s.meal_place():
+                    d.lines.append("**In your meal:** " + lock("P", self.s.meal_place()))
             elif block == "between_meals":
-                if plan.frequency_note:
-                    d.lines.append(lock("T", "The programme's position is two meals a day. I don't have approved evidence on other "
-                                              "eating patterns to share here."))
-                d.lines.append("**Between meals:** " + lock("P", self.s.between_meals()))
+                if plan.frequency_note and P.texts.get("frequency_note"):
+                    d.lines.append(lock("T", P.text("frequency_note")))
+                d.lines.append("**Between meals:** " + lock("P", self.s.between_meals() or P.text("between_meals_none")))
             elif block == "choices":
                 for group in self.s.choices(plan.topic, blocked):
                     foods = _join([name(f) for f in group.foods])
@@ -276,7 +288,7 @@ class Composer:
                         self._blocked_line(fid, person, d, lock)
                     else:
                         text, pos = self.s.position_for(fid, person.status if person else None)
-                        d.lines.append(lock("T", text))
+                        d.lines.append(lock("T", text or P.text("position_none", food=name(fid))))
                         if pos is not None and pos.allowed in ("depends_on_status", "no"):
                             d.lines.append(lock("T", "The nutrition facts below are for information only, not permission."))
             elif block == "food_facts":
@@ -301,7 +313,7 @@ class Composer:
                 for text, facts, _tip_id in self.s.tips(keys, given, blocked=blocked):
                     filled = text
                     for ph_key, fact in zip(("A", "B"), facts):
-                        filled = filled.replace("{{" + ph_key + "}}", f"{fact.text} ({_short_source(fact)})")
+                        filled = filled.replace("{{" + ph_key + "}}", f"{fact.text}{_src(fact)}")
                         d.facts.append(fact)
                         given.add(f"{fact.record_id}:{fact.field}")
                     d.lines.append("**Tip:** " + lock("K", filled))
@@ -319,7 +331,7 @@ class Composer:
                     if rec:
                         src = "USDA FoodData Central" if not self.s.library.is_indian(rid) else "Swastham Indian meal library (development only)"
                         d.lines.append("- " + lock("T", f"{rec['food_name']}: {src}, record {rid}"))
-            elif block == "status_position":
+            elif block == "status_position" and self.s.golden.uses("status_food_rule"):
                 pos = self.s.golden.fruit_position(person.status if person else Status())
                 d.lines.append(lock("T", pos.text))
             elif block == "struggle":
@@ -327,6 +339,9 @@ class Composer:
             elif block == "boundary":
                 d.lines.append(lock("T", "Your doctor or dietitian decides what's right for you personally, including any medicines."))
             elif block == "profile_note":
+                shown = set(plan.focus_foods) | set(plan.ingredients) | set(u.foods) | d.foods_named
+                for _rule, line in (self.cautions.lines(person, shown, name, u.cleaned) if self.cautions else []):
+                    d.lines.append(lock("T", line))         # a condition, medicine or pregnancy caution: fixed wording, never a ban
                 note = self._profile_note(person, state)
                 if note:
                     d.exclusion_texts.append(note)          # names an allergen only to say it was kept in mind
@@ -352,6 +367,8 @@ class Composer:
         allergies = [self.allergy.label(a) for a in (person.allergies or []) if isinstance(a, str)]
         parts = [f"allergy to {_join(allergies)}"] if allergies else []
         parts += [self.CONDITION_LABELS.get(c, c) for c in person.conditions if isinstance(c, str)]
+        parts += ["pregnancy"] if person.pregnant else []
+        parts += [f"your medicines ({_join([m for m in person.medicines if isinstance(m, str)])})"] if person.medicines else []
         if person.diet_type in {"vegetarian", "jain", "egg", "non_vegetarian"} and person.diet_type != "non_vegetarian":
             parts.append({"vegetarian": "vegetarian diet", "jain": "Jain diet", "egg": "eggs-ok diet"}[person.diet_type])
         parts = list(dict.fromkeys(parts))
@@ -372,7 +389,7 @@ class Composer:
         for text, facts, _tip_id in self.s.tips(keys, given, limit=3, blocked=d.blocked_foods):
             filled = text
             for ph_key, fact in zip(("A", "B"), facts):
-                filled = filled.replace("{{" + ph_key + "}}", f"{fact.text} ({_short_source(fact)})")
+                filled = filled.replace("{{" + ph_key + "}}", f"{fact.text}{_src(fact)}")
                 d.facts.append(fact)
                 given.add(f"{fact.record_id}:{fact.field}")
             d.lines.append("- " + lock("K", filled))
@@ -391,6 +408,25 @@ class Composer:
                                home_foods=list(state.home_foods), exclude=list(plan.exclude_recipes), exclude_foods=list(plan.exclude_foods))
         d.recipe_trace = out.trace
         general = None
+        if plan.unknown_dish and not plan.reply_slot and out.status in {"tips_only", "choices"}:
+            # A dish we don't hold: the closest recipe we have, then an AI draft recalculated and gated, then the general fallback.
+            closest = self._closest_recipe(plan.unknown_dish, person, d)
+            if closest is not None:
+                d.unknown_items.append({"word": plan.unknown_dish, "kind": "dish", "suggested_food_id": ""})
+                d.backlog_request = True
+                d.lines.append(lock("T", f"I don't have a recipe called \"{plan.unknown_dish}\" yet; I've passed it to our dietitian. "
+                                         f"The closest dish in our recipes is {closest.name}:"))
+                self._render_recipe(closest, plan, d, lock, free, name, state)
+                return
+            drafted = self.recipes.draft_for_dish(plan.unknown_dish, person)
+            d.recipe_trace += drafted.trace
+            if drafted.status == "recipe":
+                d.unknown_items.append({"word": plan.unknown_dish, "kind": "dish", "suggested_food_id": ""})
+                d.backlog_request = True
+                d.lines.append(lock("T", f"I don't have a checked recipe for \"{plan.unknown_dish}\" yet; I've passed it to our dietitian. "
+                                         "Our AI drafted one from our food list, and our checks recalculated it from USDA values:"))
+                self._render_recipe(drafted.recipe, plan, d, lock, free, name, state)
+                return
         if plan.unknown_dish and not plan.reply_slot:
             d.unknown_items.append({"word": plan.unknown_dish, "kind": "dish", "suggested_food_id": ""})
             general = self._try_general(plan.unknown_dish, person, d) if out.status in {"tips_only", "choices"} else None
@@ -559,8 +595,25 @@ class Composer:
                 pieces.append(text)
                 d.facts.append(Fact(f"DISH-{m.code}", fld, float(value), f"about {text} {serving}", serving, "Swastham library", m.name))
             shown = f"about {_join(pieces)} {serving}"
-            d.lines.append("- " + m.name.split(" (")[0] + ": " + lock("F", shown + " (dev data)"))
+            d.lines.append("- " + m.name.split(" (")[0] + ": " + lock("F", shown))
         d.lines.append(lock("T", "These are the values stored for each dish, one serving as shown. They are not a meal plan, and amounts change with how it is cooked."))
+
+    def _closest_recipe(self, request: str, person, d: Draft):
+        """The most similar recipe we hold that passes this person's gate, or None (trace kept for the audit log)."""
+        candidates = self.recipes.similar(request, person)
+        if not candidates:
+            d.recipe_trace.append(f"similar: nothing close to '{request[:40]}'")
+            return None
+        out = self.recipes.run(person=person, have=[], dish_ids=candidates[:1], unknown_words=[], suggestion=None,
+                               wants_list=False, home_foods=[])
+        for rid in candidates[1:]:
+            if out.status == "recipe":
+                break
+            out = self.recipes.run(person=person, have=[], dish_ids=[rid], unknown_words=[], suggestion=None,
+                                   wants_list=False, home_foods=[])
+        d.recipe_trace.append(f"similar: '{request[:40]}' -> {candidates}: " +
+                              (f"{out.recipe.recipe_id} passes" if out.status == "recipe" else "none passes for this person"))
+        return out.recipe if out.status == "recipe" else None
 
     def _try_general(self, request: str, person, d: Draft):
         """The general recipe fallback (development only): returns its outcome, or None when it is not available."""
@@ -607,12 +660,16 @@ class Composer:
         d.recipe = recipe
         if recipe.origin == "approved":
             self._remember_shown(state, [recipe.recipe_id])
+            if state is not None:                  # "how many calories in it?" / "and protein?" next: about this dish
+                state.last_subject, state.last_subject_kind, state.last_subject_turn = clean(recipe.name), "recipe", state.turn
         if not recipe.also_need and state is not None and state.ingredients_on_hand and recipe.origin == "approved" and plan.recipe_ids:
             # A dish picked from a list for what the person has: say what else it needs (never a food they cannot have).
             have = self.index.with_generics(set(state.ingredients_on_hand))
             recipe.also_need = [f for f in self.recipes.recipes[recipe.recipe_id]["main_ingredients"] if f not in have and f not in d.blocked_foods]
         for item in recipe.ingredients:
             d.foods_named.add(item["food"])
+        if getattr(recipe, "book", None):
+            d.foods_named.update(self.recipes.step_foods(recipe))     # the book's own steps ("serve with chapati"), already gated
         used = [f for f in plan.ingredients if f in {i["food"] for i in recipe.ingredients} and f not in d.blocked_foods
                 and self.index.foods[f]["category"] != "pantry"] if not plan.recipe_ids else []
         if used:                                   # only foods that really are in the recipe, never words from the message
@@ -620,16 +677,27 @@ class Composer:
         elif plan.recipe_ids:
             free("Here's the recipe:")
         d.lines.append("**" + lock("T", recipe.name) + "**")
+        recipe.label = self.recipes.label_for(recipe)          # after any repair or scaling: an adapted dish is no longer "as recommended"
         d.lines.append(lock("T", recipe.label))
         d.lines.append(lock("T", f"**You need** ({recipe.makes}):"))       # locked: the AI must not hint at portions
         for line in self.recipes.ingredient_lines(recipe):
             d.lines.append("- " + lock("K", line))
+        if recipe.assumed:                         # the book left these open: the grams we counted are named, never hidden
+            d.lines.append("**Amounts we assumed:** " + lock("T", _join(
+                [f"{a['text']} {_grams(a['grams'])} (the book says \"{a['book']}\")" for a in recipe.assumed])))
+        if recipe.trace_items:
+            d.lines.append("**Not counted (a pinch or a few leaves):** " + lock("T", _join(recipe.trace_items)))
+        if recipe.optional_items:
+            d.lines.append("**Optional, not counted:** " + lock("T", _join(recipe.optional_items)))
         d.lines.append("**How:**")
         for step in recipe.steps:
             d.lines.append("- " + lock("K", step))
         totals = self.recipes.totals_text(recipe)
         if totals:
             d.lines.append("**Whole dish:** " + lock("F", totals))
+        each = self.recipes.per_unit_text(recipe)
+        if each:
+            d.lines.append(lock("F", each))
         if recipe.repairs:
             note = _join(recipe.repairs)             # e.g. "oil instead of ghee": names what was removed, not an offer
             d.exclusion_texts.append(note)
@@ -657,7 +725,7 @@ class Composer:
             if plan.topic == "sabji":
                 staple = name(plan.pairs_with[0]) if plan.pairs_with else "Your meal"
                 return f"{_cap(staple)} goes well with most sabjis.", "No vegetable is off-limits in the programme."
-            return "", "The Dixit programme doesn't ban foods. It changes how you eat, and some foods are worth choosing more often."
+            return "", programme().text("choice_intro")
         if plan.type == "neutral_food_comparison":
             return "Here's how these compare:", ""
         if plan.type == "meal_from_ingredients":
@@ -668,8 +736,10 @@ class Composer:
             return "", "We don't have checked recipes yet, so here is what helps most when you cook:"
         if plan.type == "recipe_request":
             return "", "We don't have checked recipes yet. These cooking tips make the most difference:"
+        if plan.type in {"protocol_explain", "meal_protocol_application"} and not programme().uses("meal_order"):
+            return "", ""                                # nothing to introduce: the next line says the programme has no meal rules
         if plan.type == "protocol_explain":
-            return "Here's how the Dixit programme works:", ""
+            return programme().text("explain_intro"), ""
         if plan.type == "meal_protocol_application":
             return "Here's what the programme says about meal timing:", ""
         if plan.type == "support_struggle":
@@ -684,6 +754,16 @@ class Composer:
                           ("sodium", "sodium_mg")):
             if re.search(rf"\b{word}s?\b", u.cleaned):
                 field = fld
+        recipe = self.recipes.nutrition_of(u.recipe_nutrients, person or Person()) if (u.recipe_nutrients and self.recipes) else None
+        if recipe is not None:                      # one of our recipes: its own totals, worked out from its ingredients
+            totals, each = self.recipes.totals_text(recipe), self.recipes.per_unit_text(recipe)
+            if totals:
+                d.lines.append(lock("T", f"For our {recipe.name} recipe ({recipe.makes}):") + " " + lock("F", totals))
+                if each:
+                    d.lines.append(lock("F", each))
+            else:
+                d.lines.append(lock("T", f"We don't have reliable nutrition numbers for our {recipe.name} recipe yet."))
+            return
         if field in {"sugars_g", "sodium_mg"} and len(plan.focus_foods) > 1:           # "sugar in mango": sugar is what is asked, not a second food
             word = "sugar" if field == "sugars_g" else "sodium"
             plan.focus_foods = [f for f in plan.focus_foods if word not in clean(self.index.foods[f]["name"]).split()] or plan.focus_foods
@@ -767,7 +847,7 @@ class Composer:
             fact = scaled_fact(fact, grams) if grams else fact
             d.facts.append(fact)
             given.add(f"{fact.record_id}:{fact.field}")
-            d.lines.append(lock("F", f"{fact_sentence(fact)} ({_short_source(fact)})"))
+            d.lines.append(lock("F", f"{fact_sentence(fact)}{_src(fact)}"))
         if len(facts) > 1:
             d.lines.append(lock("T", f"There are several kinds of {phrase}; tell me which one you mean for a closer answer."))
         return bool(facts)
@@ -899,7 +979,7 @@ class Composer:
                         sentence = plain_sentence(result, self.DISH_FIELDS.get(field, "energy_kcal"), phrase)
                         fact = Fact(f"DISH-{result.code}", field, shown_fact.value, shown_fact.text, shown_fact.serving, "Swastham library", result.name or phrase)
                         d.facts.append(fact)
-                        d.lines.append("- " + lock("F", f"{sentence} (dev data)"))
+                        d.lines.append("- " + lock("F", sentence))
                         servings.add(shown_fact.serving)
                         shown += 1
                         continue
@@ -913,7 +993,7 @@ class Composer:
             d.facts.append(fact)
             given.add(f"{fact.record_id}:{fact.field}")
             servings.add(fact.serving)
-            d.lines.append("- " + lock("F", f"{fact_sentence(fact, phrase)} ({_short_source(fact)})"))
+            d.lines.append("- " + lock("F", f"{fact_sentence(fact, phrase)}{_src(fact)}"))
             shown += 1
         if shown >= 2 and len(servings) > 1:
             d.lines.append(lock("T", "These are for different serving sizes, so the numbers are not side by side per bite."))
@@ -1012,7 +1092,7 @@ class Composer:
             d.facts.append(fact)
             given.add(f"{fact.record_id}:{fact.field}")
             sentence = plain_sentence(result, self.DISH_FIELDS.get(field, "energy_kcal"), name)
-            d.lines.append(lock("F", f"{sentence} ({_short_source(fact)})"))
+            d.lines.append(lock("F", f"{sentence}{_src(fact)}"))
             if shown.estimate:
                 d.lines.append(lock("T", "This is an estimate from the recipe, so the real number may be a bit higher or lower."))
             return True
@@ -1025,7 +1105,8 @@ class Composer:
     def _struggle_lines(self, u, d, lock) -> None:
         if re.search(r"\b(hungry|hunger|craving|cravings)\b", u.cleaned):
             d.lines.append("**Between meals:** " + lock("P", self.s.between_meals()))
-            d.lines.append("**At your next meal:** " + lock("P", "eat until you feel satisfied, starting with nuts, salad and sprouts."))
+            if self.s.golden.next_meal():
+                d.lines.append("**At your next meal:** " + lock("P", self.s.golden.next_meal()))
             d.lines.append(lock("T", "If you feel shaky, sweaty or dizzy, especially if you take diabetes medicine, eat something "
                                      "and contact your doctor."))
         elif SYMPTOM_RE.search(u.cleaned):
@@ -1033,4 +1114,4 @@ class Composer:
             d.lines.append(lock("T", "If you feel shaky, sweaty or dizzy, especially if you take diabetes medicine, eat something and contact your doctor."))
         else:
             d.lines.append(lock("T", "Weight changes slowly and differently for each person. If nothing changes over several weeks, "
-                                     "talk to your doctor or Dixit coach."))
+                                     + programme().fill("talk to your doctor or {coach_bare}.")))

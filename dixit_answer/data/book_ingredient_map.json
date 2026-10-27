@@ -1,0 +1,1388 @@
+{
+ "version": "BM-0.1.0",
+ "status": "TEST ONLY",
+ "note": "How the Healthful Diet book's ingredient lines become food IDs and grams, so each dish is calculated from USDA records. Drafted by code for dietitian review (26 Oct 2026). One entry per line text in the book. 'food' = one food; 'split' = the grams are shared equally between the foods; 'trace' = a pinch or a few leaves, not counted (listed in the answer); 'skip' = water; 'optional' = left out and not counted; 'exclude' = the dish cannot be calculated and is not offered. 'default_g' = the grams assumed when the book gives no amount ('to taste', 'as needed'): the answer names every assumed amount. 'per' = grams for one unit of this line, where the food's own unit weight does not fit.",
+ "units": {
+  "vati": 60,
+  "g": 1,
+  "kg": 1000,
+  "ml": 1,
+  "pinch": 0.3,
+  "note": "The book defines 1 vati = 60 g (book page 152). Spoons and counts use the food's unit weight or 'per'."
+ },
+ "no_amount_units": [
+  "to taste",
+  "as needed",
+  "as required",
+  "as preferred",
+  "optional",
+  "few",
+  "handful",
+  "to make dough"
+ ],
+ "book": {
+  "id": "healthful_diet",
+  "short_title": "Healthful Diet",
+  "citation": "Healthful Diet: Think wise. Eat twice. Drop size (ADORE Trust, 2021)",
+  "source_id": "healthful_diet_book",
+  "title": "Healthful Diet: Think wise. Eat twice. Drop size",
+  "publisher": "Association for Diabetes and Obesity Reversal (ADORE) Trust, Pune",
+  "edition": "First edition, 2 June 2021",
+  "authors": [
+   "Dr Milind Dhamankar",
+   "Dr Ratna Ashtekar",
+   "Aditi Kelkar-Hate"
+  ],
+  "foreword": "Dr Jagannath V Dixit"
+ },
+ "dish_categories": {
+  "vegetable": "sabji",
+  "vegetable_with_dal": "dal",
+  "protein_dish": "protein",
+  "non_vegetarian": "protein",
+  "chapati_alternative": "grain",
+  "rice_alternative": "grain",
+  "salad": "salad",
+  "one_dish_meal": "one_dish",
+  "upwas": "protein"
+ },
+ "kind_overrides": {
+  "HD-E-01": "chilla",
+  "HD-I-03": "khichdi",
+  "HD-J-01": null,
+  "HD-E-05": null,
+  "HD-E-07": null
+ },
+ "kind_override_notes": {
+  "HD-J-01": "a drink, not a home-meal dish",
+  "HD-E-05": "a flour, used inside other dishes",
+  "HD-E-07": "a wrap with no stated filling"
+ },
+ "items": {
+  "ajwain seeds": {
+   "trace": true
+  },
+  "anise seeds": {
+   "food": "FOOD-ANISE-SEED"
+  },
+  "applesauce (can substitute banana)": {
+   "food": "FOOD-APPLE",
+   "note": "applesauce: raw apple record"
+  },
+  "asafetida": {
+   "trace": true
+  },
+  "baby corn, sliced": {
+   "food": "FOOD-SWEET-CORN"
+  },
+  "bajri (pearl millet)": {
+   "food": "FOOD-BAJRA"
+  },
+  "baking soda": {
+   "food": "FOOD-BAKING-SODA"
+  },
+  "bananas": {
+   "food": "FOOD-BANANA"
+  },
+  "basil, mint, cardamom or cinnamon for flavour": {
+   "optional": true
+  },
+  "bell pepper, cubed": {
+   "food": "FOOD-CAPSICUM",
+   "default_g": 60
+  },
+  "bhajni flour": {
+   "food": "FOOD-BHAJNI"
+  },
+  "black caraway seeds (shahajeera)": {
+   "food": "FOOD-CARAWAY-SEED"
+  },
+  "black cardamom": {
+   "food": "FOOD-CARDAMOM",
+   "per": {
+    "count": 0.2
+   }
+  },
+  "black peas": {
+   "food": "FOOD-BLACK-PEAS"
+  },
+  "black pepper": {
+   "food": "FOOD-BLACK-PEPPER",
+   "default_g": 0.5
+  },
+  "black peppercorn": {
+   "food": "FOOD-BLACK-PEPPER"
+  },
+  "black salt": {
+   "trace": true
+  },
+  "bottle gourd": {
+   "food": "FOOD-LAUKI"
+  },
+  "bottle gourd, grated": {
+   "food": "FOOD-LAUKI"
+  },
+  "bread/pav": {
+   "food": "FOOD-PAV"
+  },
+  "brinjal, cut": {
+   "food": "FOOD-BRINJAL"
+  },
+  "broccoli florets": {
+   "food": "FOOD-BROCCOLI"
+  },
+  "cabbage": {
+   "food": "FOOD-CABBAGE"
+  },
+  "capsicum, finely chopped": {
+   "food": "FOOD-CAPSICUM"
+  },
+  "caraway seeds": {
+   "food": "FOOD-CARAWAY-SEED"
+  },
+  "cardamom": {
+   "food": "FOOD-CARDAMOM",
+   "per": {
+    "count": 0.2
+   }
+  },
+  "cardamom powder": {
+   "food": "FOOD-CARDAMOM",
+   "per": {
+    "count": 0.2
+   }
+  },
+  "carrot, cut": {
+   "food": "FOOD-CARROT"
+  },
+  "carrot, julienned (steam/blanch if required)": {
+   "food": "FOOD-CARROT"
+  },
+  "carrots": {
+   "food": "FOOD-CARROT"
+  },
+  "carrots, sliced": {
+   "food": "FOOD-CARROT"
+  },
+  "cashew": {
+   "food": "FOOD-CASHEW"
+  },
+  "cashews, powdered": {
+   "food": "FOOD-CASHEW",
+   "default_g": 15,
+   "note": "'a handful': 15 g assumed"
+  },
+  "cauliflower": {
+   "food": "FOOD-CAULIFLOWER"
+  },
+  "cauliflower florets": {
+   "food": "FOOD-CAULIFLOWER",
+   "per": {
+    "count": 15
+   }
+  },
+  "cayenne pepper or red chilli powder": {
+   "food": "FOOD-CHILLI-POWDER",
+   "default_g": 1
+  },
+  "celery": {
+   "food": "FOOD-CELERY"
+  },
+  "chana dal": {
+   "food": "FOOD-CHANA-DAL"
+  },
+  "chana dal (split Bengal gram)": {
+   "food": "FOOD-CHANA-DAL"
+  },
+  "chana flour": {
+   "food": "FOOD-BESAN"
+  },
+  "chana flour (besan)": {
+   "food": "FOOD-BESAN"
+  },
+  "chicken breasts, thinly sliced, marinated with salt, garlic and red chilli powder": {
+   "food": "FOOD-CHICKEN"
+  },
+  "chickpea flour": {
+   "food": "FOOD-BESAN"
+  },
+  "chickpeas": {
+   "food": "FOOD-CHICKPEAS"
+  },
+  "chilli paste": {
+   "food": "FOOD-GREEN-CHILLI",
+   "default_g": 3
+  },
+  "chilli powder": {
+   "food": "FOOD-CHILLI-POWDER",
+   "default_g": 1
+  },
+  "chopped coriander": {
+   "food": "FOOD-CORIANDER-LEAVES",
+   "default_g": 5
+  },
+  "chopped mint": {
+   "food": "FOOD-MINT",
+   "default_g": 3
+  },
+  "chopped onion": {
+   "food": "FOOD-ONION",
+   "default_g": 110,
+   "note": "'as needed': one onion assumed"
+  },
+  "chopped tomatoes": {
+   "food": "FOOD-TOMATO",
+   "default_g": 120,
+   "note": "'as needed': one tomato assumed"
+  },
+  "cilantro/coriander with tender stems": {
+   "food": "FOOD-CORIANDER-LEAVES",
+   "default_g": 5
+  },
+  "cinnamon": {
+   "food": "FOOD-CINNAMON"
+  },
+  "cinnamon powder": {
+   "food": "FOOD-CINNAMON"
+  },
+  "cinnamon stick": {
+   "food": "FOOD-CINNAMON"
+  },
+  "citric acid (substitute for lemon juice; improves shelf life)": {
+   "trace": true
+  },
+  "clove": {
+   "food": "FOOD-CLOVES"
+  },
+  "cloves": {
+   "food": "FOOD-CLOVES",
+   "per": {
+    "count": 0.1
+   }
+  },
+  "coconut milk": {
+   "food": "FOOD-COCONUT-MILK",
+   "default_g": 60,
+   "note": "'as needed': 1 vati assumed"
+  },
+  "coconut oil": {
+   "food": "FOOD-OIL"
+  },
+  "cooking oil": {
+   "food": "FOOD-OIL",
+   "default_g": 9,
+   "note": "'as needed': 2 teaspoons assumed",
+   "per": {
+    "teaspoon": 4.5,
+    "tablespoon": 13.5,
+    "ml": 0.92
+   }
+  },
+  "coriander leaves": {
+   "food": "FOOD-CORIANDER-LEAVES",
+   "default_g": 5
+  },
+  "coriander leaves for garnish": {
+   "food": "FOOD-CORIANDER-LEAVES",
+   "default_g": 5
+  },
+  "coriander leaves, chopped": {
+   "food": "FOOD-CORIANDER-LEAVES",
+   "default_g": 5
+  },
+  "coriander powder": {
+   "food": "FOOD-DHANIA-POWDER"
+  },
+  "coriander seeds": {
+   "food": "FOOD-CORIANDER-SEED"
+  },
+  "coriander, chopped": {
+   "food": "FOOD-CORIANDER-LEAVES",
+   "default_g": 5
+  },
+  "cream or milk": {
+   "food": "FOOD-CREAM"
+  },
+  "crushed black pepper": {
+   "food": "FOOD-BLACK-PEPPER",
+   "default_g": 0.5
+  },
+  "crushed peanuts": {
+   "food": "FOOD-PEANUT"
+  },
+  "cucumbers": {
+   "food": "FOOD-CUCUMBER"
+  },
+  "cumin powder": {
+   "food": "FOOD-JEERA",
+   "default_g": 1
+  },
+  "cumin seed powder": {
+   "food": "FOOD-JEERA",
+   "default_g": 1
+  },
+  "cumin seeds": {
+   "food": "FOOD-JEERA",
+   "default_g": 1
+  },
+  "cumin seeds (jeera)": {
+   "food": "FOOD-JEERA",
+   "default_g": 1
+  },
+  "curd": {
+   "food": "FOOD-CURD"
+  },
+  "curry and coriander leaves": {
+   "trace": true
+  },
+  "curry leaves": {
+   "trace": true
+  },
+  "curry leaves (kadhipatta)": {
+   "trace": true
+  },
+  "cut vegetables (carrot, cabbage, capsicum)": {
+   "split": [
+    "FOOD-CARROT",
+    "FOOD-CABBAGE",
+    "FOOD-CAPSICUM"
+   ]
+  },
+  "cut vegetables: 1 green pepper, 1 zucchini, 1 medium eggplant, 1 celery stem, 2 spring onion stems, 5-6 mushrooms, bamboo shoots, bean sprouts": {
+   "split": [
+    "FOOD-CAPSICUM",
+    "FOOD-ZUCCHINI",
+    "FOOD-BRINJAL",
+    "FOOD-CELERY",
+    "FOOD-SPRING-ONION",
+    "FOOD-MUSHROOM"
+   ],
+   "default_g": 300,
+   "note": "the book says 'as preferred': 300 g assumed"
+  },
+  "dairy, almond, rice, soy or coconut milk": {
+   "food": "FOOD-MILK",
+   "note": "first option (dairy milk) used"
+  },
+  "desiccated coconut": {
+   "food": "FOOD-COCONUT-DRY"
+  },
+  "diced onion": {
+   "food": "FOOD-ONION",
+   "default_g": 110,
+   "note": "'as needed': one onion assumed"
+  },
+  "dill or cumin (for the jar base)": {
+   "trace": true
+  },
+  "dried basil": {
+   "food": "FOOD-BASIL-DRIED"
+  },
+  "dried ginger": {
+   "food": "FOOD-GINGER-POWDER"
+  },
+  "dried red chillies": {
+   "food": "FOOD-CHILLI-POWDER",
+   "per": {
+    "count": 0.5
+   },
+   "note": "dried red chilli: chilli powder record"
+  },
+  "dry ginger powder": {
+   "food": "FOOD-GINGER-POWDER"
+  },
+  "dry grated coconut": {
+   "food": "FOOD-COCONUT-DRY"
+  },
+  "dry quinoa": {
+   "food": "FOOD-QUINOA"
+  },
+  "dry red chillies": {
+   "food": "FOOD-CHILLI-POWDER",
+   "per": {
+    "count": 0.5
+   },
+   "note": "dried red chilli: chilli powder record"
+  },
+  "dry red chillies (byadgi or red Kashmiri)": {
+   "food": "FOOD-CHILLI-POWDER",
+   "per": {
+    "count": 0.5
+   },
+   "note": "dried red chilli: chilli powder record"
+  },
+  "egg bhurji or paneer bhurji": {
+   "exclude": "the filling is another recipe with no amount"
+  },
+  "eggs": {
+   "food": "FOOD-EGG",
+   "per": {
+    "count": 50
+   }
+  },
+  "elephant foot yam (suran/jimikand), cut": {
+   "food": "FOOD-SURAN"
+  },
+  "Eno or baking soda": {
+   "food": "FOOD-BAKING-SODA"
+  },
+  "fennel seeds": {
+   "food": "FOOD-FENNEL-SEED"
+  },
+  "fenugreek leaves": {
+   "food": "FOOD-FENUGREEK-LEAVES"
+  },
+  "fenugreek seed powder": {
+   "food": "FOOD-FENUGREEK-SEED",
+   "default_g": 1
+  },
+  "fenugreek seeds": {
+   "food": "FOOD-FENUGREEK-SEED",
+   "default_g": 1
+  },
+  "fish sauce": {
+   "optional": true
+  },
+  "five whole spices (mustard, cumin, fenugreek seeds, fennel, kalonji)": {
+   "food": "FOOD-SPICE-MIX",
+   "per": {
+    "tablespoon": 9
+   }
+  },
+  "flavours (garam masala, black pepper, khada masala)": {
+   "food": "FOOD-SPICE-MIX",
+   "default_g": 1
+  },
+  "flax seeds": {
+   "food": "FOOD-FLAXSEED",
+   "note": "first option (flax) used"
+  },
+  "flax, hemp or chia seeds": {
+   "food": "FOOD-FLAXSEED",
+   "note": "first option (flax) used"
+  },
+  "French beans": {
+   "food": "FOOD-BEANS"
+  },
+  "French beans, sliced": {
+   "food": "FOOD-BEANS"
+  },
+  "fresh cilantro": {
+   "food": "FOOD-CORIANDER-LEAVES",
+   "default_g": 5
+  },
+  "fresh coriander": {
+   "food": "FOOD-CORIANDER-LEAVES",
+   "default_g": 5
+  },
+  "fresh coriander leaves": {
+   "food": "FOOD-CORIANDER-LEAVES",
+   "default_g": 5
+  },
+  "fresh coriander leaves and lemon juice for garnish": {
+   "split": [
+    "FOOD-CORIANDER-LEAVES",
+    "FOOD-LEMON-JUICE"
+   ],
+   "default_g": 10
+  },
+  "fresh coriander, chopped": {
+   "food": "FOOD-CORIANDER-LEAVES",
+   "default_g": 5
+  },
+  "fresh fenugreek": {
+   "food": "FOOD-FENUGREEK-LEAVES"
+  },
+  "fresh grated coconut": {
+   "food": "FOOD-COCONUT",
+   "default_g": 10,
+   "note": "'as needed': 10 g assumed"
+  },
+  "fresh green chilli": {
+   "food": "FOOD-GREEN-CHILLI",
+   "per": {
+    "count": 5
+   },
+   "default_g": 5
+  },
+  "fresh green chillies (or jalapeños)": {
+   "food": "FOOD-GREEN-CHILLI",
+   "per": {
+    "count": 5
+   },
+   "default_g": 5
+  },
+  "fresh green tender papaya, julienned (steam/blanch if required)": {
+   "food": "FOOD-RAW-PAPAYA"
+  },
+  "fresh hot green chillies": {
+   "food": "FOOD-GREEN-CHILLI",
+   "per": {
+    "count": 5
+   },
+   "default_g": 5
+  },
+  "fresh lemon juice": {
+   "food": "FOOD-LEMON-JUICE",
+   "default_g": 5
+  },
+  "fresh lemon/lime juice": {
+   "food": "FOOD-LEMON-JUICE",
+   "default_g": 5
+  },
+  "fresh moringa leaves, separated from stem, washed and cut": {
+   "food": "FOOD-MORINGA-LEAVES"
+  },
+  "fresh spinach, cut (baby spinach preferred)": {
+   "food": "FOOD-PALAK"
+  },
+  "fresh tomatoes": {
+   "food": "FOOD-TOMATO",
+   "default_g": 120,
+   "note": "'as needed': one tomato assumed"
+  },
+  "freshly grated coconut": {
+   "food": "FOOD-COCONUT",
+   "default_g": 10,
+   "note": "'as needed': 10 g assumed"
+  },
+  "garam masala": {
+   "food": "FOOD-SPICE-MIX"
+  },
+  "garam masala powder": {
+   "food": "FOOD-SPICE-MIX"
+  },
+  "garlic": {
+   "food": "FOOD-GARLIC",
+   "per": {
+    "count": 3
+   },
+   "default_g": 5
+  },
+  "garlic and ginger juliennes": {
+   "split": [
+    "FOOD-GINGER",
+    "FOOD-GARLIC"
+   ],
+   "per": {
+    "teaspoon": 5,
+    "tablespoon": 15,
+    "spoon": 5
+   },
+   "default_g": 5
+  },
+  "garlic clove": {
+   "food": "FOOD-GARLIC",
+   "per": {
+    "count": 3
+   },
+   "default_g": 5
+  },
+  "garlic cloves": {
+   "food": "FOOD-GARLIC",
+   "per": {
+    "count": 3
+   },
+   "default_g": 5
+  },
+  "garlic cloves, chopped": {
+   "food": "FOOD-GARLIC",
+   "per": {
+    "count": 3
+   },
+   "default_g": 5
+  },
+  "garlic cloves, crushed": {
+   "food": "FOOD-GARLIC",
+   "per": {
+    "count": 3
+   },
+   "default_g": 5
+  },
+  "garlic cloves, cut small": {
+   "food": "FOOD-GARLIC",
+   "per": {
+    "count": 3
+   },
+   "default_g": 5
+  },
+  "garlic cloves, finely chopped": {
+   "food": "FOOD-GARLIC",
+   "per": {
+    "count": 3
+   },
+   "default_g": 5
+  },
+  "garlic cloves, simmered in olive oil": {
+   "food": "FOOD-GARLIC",
+   "per": {
+    "count": 3
+   },
+   "default_g": 5
+  },
+  "garlic paste": {
+   "food": "FOOD-GARLIC",
+   "default_g": 5
+  },
+  "garlic, chopped": {
+   "food": "FOOD-GARLIC",
+   "per": {
+    "count": 3
+   },
+   "default_g": 5
+  },
+  "garlic, finely chopped": {
+   "food": "FOOD-GARLIC",
+   "per": {
+    "count": 3
+   },
+   "default_g": 5
+  },
+  "garlic, grated": {
+   "food": "FOOD-GARLIC",
+   "per": {
+    "count": 3
+   },
+   "default_g": 5
+  },
+  "ghee": {
+   "food": "FOOD-GHEE",
+   "default_g": 9,
+   "note": "'as needed': 2 teaspoons assumed"
+  },
+  "ghee or oil": {
+   "food": "FOOD-GHEE",
+   "note": "first option (ghee) used"
+  },
+  "ginger": {
+   "food": "FOOD-GINGER",
+   "default_g": 5
+  },
+  "ginger and green chilli paste": {
+   "split": [
+    "FOOD-GINGER",
+    "FOOD-GREEN-CHILLI"
+   ],
+   "per": {
+    "teaspoon": 5
+   }
+  },
+  "ginger garlic paste": {
+   "split": [
+    "FOOD-GINGER",
+    "FOOD-GARLIC"
+   ],
+   "per": {
+    "teaspoon": 5,
+    "tablespoon": 15,
+    "spoon": 5
+   },
+   "default_g": 5
+  },
+  "ginger paste": {
+   "food": "FOOD-GINGER",
+   "default_g": 5
+  },
+  "ginger root, cut into small pieces": {
+   "food": "FOOD-GINGER",
+   "default_g": 5
+  },
+  "ginger, chopped": {
+   "food": "FOOD-GINGER",
+   "default_g": 5
+  },
+  "ginger, crushed": {
+   "food": "FOOD-GINGER",
+   "default_g": 5
+  },
+  "ginger, finely chopped": {
+   "food": "FOOD-GINGER",
+   "default_g": 5
+  },
+  "ginger-garlic paste": {
+   "split": [
+    "FOOD-GINGER",
+    "FOOD-GARLIC"
+   ],
+   "per": {
+    "teaspoon": 5,
+    "tablespoon": 15,
+    "spoon": 5
+   },
+   "default_g": 5
+  },
+  "goat liver or chicken liver": {
+   "food": "FOOD-LIVER"
+  },
+  "grated carrot, cabbage, bottle gourd, radish": {
+   "split": [
+    "FOOD-CARROT",
+    "FOOD-CABBAGE",
+    "FOOD-LAUKI",
+    "FOOD-MOOLI"
+   ]
+  },
+  "grated coconut": {
+   "food": "FOOD-COCONUT",
+   "default_g": 10,
+   "note": "'as needed': 10 g assumed"
+  },
+  "grated dry coconut": {
+   "food": "FOOD-COCONUT-DRY"
+  },
+  "green apple": {
+   "food": "FOOD-APPLE",
+   "per": {
+    "count": 180
+   }
+  },
+  "green cardamom pods (use the seeds)": {
+   "food": "FOOD-CARDAMOM",
+   "per": {
+    "count": 0.2
+   }
+  },
+  "green chilli": {
+   "food": "FOOD-GREEN-CHILLI",
+   "per": {
+    "count": 5
+   },
+   "default_g": 5
+  },
+  "green chilli, chopped": {
+   "food": "FOOD-GREEN-CHILLI",
+   "per": {
+    "count": 5
+   },
+   "default_g": 5
+  },
+  "green chillies": {
+   "food": "FOOD-GREEN-CHILLI",
+   "per": {
+    "count": 5
+   },
+   "default_g": 5
+  },
+  "green chillies, chopped": {
+   "food": "FOOD-GREEN-CHILLI",
+   "per": {
+    "count": 5
+   },
+   "default_g": 5
+  },
+  "green chillies, cut small, seeds removed": {
+   "food": "FOOD-GREEN-CHILLI",
+   "per": {
+    "count": 5
+   },
+   "default_g": 5
+  },
+  "green chillies, finely chopped": {
+   "food": "FOOD-GREEN-CHILLI",
+   "per": {
+    "count": 5
+   },
+   "default_g": 5
+  },
+  "green or red chillies, chopped and julienned": {
+   "food": "FOOD-GREEN-CHILLI",
+   "per": {
+    "count": 5
+   }
+  },
+  "green or red Thai curry paste": {
+   "food": "FOOD-SPICE-MIX",
+   "per": {
+    "tablespoon": 15
+   },
+   "note": "Thai curry paste: spice-mix proxy"
+  },
+  "green peas": {
+   "food": "FOOD-PEAS"
+  },
+  "green plantain, cut": {
+   "food": "FOOD-RAW-BANANA"
+  },
+  "green string beans (steam/blanch if required)": {
+   "food": "FOOD-BEANS",
+   "per": {
+    "count": 5
+   }
+  },
+  "herbs (nutmeg, basil, celery)": {
+   "food": "FOOD-BASIL-DRIED"
+  },
+  "hoisin soya sauce": {
+   "food": "FOOD-HOISIN"
+  },
+  "honey (or 2 dates)": {
+   "food": "FOOD-HONEY"
+  },
+  "horse gram flour": {
+   "food": "FOOD-HORSE-GRAM-FLOUR"
+  },
+  "hot water": {
+   "skip": "water: no nutrients"
+  },
+  "ice-cold water": {
+   "skip": "water: no nutrients"
+  },
+  "jaggery": {
+   "food": "FOOD-JAGGERY",
+   "default_g": 5
+  },
+  "jalapeño/green chilli": {
+   "food": "FOOD-GREEN-CHILLI",
+   "per": {
+    "count": 5
+   },
+   "default_g": 5
+  },
+  "jaypatri (mace)": {
+   "food": "FOOD-MACE"
+  },
+  "jowar": {
+   "food": "FOOD-JOWAR"
+  },
+  "jowar flour": {
+   "food": "FOOD-JOWAR-FLOUR"
+  },
+  "kachri (or 1/4 vati dry kachri powder)": {
+   "trace": true
+  },
+  "kaffir lime leaves": {
+   "trace": true
+  },
+  "kasuri methi": {
+   "trace": true
+  },
+  "kasuri methi, crushed": {
+   "trace": true
+  },
+  "kokum": {
+   "trace": true
+  },
+  "large garlic cloves (3 whole, 2 finely chopped)": {
+   "food": "FOOD-GARLIC",
+   "per": {
+    "count": 3
+   },
+   "default_g": 5
+  },
+  "large garlic cloves, chopped": {
+   "food": "FOOD-GARLIC",
+   "per": {
+    "count": 3
+   },
+   "default_g": 5
+  },
+  "lemon juice": {
+   "food": "FOOD-LEMON-JUICE",
+   "default_g": 5
+  },
+  "lettuce leaves": {
+   "food": "FOOD-LETTUCE",
+   "per": {
+    "pieces": 10
+   }
+  },
+  "lime, juiced": {
+   "food": "FOOD-LEMON-JUICE",
+   "per": {
+    "count": 30
+   }
+  },
+  "liver": {
+   "food": "FOOD-LIVER"
+  },
+  "maize flour": {
+   "food": "FOOD-JOWAR-FLOUR",
+   "note": "maize flour: a whole-grain flour proxy"
+  },
+  "minced chicken": {
+   "food": "FOOD-CHICKEN-MINCE"
+  },
+  "minced garlic": {
+   "food": "FOOD-GARLIC",
+   "per": {
+    "count": 3
+   },
+   "default_g": 5
+  },
+  "mint leaves": {
+   "food": "FOOD-MINT",
+   "default_g": 3
+  },
+  "mixed grain flour (thalipeeth bhajni)": {
+   "food": "FOOD-BHAJNI"
+  },
+  "mixed greens such as bathua (chenopodium)/cheel bhaji, or spinach": {
+   "food": "FOOD-PALAK",
+   "note": "bathua or spinach: spinach used"
+  },
+  "mixed vegetables (carrot, cauliflower florets, beans)": {
+   "split": [
+    "FOOD-CARROT",
+    "FOOD-CAULIFLOWER",
+    "FOOD-BEANS"
+   ]
+  },
+  "mixed vegetables of choice": {
+   "split": [
+    "FOOD-CARROT",
+    "FOOD-BEANS",
+    "FOOD-CAULIFLOWER",
+    "FOOD-PEAS"
+   ],
+   "note": "'of choice': carrot, beans, cauliflower and peas assumed"
+  },
+  "moong dal": {
+   "food": "FOOD-MOONG-DAL"
+  },
+  "moong dal (husked split mung)": {
+   "food": "FOOD-MOONG-DAL"
+  },
+  "moringa leaves": {
+   "food": "FOOD-MORINGA-LEAVES"
+  },
+  "mushrooms": {
+   "food": "FOOD-MUSHROOM"
+  },
+  "mustard greens": {
+   "food": "FOOD-SARSON"
+  },
+  "mustard oil": {
+   "food": "FOOD-OIL",
+   "default_g": 9,
+   "note": "'as needed': 2 teaspoons assumed",
+   "per": {
+    "teaspoon": 4.5,
+    "tablespoon": 13.5,
+    "ml": 0.92
+   }
+  },
+  "mustard seeds": {
+   "food": "FOOD-MUSTARD-SEED"
+  },
+  "oil": {
+   "food": "FOOD-OIL",
+   "default_g": 9,
+   "note": "'as needed': 2 teaspoons assumed",
+   "per": {
+    "teaspoon": 4.5,
+    "tablespoon": 13.5,
+    "ml": 0.92
+   }
+  },
+  "oil (mustard or olive)": {
+   "food": "FOOD-OIL",
+   "default_g": 9,
+   "note": "'as needed': 2 teaspoons assumed",
+   "per": {
+    "teaspoon": 4.5,
+    "tablespoon": 13.5,
+    "ml": 0.92
+   }
+  },
+  "oil for tadka": {
+   "food": "FOOD-OIL",
+   "default_g": 9,
+   "note": "'as needed': 2 teaspoons assumed",
+   "per": {
+    "teaspoon": 4.5,
+    "tablespoon": 13.5,
+    "ml": 0.92
+   }
+  },
+  "oil/butter": {
+   "food": "FOOD-OIL",
+   "default_g": 9,
+   "note": "first option (oil); 'as needed': 2 teaspoons assumed"
+  },
+  "olive oil": {
+   "food": "FOOD-OIL",
+   "default_g": 9,
+   "note": "'as needed': 2 teaspoons assumed",
+   "per": {
+    "teaspoon": 4.5,
+    "tablespoon": 13.5,
+    "ml": 0.92
+   }
+  },
+  "onion": {
+   "food": "FOOD-ONION",
+   "default_g": 110,
+   "note": "'as needed': one onion assumed"
+  },
+  "onion (paste)": {
+   "food": "FOOD-ONION",
+   "default_g": 110,
+   "note": "'as needed': one onion assumed"
+  },
+  "onion, chopped": {
+   "food": "FOOD-ONION",
+   "default_g": 110,
+   "note": "'as needed': one onion assumed"
+  },
+  "onion, cut": {
+   "food": "FOOD-ONION",
+   "default_g": 110,
+   "note": "'as needed': one onion assumed"
+  },
+  "onion, cut into small pieces": {
+   "food": "FOOD-ONION",
+   "default_g": 110,
+   "note": "'as needed': one onion assumed"
+  },
+  "onion, finely chopped": {
+   "food": "FOOD-ONION",
+   "default_g": 110,
+   "note": "'as needed': one onion assumed"
+  },
+  "onion, minced, water removed": {
+   "food": "FOOD-ONION",
+   "default_g": 110,
+   "note": "'as needed': one onion assumed"
+  },
+  "onion, sliced": {
+   "food": "FOOD-ONION",
+   "default_g": 110,
+   "note": "'as needed': one onion assumed"
+  },
+  "onion, thin long slices": {
+   "food": "FOOD-ONION",
+   "default_g": 110,
+   "note": "'as needed': one onion assumed"
+  },
+  "onions": {
+   "food": "FOOD-ONION",
+   "default_g": 110,
+   "note": "'as needed': one onion assumed"
+  },
+  "onions, chopped": {
+   "food": "FOOD-ONION",
+   "default_g": 110,
+   "note": "'as needed': one onion assumed"
+  },
+  "oyster sauce": {
+   "food": "FOOD-OYSTER-SAUCE"
+  },
+  "paneer": {
+   "food": "FOOD-PANEER"
+  },
+  "paneer, cubed": {
+   "food": "FOOD-PANEER"
+  },
+  "parsley, chopped": {
+   "food": "FOOD-PARSLEY",
+   "default_g": 3
+  },
+  "pav bhaji masala": {
+   "food": "FOOD-SPICE-MIX"
+  },
+  "peanut powder": {
+   "food": "FOOD-PEANUT"
+  },
+  "pearl/small onions": {
+   "food": "FOOD-ONION",
+   "default_g": 110,
+   "note": "'as needed': one onion assumed"
+  },
+  "plain Greek yogurt": {
+   "food": "FOOD-GREEK-YOGURT"
+  },
+  "poppy seeds": {
+   "food": "FOOD-POPPY-SEED"
+  },
+  "potato, peeled and cubed": {
+   "food": "FOOD-ALOO"
+  },
+  "precooked protein (cooked chicken, paneer, boiled egg, soyabean chunks, etc.)": {
+   "exclude": "the protein and its amount are left to the cook"
+  },
+  "protein powder of choice": {
+   "exclude": "a brand product; no USDA record chosen"
+  },
+  "pumpkin (kaddu), cut": {
+   "food": "FOOD-KADDU"
+  },
+  "radishes, crushed with a stone": {
+   "food": "FOOD-MOOLI"
+  },
+  "rajgira (amaranth)": {
+   "food": "FOOD-AMARANTH-GRAIN"
+  },
+  "raw cashews": {
+   "food": "FOOD-CASHEW"
+  },
+  "raw papaya, cut": {
+   "food": "FOOD-RAW-PAPAYA"
+  },
+  "red chilli": {
+   "food": "FOOD-CHILLI-POWDER",
+   "per": {
+    "count": 0.5
+   },
+   "note": "dried red chilli: chilli powder record"
+  },
+  "red chilli powder": {
+   "food": "FOOD-CHILLI-POWDER",
+   "default_g": 1
+  },
+  "red chillies": {
+   "food": "FOOD-CHILLI-POWDER",
+   "per": {
+    "count": 0.5
+   },
+   "note": "dried red chilli: chilli powder record"
+  },
+  "red onion": {
+   "food": "FOOD-ONION",
+   "default_g": 110,
+   "note": "'as needed': one onion assumed"
+  },
+  "rice": {
+   "food": "FOOD-RICE"
+  },
+  "rice (broken or regular)": {
+   "food": "FOOD-RICE"
+  },
+  "ripe avocadoes": {
+   "food": "FOOD-AVOCADO",
+   "per": {
+    "count": 150
+   }
+  },
+  "roasted cashews": {
+   "food": "FOOD-CASHEW-ROASTED"
+  },
+  "roasted coriander and fennel powder": {
+   "food": "FOOD-SPICE-MIX",
+   "default_g": 1
+  },
+  "roasted coriander powder": {
+   "food": "FOOD-DHANIA-POWDER"
+  },
+  "roasted cumin seeds": {
+   "food": "FOOD-JEERA",
+   "default_g": 1
+  },
+  "roasted gram flour": {
+   "food": "FOOD-BESAN"
+  },
+  "rutabaga (or turnip/salgum), peeled, cut, crushed with a stone": {
+   "food": "FOOD-SHALGAM",
+   "per": {
+    "pieces": 150
+   }
+  },
+  "salt": {
+   "food": "FOOD-SALT",
+   "default_g": 3,
+   "note": "'to taste': 3 g assumed"
+  },
+  "salt and pepper": {
+   "food": "FOOD-SALT",
+   "default_g": 3
+  },
+  "sea salt brine: 1 vati chlorine-free water with about 1 1/4 teaspoons iodine-free sea salt": {
+   "skip": "water: no nutrients"
+  },
+  "seekh kabab masala or garam masala (not both; neither is fine)": {
+   "optional": true
+  },
+  "sesame oil": {
+   "food": "FOOD-OIL"
+  },
+  "sesame seeds": {
+   "food": "FOOD-SESAME"
+  },
+  "sliced ginger": {
+   "food": "FOOD-GINGER",
+   "default_g": 5
+  },
+  "soya granules (or soya chunks ground fine after cooking)": {
+   "food": "FOOD-SOYA-GRANULES"
+  },
+  "soya granules (soaked in hot water, drained, pressure cooked)": {
+   "food": "FOOD-SOYA-GRANULES"
+  },
+  "soya sauce": {
+   "food": "FOOD-SOY-SAUCE"
+  },
+  "spinach": {
+   "food": "FOOD-PALAK"
+  },
+  "split toor dal or split chana dal": {
+   "food": "FOOD-TOOR-DAL"
+  },
+  "sprouted field beans": {
+   "food": "FOOD-VAL-SPROUTS"
+  },
+  "star anise": {
+   "trace": true
+  },
+  "stone flower (dagadphool)": {
+   "trace": true
+  },
+  "sugar": {
+   "food": "FOOD-SUGAR",
+   "default_g": 0.3
+  },
+  "sugar (or palm sugar)": {
+   "food": "FOOD-SUGAR",
+   "default_g": 0.3
+  },
+  "sugar/palm sugar": {
+   "food": "FOOD-SUGAR",
+   "default_g": 0.3
+  },
+  "sunflower oil": {
+   "food": "FOOD-OIL",
+   "default_g": 9,
+   "note": "'as needed': 2 teaspoons assumed",
+   "per": {
+    "teaspoon": 4.5,
+    "tablespoon": 13.5,
+    "ml": 0.92
+   }
+  },
+  "tahini (sesame paste)": {
+   "food": "FOOD-TAHINI"
+  },
+  "tamarind": {
+   "food": "FOOD-TAMARIND"
+  },
+  "tamarind juice/paste": {
+   "food": "FOOD-TAMARIND"
+  },
+  "thalipeeth bhajni (mixed-grain flour)": {
+   "food": "FOOD-BHAJNI"
+  },
+  "tomato": {
+   "food": "FOOD-TOMATO",
+   "default_g": 120,
+   "note": "'as needed': one tomato assumed"
+  },
+  "tomato paste (or 4-5 fresh tomatoes, finely cut)": {
+   "food": "FOOD-TOMATO-PASTE"
+  },
+  "tomato, chopped": {
+   "food": "FOOD-TOMATO",
+   "default_g": 120,
+   "note": "'as needed': one tomato assumed"
+  },
+  "tomato, cut": {
+   "food": "FOOD-TOMATO",
+   "default_g": 120,
+   "note": "'as needed': one tomato assumed"
+  },
+  "tomato, finely chopped": {
+   "food": "FOOD-TOMATO",
+   "default_g": 120,
+   "note": "'as needed': one tomato assumed"
+  },
+  "tomato, grated": {
+   "food": "FOOD-TOMATO",
+   "default_g": 120,
+   "note": "'as needed': one tomato assumed"
+  },
+  "tomato, paste or chopped": {
+   "food": "FOOD-TOMATO",
+   "default_g": 120,
+   "note": "'as needed': one tomato assumed"
+  },
+  "tomato, sliced": {
+   "food": "FOOD-TOMATO",
+   "default_g": 120,
+   "note": "'as needed': one tomato assumed"
+  },
+  "tomatoes": {
+   "food": "FOOD-TOMATO",
+   "default_g": 120,
+   "note": "'as needed': one tomato assumed"
+  },
+  "tomatoes (or a can of tomatoes, or 1 kg fresh ripe tomatoes), cubed": {
+   "food": "FOOD-TOMATO",
+   "default_g": 120,
+   "note": "'as needed': one tomato assumed"
+  },
+  "tomatoes or tomato purée": {
+   "food": "FOOD-TOMATO",
+   "default_g": 120,
+   "note": "'as needed': one tomato assumed"
+  },
+  "tomatoes, chopped": {
+   "food": "FOOD-TOMATO",
+   "default_g": 120,
+   "note": "'as needed': one tomato assumed"
+  },
+  "tomatoes, diced": {
+   "food": "FOOD-TOMATO",
+   "default_g": 120,
+   "note": "'as needed': one tomato assumed"
+  },
+  "toor dal (or any dal)": {
+   "food": "FOOD-TOOR-DAL"
+  },
+  "turmeric": {
+   "food": "FOOD-HALDI",
+   "default_g": 1
+  },
+  "turmeric powder": {
+   "food": "FOOD-HALDI",
+   "default_g": 1
+  },
+  "unsalted butter": {
+   "food": "FOOD-BUTTER"
+  },
+  "urad dal": {
+   "food": "FOOD-URAD-DAL"
+  },
+  "urad dal, skinned": {
+   "food": "FOOD-URAD-DAL"
+  },
+  "urad flour": {
+   "food": "FOOD-URAD-DAL"
+  },
+  "vinegar": {
+   "food": "FOOD-VINEGAR",
+   "default_g": 5
+  },
+  "water": {
+   "skip": "water: no nutrients"
+  },
+  "wheat": {
+   "food": "FOOD-WHEAT-FLOUR",
+   "note": "whole wheat grain: flour record"
+  },
+  "wheat flour": {
+   "food": "FOOD-WHEAT-FLOUR"
+  },
+  "white sesame seeds": {
+   "food": "FOOD-SESAME"
+  },
+  "whole black peppercorns": {
+   "food": "FOOD-BLACK-PEPPER"
+  },
+  "whole black urad": {
+   "food": "FOOD-URAD-DAL"
+  },
+  "whole chana": {
+   "food": "FOOD-CHICKPEAS"
+  },
+  "whole coriander seeds": {
+   "food": "FOOD-CORIANDER-SEED"
+  },
+  "whole dry Kashmiri chillies, broken": {
+   "food": "FOOD-CHILLI-POWDER",
+   "per": {
+    "count": 0.5
+   },
+   "note": "dried red chilli: chilli powder record"
+  },
+  "yoghurt": {
+   "food": "FOOD-CURD"
+  }
+ }
+}

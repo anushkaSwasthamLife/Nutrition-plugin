@@ -73,7 +73,12 @@ class SwasthamData:
     dish_rules: dict
     book_measures: dict
     decision_logic: dict
+    doctor_packs: dict
+    router_rules: dict
+    book_ingredient_map: dict
     manifest: dict
+    programme_rules: dict = None          # programme id -> its rules file (manifest "programme_rules"); one per doctor's programme
+    food_cautions: dict = None            # condition / medicine / pregnancy food cautions (cautions.py)
 
 
 def sha256_of(path: Path) -> str:
@@ -186,8 +191,15 @@ def load_swastham_data(settings: Settings, manifest: dict | None = None) -> Swas
             raise LoadError(f"{name}: cannot be read ({exc.__class__.__name__})") from exc
         if not isinstance(loaded[key], dict):
             raise LoadError(f"{name}: must be a JSON object")
+    rules: dict = {}
+    for pid, name in (manifest.get("programme_rules") or {}).items():
+        try:
+            rules[pid] = json.loads((DATA_DIR / name).read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise LoadError(f"{name}: cannot be read ({exc.__class__.__name__})") from exc
     if not env.get("allow_test_only_data"):
-        for key, data in loaded.items():
+        checked = {**{names[k]: v for k, v in loaded.items()}, **{manifest["programme_rules"][p]: v for p, v in rules.items()}}
+        for name, data in checked.items():
             if str(data.get("status", "")).upper() in {"TEST ONLY", "STUB", "PARTIAL", "PROPOSED", "DRAFT"}:
-                raise LoadError(f"Production refuses {names[key]}: status is {data['status']}.")
-    return SwasthamData(manifest=manifest, **loaded)
+                raise LoadError(f"Production refuses {name}: status is {data['status']}.")
+    return SwasthamData(manifest=manifest, programme_rules=rules, **loaded)

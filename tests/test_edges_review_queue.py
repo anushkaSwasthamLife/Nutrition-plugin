@@ -353,7 +353,7 @@ def test_a_decision_reaches_a_real_chat_the_next_time_the_engine_starts(env, mon
     env.queue.apply(env.eng, data_copy / "food_master.json", data_copy / "allergen_map.json", "Dr Rao")
     settings = env.eng.settings
     new_engine = Engine(settings, llm=env.eng.llm)
-    assert new_engine.data.food_master["version"] == "FM-0.3.3"
+    assert new_engine.data.food_master["version"] == "FM-0.4.1"
     assert [m.food_id for m in new_engine.index.find("I have okra fry at home")] == ["FOOD-BHINDI"]
     answer = new_engine.answer("I have okra fry, what can I cook?", None, {"allergies": []})
     assert "okra fry" not in " ".join(answer.plan.get("ingredients", [])) and "isn't in our food list" not in answer.answer

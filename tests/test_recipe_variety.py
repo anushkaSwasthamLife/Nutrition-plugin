@@ -77,7 +77,7 @@ def test_the_halwa_never_passes_the_gate_for_anyone(full_engine):
 # ---------------------------------------------------------------- every food has dishes
 def food_ids(engine):
     return [f for f, food in engine.index.foods.items() if food["category"] in {"vegetable", "starchy_vegetable", "pulse"}
-            and f not in {"FOOD-GARLIC", "FOOD-GINGER", "FOOD-SPROUTS", "FOOD-DAL", "FOOD-SOYBEAN", "FOOD-SPRING-ONION"}]
+            and f not in engine.index.book_only and f not in {"FOOD-GARLIC", "FOOD-GINGER", "FOOD-SPROUTS", "FOOD-DAL", "FOOD-SOYBEAN", "FOOD-SPRING-ONION"}]
 
 
 def test_every_vegetable_and_pulse_is_the_main_food_of_at_least_one_dish(full_engine):

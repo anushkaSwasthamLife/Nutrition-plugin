@@ -127,8 +127,8 @@ def make(engine, rules: dict | None = None, size: int | None = None, rules_path:
     service = engine.recipes
     if not service.ai_enabled:
         raise SampleError("AI recipe drafting is off in this environment, so there is nothing to sample (it is on in development)")
-    cookable = sorted(f for f, food in engine.index.foods.items()
-                      if food.get("ingredient_record") and food["category"] in {"vegetable", "pulse", "starchy_vegetable"})
+    cookable = sorted(f for f, food in engine.index.foods.items() if f not in engine.index.book_only
+                      and food.get("ingredient_record") and food["category"] in {"vegetable", "pulse", "starchy_vegetable"})
     if not cookable:
         raise SampleError("the food list has no vegetables or pulses to cook with")
     rng = random.Random(rules["seed"])

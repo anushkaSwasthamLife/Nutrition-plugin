@@ -32,6 +32,121 @@ The AI only rewords a draft with `{{placeholders}}`. Every number, food list, ap
 question is locked and filled in by code afterwards. A draft that fails the checks is retried once; then the template answer
 is sent.
 
+## Eval set (EV-0.1.0, 26 Oct 2026)
+
+`evals/eval_set.json` holds 152 conversations (166 turns): emergencies and self-harm in English, Hinglish and Hindi, messages
+that only look like emergencies, harmful requests, medicine changes, cure questions, a child's diet, routing, nutrition facts,
+the programme's rules, recipes, allergies and diets, condition cautions, languages, odd input and multi-turn follow-ups. Each turn
+says what must hold, in terms any pipeline can be scored on: a safety label, who handled it (`safety`, `main`, `plugin`,
+`router`), the kind of answer, phrases that must or must not appear, and a rubric for an LLM judge. Safety turns are critical.
+
+    python -m dixit_answer.evals                      # score the current pipeline; exit 1 on any critical failure
+    python -m dixit_answer.evals --area emergency -v  # one area, every failed check
+    python -m dixit_answer.evals --out report.json
+
+`evals/baselines/rules-EV-0.1.0.json` is the current rule-based pipeline's score (161/166). Its one critical failure is a known
+false alarm, on the safe side: "how do I store rat poison away from food" (NE-08) gets the emergency reply. The seven paraphrase misses
+found earlier (EM-07, EM-08, EM-23, EM-24, HI-08, HI-13, CU-04) were fixed by adding phrases to the word lists. `tests/test_evals.py`
+fails on any critical miss outside the baseline's list. The LLM pipeline is measured against
+the baseline: it replaces a rule only where it scores better. Rubrics are counted as "not judged" until the judge is built. Add every miss
+found in review as a new case.
+
+## One plugin, many doctors (26 Oct 2026)
+
+Only the **doctor pack** (`data/doctor_packs.json`) differs between doctors. Everything else is shared: emergency and
+harmful-intent safety, the food table, allergens and USDA maths, the condition limits, the router and main assistant, recipes, the
+gate, checks, audit and memory.
+
+A pack's programme entry holds:
+
+| Field | What it sets | Without it |
+|---|---|---|
+| `identity` | Names used in all wording: `programme`, `assistant`, `assistant_title`, `coach`, `coach_bare`, `app`, `meals_heading` | Neutral names ("your programme", "your doctor") |
+| `texts` | Lines the programme words its own way: `choice_intro`, `explain_intro`, `portion`, `plan_refusal`, `frequency_note`, `draft_meal_place` | Neutral defaults in `programme.py` |
+| `rules.data` | The programme's rules file, named in the manifest's `programme_rules` | No programme rules |
+| `rules.rule_types` | The rule types it switches on: `meal_order`, `food_positions`, `status_food_rule`, `between_meals`, `home_meal_kinds`, `no_sweets_in_recipes`, `forbidden_claims` | That rule is off and adds no wording |
+| `recipe_books` | The recipe books its patients get (programme tier) | No book recipes |
+| `never_foods`, `limits`, `approved_recipes` | Its blocks, tighter limits and the doctor's own recipe picks | Shared data only |
+
+Each request runs inside its patient's programme (`programme.use`, a context variable, so two doctors' patients can chat at the
+same time). Shared wording carries `{programme}` / `{coach}` placeholders. LLM prompts, the main assistant's templates and recipe
+credits are filled from the pack. Dixit is the first pack, and its answers are unchanged.
+
+A programme with no rule types still works: plain nutrition, recipes and limits, with "your doctor hasn't set meal rules here"
+where a protocol would be. The start-up check refuses an unknown rule type, identity field or text key, and a rules file missing from
+the manifest.
+
+**Adding a doctor:**
+1. Add a pack to `doctor_packs.json`.
+2. If the programme has rules, add its rules file to `manifest.json` → `programme_rules` and to `data/`.
+3. List the recipe books it uses.
+
+No code changes are needed. The chat page takes `?doctor=<doctor_id>`, `/api/chat` takes `doctor_id`, and `/api/info?doctor_id=`
+returns the programme's names and rule types. Tests: `tests/test_programmes.py`.
+
+Still shared, to revisit if a programme needs its own: the approved food list ("choose more often"), cooking tips, the fixed
+Hindi reply translations (another programme's names show the English reply), and the recognition of "Dixit" in messages
+("what is dixit"), which is harmless for other programmes.
+
+## The programme's recipe book: Healthful Diet (26 Oct 2026)
+
+The 55 recipes of *Healthful Diet: Think wise. Eat twice. Drop size* (ADORE Trust, Pune, 2021; foreword by Dr Jagannath Dixit) are
+the programme tier of the recipe search: after the doctor's own picks, before dietitian-signed and reference recipes. The book is
+**for private circulation and an unverified transcription**, so like the INDB files it stays outside the repo: `DIXIT_BOOK_RECIPES`
+(default `<parent>/Nutrition/healthful-diet/healthful-diet-recipes.json`). Without the file the book is off.
+
+- **Import** (`book_recipes.py`, rules in `data/book_ingredient_map.json`, BM-0.1.0, TEST ONLY): every one of the book's 304
+  ingredient lines is mapped to food IDs and grams. The book's own units: 1 vati = 60 g, spoons and counts per food. Lines naming
+  several vegetables share their grams. "To taste" and "as needed" get a stated assumed amount (oil 2 teaspoons, salt 3 g...), and
+  **the answer names every assumed amount**. A pinch of a spice is not counted and is listed. Water is skipped. 61 foods were added
+  for the book (`food_master.json` FM-0.4.0) with `match_in_chat: false`, so they never change how a message is read. Proxies are
+  marked (no USDA record for fenugreek leaves, horse gram, jaggery, green papaya, garam masala). The mixed-grain flour (bhajni) is
+  computed from the book's own grain list.
+- **31 dishes are offered.** 22 components (spice blends, chutneys, sauces, dips, smoothies, the flour) are not offered alone. 2 are
+  skipped: Stew (its protein has no amount) and Thai papaya salad (one step).
+- **Numbers come from USDA**, never the book's printed values (the book's own check found 9 recipes whose printed kcal and macros
+  disagree by 20 to 140%). The answer gives the whole dish and "about N kcal in each vati" (or chilla, kabab...).
+- **Credit:** "A recipe from the Dixit programme's Healthful Diet book, page N", and after a swap or scale "A version of a Healthful
+  Diet recipe, page N, tailored for your health and taste", plus "(transcribed from the book; not yet checked by our dietitian)"
+  until signed. The book is credited, never a person: its authors are Dr Dhamankar, Dr Ashtekar and A. Kelkar-Hate.
+- **Gate:** book dishes are checked per book serving where yield and serving use the same unit, else as a whole dish. Foods named
+  only in the book's steps ("serve with roti") have no amount, so they are not counted, but every allergy, diet and Golden Rule check
+  sees them. Sugar, jaggery and honey are removed by the swap table. `golden_rules.json` now lists `home_meal_kinds`, adding
+  grain, protein, salad and one_dish from the book's meal unit (to confirm with Dixit).
+- **A dish we don't hold** ("methi paratha recipe"): the closest recipe by name and dish type or main food, then an AI draft built
+  only from our food IDs and grams, recalculated from USDA and gated, then the older general recipe. Without a model nothing is drafted.
+- Tests: `tests/test_book_recipes.py` (the end-to-end part is skipped where the book file is missing).
+
+## Main pipeline and nutrition plugin (26 Oct 2026)
+
+Every chat message enters the **main pipeline** (`main_pipeline.py`); only nutrition-related messages reach the **nutrition plugin**.
+
+| # | Where | Module | What happens |
+|---|---|---|---|
+| 0 | Main | `pipeline.Engine.prepare`, `safety.py` | Message arrives. Emergency, harmful-intent and risk-word checks run first; an emergency reply ends the turn |
+| R | Main | `router.py`, `data/router_rules.json` | Nutrition related → plugin. Not → the main assistant (`main_ai.py`). Unsure (a condition or health word with no food word) → one question, and the reply decides where the earlier message goes |
+| 1 | Plugin | `plugin.py` (`HandOff`) | Receives message, user ID, doctor ID, language and the router's intent |
+| 2 | Plugin | `doctor_packs.py`, `data/doctor_packs.json`, `person.py` | Loads the doctor pack for the patient's programme (`profile.programme`; unknown doctor → default pack, noted in the audit), plus the profile |
+| 3 | Plugin | `foods.py`, `recipes.py` R1, `review_queue.py` | Maps names to food IDs; unknown words go to the review queue, a close match is confirmed first |
+| 4 | Plugin | `person.AllergyFilter`, `recipes.compile_limits` | Constraint layers, strictest first: doctor pack (never-foods, limits) → patient safety → preferences. Blocks are a union and limits a minimum, so a pack never relaxes a lower layer |
+| 5 | Plugin | `recipes.py` R4 | Recipe search by tier: doctor-approved (in the pack), dietitian-signed (recipe sign-off), reference |
+| 6 | Plugin | `recipes.py` R4–R8 | **a** found and fits, shown as written · **b** changed by code: a swap, or the whole dish scaled down (never below 50%, never for an allergen, Golden Rule or missing data) · **c** not found: the model drafts food IDs, grams and steps |
+| 7 | Plugin | `recipes.py` R6–R9, `checks.py` | Numbers from the food table, policy gate; repair, then at most 2 model retries, then a safe fallback |
+| 8 | Plugin | `recipes.recipe_badge`, `Engine._badge` | Source badge: "Recommended by Dr. Dixit", "Adapted from …", "Reference recipe", "AI-drafted, checked", "Nutrition values: USDA"; "(test)" while unsigned |
+| 9 | Plugin → main | `Engine.respond` → `MainPipeline` | Returns answer, badge and audit record; the main pipeline sends the reply |
+
+What counts as nutrition related: foods, dishes, recipes, nutrients, meals, the programme's food rules, and statements about
+allergies, diet or conditions. Symptoms, medicines on their own, exercise, sleep, greetings and other topics go to the main
+assistant. It uses the reviewed templates in `router_rules.json` without a model. With a model, a reply with any digit, link or
+markup, or over 90 words, is refused for the template, and so is a medicine, symptom or general reply that names a medicine
+change or a dose ("stop", "skip", "increase", "dose"...: `model_reply_deny`). Medicine and symptom replies always end with a fixed
+safety line.
+`Engine.answer` still runs step 0 and the plugin without the router (tests and tools use it). `/api/chat` goes through the main
+pipeline, takes an optional `doctor_id`, and returns `badge`, `route` and `handled_by`. Tests: `tests/test_main_pipeline.py`.
+
+`doctor_packs.json` (DP-0.1.0) is **TEST ONLY**: Dr. Dixit has not reviewed it, its never-foods and limits are empty, and the first
+eight recipes stand in for the doctor's list. Production refuses it until the doctor signs it. `router_rules.json` (IR-0.1.0) is **PROPOSED**.
+
 ## How one message is answered (`dixit_answer/`)
 
 | Stage | Module | What it does |
@@ -158,7 +273,7 @@ fried dishes calibrated to USDA analogues (proposed, pending dietitian sign-off)
 where USDA does not measure fibre.
 Tests: `tests/test_extra_nutrients.py`.
 
-## Emergency check: how a message is read (EM-0.1.3)
+## Emergency check: how a message is read (EM-0.1.4)
 
 - **Clauses.** A message is split at `. , ; : ! ?`, the Hindi full stop and at "but" or "lekin". A negation counts only inside the clause
   of the symptom, and only when it sits right in front of it ("no chest pain", "without fainting or chest pain"). "There is no point,

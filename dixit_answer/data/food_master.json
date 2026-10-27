@@ -1,7 +1,7 @@
 {
- "version": "FM-0.3.2",
+ "version": "FM-0.4.0",
  "status": "TEST ONLY",
- "note": "Draft food master table for development. Allergens, record choices and unit weights need dietitian review; unit weights are typical values to verify against USDA FoodData Central portion data. ingredient_record = USDA per-100 g record used for recipe maths. No IFCT links. FM-0.3.0 (16 Oct 2026): 35 more vegetables, leafy greens, roots and pulses/legumes added, each mapped to one USDA record; the vegetables people cook most in India were missing (capsicum, brinjal, karela, carrot and others). Names and aliases (Hindi, regional) need dietitian review; only carrot, beetroot and capsicum have a unit weight, the rest have none until a dietitian enters one. dry_weight = the record is for the dry, uncooked pulse: the AI is never asked to build a recipe around it (it needs soaking and boiling), approved recipes may use it. FM-0.3.2: rice now has a USDA record so approved recipes (khichdi, pulao, lemon rice) can use it; besan and suji added. The AI is never asked to draft around them.",
+ "note": "Draft food master table for development. Allergens, record choices and unit weights need dietitian review; unit weights are typical values to verify against USDA FoodData Central portion data. ingredient_record = USDA per-100 g record used for recipe maths. No IFCT links. FM-0.3.0 (16 Oct 2026): 35 more vegetables, leafy greens, roots and pulses/legumes added, each mapped to one USDA record; the vegetables people cook most in India were missing (capsicum, brinjal, karela, carrot and others). Names and aliases (Hindi, regional) need dietitian review; only carrot, beetroot and capsicum have a unit weight, the rest have none until a dietitian enters one. dry_weight = the record is for the dry, uncooked pulse: the AI is never asked to build a recipe around it (it needs soaking and boiling), approved recipes may use it. FM-0.3.2: rice now has a USDA record so approved recipes (khichdi, pulao, lemon rice) can use it; besan and suji added. The AI is never asked to draft around them. FM-0.4.0 (26 Oct 2026): foods and unit weights for the Healthful Diet book recipes. Book-only foods have match_in_chat false, so they never change how a chat message is read; proxies say which USDA record stands in and why. Every record, weight, proxy and allergen here needs dietitian review.",
  "foods": [
   {
    "id": "FOOD-CHAPATI",
@@ -123,7 +123,8 @@
    },
    "ingredient_record": "LEGACY-170026",
    "unit_weights_g": {
-    "medium": 150
+    "medium": 150,
+    "count": 150
    }
   },
   {
@@ -149,7 +150,8 @@
    },
    "ingredient_record": "SURVEY-2709777",
    "unit_weights_g": {
-    "medium head": 600
+    "medium head": 600,
+    "count": 600
    }
   },
   {
@@ -193,7 +195,8 @@
    },
    "ingredient_record": "LEGACY-169232",
    "unit_weights_g": {
-    "medium": 700
+    "medium": 700,
+    "count": 700
    }
   },
   {
@@ -297,7 +300,9 @@
     ]
    },
    "ingredient_record": "LEGACY-171284",
-   "unit_weights_g": {}
+   "unit_weights_g": {
+    "tablespoon": 15
+   }
   },
   {
    "id": "FOOD-PANEER",
@@ -339,7 +344,8 @@
    },
    "ingredient_record": "SURVEY-2709795",
    "unit_weights_g": {
-    "medium": 110
+    "medium": 110,
+    "count": 110
    }
   },
   {
@@ -362,7 +368,8 @@
    },
    "ingredient_record": "SURVEY-2709719",
    "unit_weights_g": {
-    "medium": 120
+    "medium": 120,
+    "count": 120
    }
   },
   {
@@ -385,7 +392,8 @@
    },
    "ingredient_record": "SURVEY-2709784",
    "unit_weights_g": {
-    "medium": 200
+    "medium": 200,
+    "count": 200
    }
   },
   {
@@ -462,7 +470,10 @@
     ]
    },
    "ingredient_record": "LEGACY-172430",
-   "unit_weights_g": {}
+   "unit_weights_g": {
+    "teaspoon": 2.7,
+    "tablespoon": 8
+   }
   },
   {
    "id": "FOOD-SPROUTS",
@@ -579,7 +590,8 @@
    },
    "ingredient_record": "SURVEY-2709224",
    "unit_weights_g": {
-    "medium": 120
+    "medium": 120,
+    "count": 120
    }
   },
   {
@@ -602,7 +614,8 @@
    },
    "ingredient_record": "USDA-746784",
    "unit_weights_g": {
-    "teaspoon": 4
+    "teaspoon": 4,
+    "tablespoon": 12
    }
   },
   {
@@ -686,7 +699,9 @@
    "allergens": [
     "chickpea"
    ],
-   "unit_weights_g": {},
+   "unit_weights_g": {
+    "tablespoon": 12
+   },
    "ingredient_record": "LEGACY-173756",
    "fact_records": {
     "development": [
@@ -736,7 +751,8 @@
     "milk"
    ],
    "unit_weights_g": {
-    "teaspoon": 4.5
+    "teaspoon": 4.5,
+    "tablespoon": 13.5
    },
    "ingredient_record": "SURVEY-2710168",
    "fact_records": {
@@ -758,7 +774,8 @@
    ],
    "allergens": [],
    "unit_weights_g": {
-    "teaspoon": 6
+    "teaspoon": 6,
+    "tablespoon": 18
    },
    "ingredient_record": "LEGACY-173468",
    "fact_records": {
@@ -781,7 +798,8 @@
    ],
    "allergens": [],
    "unit_weights_g": {
-    "teaspoon": 2
+    "teaspoon": 2,
+    "tablespoon": 6
    },
    "ingredient_record": "LEGACY-170923",
    "fact_records": {
@@ -803,7 +821,8 @@
    ],
    "allergens": [],
    "unit_weights_g": {
-    "teaspoon": 3
+    "teaspoon": 3,
+    "tablespoon": 9
    },
    "ingredient_record": "LEGACY-172231",
    "fact_records": {
@@ -825,7 +844,8 @@
    ],
    "allergens": [],
    "unit_weights_g": {
-    "teaspoon": 2
+    "teaspoon": 2,
+    "tablespoon": 6
    },
    "ingredient_record": "LEGACY-170922",
    "fact_records": {
@@ -848,7 +868,8 @@
    ],
    "allergens": [],
    "unit_weights_g": {
-    "teaspoon": 2.5
+    "teaspoon": 2.5,
+    "tablespoon": 7.5
    },
    "ingredient_record": "LEGACY-171319",
    "fact_records": {
@@ -871,7 +892,8 @@
    ],
    "allergens": [],
    "unit_weights_g": {
-    "piece": 5
+    "piece": 5,
+    "teaspoon": 5
    },
    "ingredient_record": "LEGACY-170497",
    "fact_records": {
@@ -894,7 +916,8 @@
    ],
    "allergens": [],
    "unit_weights_g": {
-    "clove": 3
+    "clove": 3,
+    "teaspoon": 5
    },
    "ingredient_record": "SURVEY-2709786",
    "fact_records": {
@@ -916,7 +939,8 @@
    ],
    "allergens": [],
    "unit_weights_g": {
-    "inch": 5
+    "inch": 5,
+    "teaspoon": 5
    },
    "ingredient_record": "LEGACY-169231",
    "fact_records": {
@@ -939,7 +963,12 @@
     "cilantro"
    ],
    "allergens": [],
-   "unit_weights_g": {},
+   "unit_weights_g": {
+    "teaspoon": 1,
+    "tablespoon": 3,
+    "bunch": 100,
+    "stalk": 2
+   },
    "ingredient_record": "LEGACY-169997",
    "fact_records": {
     "development": [
@@ -989,7 +1018,8 @@
    ],
    "allergens": [],
    "unit_weights_g": {
-    "medium": 119
+    "medium": 119,
+    "count": 119
    },
    "ingredient_record": "LEGACY-170427",
    "fact_records": {
@@ -1109,7 +1139,8 @@
    ],
    "allergens": [],
    "unit_weights_g": {
-    "medium": 61
+    "medium": 61,
+    "count": 61
    },
    "ingredient_record": "LEGACY-170393",
    "fact_records": {
@@ -1158,7 +1189,9 @@
     "daikon"
    ],
    "allergens": [],
-   "unit_weights_g": {},
+   "unit_weights_g": {
+    "count": 100
+   },
    "ingredient_record": "LEGACY-169276",
    "fact_records": {
     "development": [
@@ -1180,7 +1213,9 @@
     "shaljam"
    ],
    "allergens": [],
-   "unit_weights_g": {},
+   "unit_weights_g": {
+    "count": 150
+   },
    "ingredient_record": "LEGACY-170465",
    "fact_records": {
     "development": [
@@ -1389,7 +1424,9 @@
     "button mushroom"
    ],
    "allergens": [],
-   "unit_weights_g": {},
+   "unit_weights_g": {
+    "count": 18
+   },
    "ingredient_record": "LEGACY-169251",
    "fact_records": {
     "development": [
@@ -1412,7 +1449,10 @@
     "maize"
    ],
    "allergens": [],
-   "unit_weights_g": {},
+   "unit_weights_g": {
+    "count": 8,
+    "teaspoon": 2.7
+   },
    "ingredient_record": "LEGACY-169998",
    "fact_records": {
     "development": [
@@ -1594,7 +1634,9 @@
     "celery"
    ],
    "allergens": [],
-   "unit_weights_g": {},
+   "unit_weights_g": {
+    "bunch": 400
+   },
    "ingredient_record": "LEGACY-169988",
    "fact_records": {
     "development": [
@@ -1615,7 +1657,9 @@
     "iceberg lettuce"
    ],
    "allergens": [],
-   "unit_weights_g": {},
+   "unit_weights_g": {
+    "count": 10
+   },
    "ingredient_record": "SURVEY-2709789",
    "fact_records": {
     "development": [
@@ -1830,7 +1874,9 @@
    "allergens": [
     "chickpea"
    ],
-   "unit_weights_g": {},
+   "unit_weights_g": {
+    "tablespoon": 8
+   },
    "ingredient_record": "LEGACY-174288",
    "fact_records": {
     "development": [
@@ -1866,6 +1912,1123 @@
     ]
    },
    "dry_weight": true
+  },
+  {
+   "id": "FOOD-MUSTARD-SEED",
+   "name": "mustard seeds",
+   "category": "pantry",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-170929",
+   "unit_weights_g": {
+    "teaspoon": 3.3
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-CORIANDER-SEED",
+   "name": "coriander seeds",
+   "category": "pantry",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-170922",
+   "unit_weights_g": {
+    "teaspoon": 1.8
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-FENNEL-SEED",
+   "name": "fennel seeds",
+   "category": "pantry",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-171323",
+   "unit_weights_g": {
+    "teaspoon": 2
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-CINNAMON",
+   "name": "cinnamon",
+   "category": "pantry",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-171320",
+   "unit_weights_g": {
+    "teaspoon": 2.6,
+    "inch": 1,
+    "piece": 2.5
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-BLACK-PEPPER",
+   "name": "black pepper",
+   "category": "pantry",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-170931",
+   "unit_weights_g": {
+    "teaspoon": 2.3
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-CLOVES",
+   "name": "cloves",
+   "category": "pantry",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-171321",
+   "unit_weights_g": {
+    "teaspoon": 2.1,
+    "piece": 0.1
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-CARDAMOM",
+   "name": "cardamom",
+   "category": "pantry",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-170919",
+   "unit_weights_g": {
+    "teaspoon": 2,
+    "piece": 0.2
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-FENUGREEK-SEED",
+   "name": "fenugreek seeds",
+   "category": "pantry",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-171324",
+   "unit_weights_g": {
+    "teaspoon": 3.7
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-POPPY-SEED",
+   "name": "poppy seeds",
+   "category": "pantry",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-171330",
+   "unit_weights_g": {
+    "teaspoon": 2.8
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-ANISE-SEED",
+   "name": "anise seeds",
+   "category": "pantry",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-171316",
+   "unit_weights_g": {
+    "teaspoon": 2.1
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-CARAWAY-SEED",
+   "name": "caraway seeds",
+   "category": "pantry",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-170918",
+   "unit_weights_g": {
+    "teaspoon": 2.1
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-MACE",
+   "name": "mace",
+   "category": "pantry",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-170927",
+   "unit_weights_g": {
+    "teaspoon": 1.7,
+    "piece": 0.5
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-GINGER-POWDER",
+   "name": "dry ginger powder",
+   "category": "pantry",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-170926",
+   "unit_weights_g": {
+    "teaspoon": 1.8
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-SPICE-MIX",
+   "name": "spice mix (garam masala type)",
+   "category": "pantry",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-170924",
+   "unit_weights_g": {
+    "teaspoon": 2
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)",
+   "proxy": "USDA curry powder stands in for garam masala, pav bhaji masala, sambar masala and Thai curry paste"
+  },
+  {
+   "id": "FOOD-BASIL-DRIED",
+   "name": "dried basil",
+   "category": "pantry",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-171317",
+   "unit_weights_g": {
+    "teaspoon": 0.7
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-SESAME",
+   "name": "sesame seeds",
+   "category": "nut",
+   "aliases": [],
+   "allergens": [
+    "sesame"
+   ],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-170150",
+   "unit_weights_g": {
+    "teaspoon": 3
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-TAHINI",
+   "name": "tahini",
+   "category": "nut",
+   "aliases": [],
+   "allergens": [
+    "sesame"
+   ],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-168604",
+   "unit_weights_g": {
+    "tablespoon": 15
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-FLAXSEED",
+   "name": "flax seeds",
+   "category": "nut",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-169414",
+   "unit_weights_g": {
+    "teaspoon": 3.5,
+    "tablespoon": 10
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-COCONUT",
+   "name": "coconut (fresh, grated)",
+   "category": "nut",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-170169",
+   "unit_weights_g": {
+    "teaspoon": 2.5
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)",
+   "note": "Not tagged as a tree nut; the dietitian decides."
+  },
+  {
+   "id": "FOOD-COCONUT-DRY",
+   "name": "dry coconut (desiccated)",
+   "category": "nut",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-170170",
+   "unit_weights_g": {
+    "teaspoon": 1.7
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)",
+   "note": "Not tagged as a tree nut; the dietitian decides."
+  },
+  {
+   "id": "FOOD-COCONUT-MILK",
+   "name": "coconut milk",
+   "category": "nut",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-170172",
+   "unit_weights_g": {
+    "tablespoon": 15
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-CASHEW",
+   "name": "cashews",
+   "category": "nut",
+   "aliases": [],
+   "allergens": [
+    "tree_nut"
+   ],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-170162",
+   "unit_weights_g": {
+    "piece": 1.5,
+    "tablespoon": 9
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-CASHEW-ROASTED",
+   "name": "roasted cashews",
+   "category": "nut",
+   "aliases": [],
+   "allergens": [
+    "tree_nut"
+   ],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-170571",
+   "unit_weights_g": {
+    "piece": 1.5
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-WHEAT-FLOUR",
+   "name": "whole wheat flour",
+   "category": "staple",
+   "aliases": [],
+   "allergens": [
+    "gluten"
+   ],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-168893",
+   "unit_weights_g": {
+    "tablespoon": 8
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)",
+   "dry_weight": true
+  },
+  {
+   "id": "FOOD-JOWAR-FLOUR",
+   "name": "jowar flour",
+   "category": "staple",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-168943",
+   "unit_weights_g": {
+    "tablespoon": 8
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)",
+   "dry_weight": true
+  },
+  {
+   "id": "FOOD-JOWAR",
+   "name": "jowar (sorghum grain)",
+   "category": "staple",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-169716",
+   "unit_weights_g": {},
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)",
+   "dry_weight": true
+  },
+  {
+   "id": "FOOD-BAJRA",
+   "name": "bajri (pearl millet)",
+   "category": "staple",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-169702",
+   "unit_weights_g": {},
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)",
+   "dry_weight": true
+  },
+  {
+   "id": "FOOD-QUINOA",
+   "name": "quinoa",
+   "category": "staple",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-168874",
+   "unit_weights_g": {},
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)",
+   "dry_weight": true
+  },
+  {
+   "id": "FOOD-AMARANTH-GRAIN",
+   "name": "rajgira (amaranth grain)",
+   "category": "staple",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-170682",
+   "unit_weights_g": {},
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)",
+   "dry_weight": true
+  },
+  {
+   "id": "FOOD-URAD-DAL",
+   "name": "urad dal",
+   "category": "pulse",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-174259",
+   "unit_weights_g": {
+    "tablespoon": 12,
+    "teaspoon": 4
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)",
+   "dry_weight": true,
+   "generic": "FOOD-DAL"
+  },
+  {
+   "id": "FOOD-BLACK-PEAS",
+   "name": "black peas (dried)",
+   "category": "pulse",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-172428",
+   "unit_weights_g": {},
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)",
+   "dry_weight": true,
+   "proxy": "USDA dried split peas"
+  },
+  {
+   "id": "FOOD-HORSE-GRAM-FLOUR",
+   "name": "horse gram flour",
+   "category": "pulse",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-172420",
+   "unit_weights_g": {},
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)",
+   "dry_weight": true,
+   "proxy": "USDA has no horse gram: raw lentils stand in"
+  },
+  {
+   "id": "FOOD-VAL-SPROUTS",
+   "name": "sprouted field beans (val)",
+   "category": "pulse",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-168427",
+   "unit_weights_g": {},
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)",
+   "proxy": "USDA has no sprouted field beans: sprouted lentils stand in"
+  },
+  {
+   "id": "FOOD-SOYA-GRANULES",
+   "name": "soya granules",
+   "category": "pulse",
+   "aliases": [],
+   "allergens": [
+    "soy"
+   ],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "SURVEY-2707451",
+   "unit_weights_g": {},
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)",
+   "dry_weight": true
+  },
+  {
+   "id": "FOOD-MORINGA-LEAVES",
+   "name": "moringa leaves",
+   "category": "vegetable",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-168416",
+   "unit_weights_g": {},
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-FENUGREEK-LEAVES",
+   "name": "fenugreek leaves (methi)",
+   "category": "vegetable",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "USDA-1999633",
+   "unit_weights_g": {
+    "bunch": 100
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)",
+   "proxy": "USDA has no fresh fenugreek leaves: spinach stands in"
+  },
+  {
+   "id": "FOOD-MINT",
+   "name": "mint leaves",
+   "category": "pantry",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-173475",
+   "unit_weights_g": {
+    "teaspoon": 1,
+    "tablespoon": 3
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-PARSLEY",
+   "name": "parsley",
+   "category": "pantry",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-170416",
+   "unit_weights_g": {
+    "teaspoon": 1
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-AVOCADO",
+   "name": "avocado",
+   "category": "vegetable",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-171705",
+   "unit_weights_g": {
+    "piece": 150
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)",
+   "note": "Category vegetable (low sugar); the dietitian decides how the fruit rule treats it."
+  },
+  {
+   "id": "FOOD-APPLE",
+   "name": "green apple",
+   "category": "fruit",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "USDA-1750342",
+   "unit_weights_g": {
+    "piece": 180
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-RAW-PAPAYA",
+   "name": "raw papaya",
+   "category": "vegetable",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "SURVEY-2709246",
+   "unit_weights_g": {
+    "piece": 500
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)",
+   "proxy": "USDA has no green papaya: ripe papaya stands in (overstates sugar)"
+  },
+  {
+   "id": "FOOD-HONEY",
+   "name": "honey",
+   "category": "sweet",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-169640",
+   "unit_weights_g": {
+    "tablespoon": 21
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-JAGGERY",
+   "name": "jaggery",
+   "category": "sweet",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-168833",
+   "unit_weights_g": {
+    "teaspoon": 4,
+    "tablespoon": 12
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)",
+   "proxy": "USDA has no jaggery: brown sugar stands in"
+  },
+  {
+   "id": "FOOD-CHICKEN",
+   "name": "chicken breast",
+   "category": "meat",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "USDA-2646170",
+   "unit_weights_g": {
+    "piece": 170
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-CHICKEN-MINCE",
+   "name": "minced chicken",
+   "category": "meat",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-171116",
+   "unit_weights_g": {},
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-LIVER",
+   "name": "liver",
+   "category": "meat",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-171060",
+   "unit_weights_g": {},
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)",
+   "proxy": "chicken liver record, also used for goat liver"
+  },
+  {
+   "id": "FOOD-BUTTER",
+   "name": "butter",
+   "category": "dairy",
+   "aliases": [],
+   "allergens": [
+    "milk"
+   ],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-173430",
+   "unit_weights_g": {
+    "tablespoon": 14,
+    "teaspoon": 4.7
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-MILK",
+   "name": "milk",
+   "category": "dairy",
+   "aliases": [],
+   "allergens": [
+    "milk"
+   ],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "SURVEY-2705385",
+   "unit_weights_g": {
+    "tablespoon": 15
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-CREAM",
+   "name": "cream",
+   "category": "dairy",
+   "aliases": [],
+   "allergens": [
+    "milk"
+   ],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "SURVEY-2705593",
+   "unit_weights_g": {
+    "tablespoon": 15
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-GREEK-YOGURT",
+   "name": "Greek yogurt",
+   "category": "dairy",
+   "aliases": [],
+   "allergens": [
+    "milk"
+   ],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-171304",
+   "unit_weights_g": {},
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-SOY-SAUCE",
+   "name": "soy sauce",
+   "category": "pantry",
+   "aliases": [],
+   "allergens": [
+    "soy",
+    "gluten"
+   ],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "SURVEY-2707442",
+   "unit_weights_g": {
+    "teaspoon": 5.3,
+    "tablespoon": 16
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-HOISIN",
+   "name": "hoisin sauce",
+   "category": "pantry",
+   "aliases": [],
+   "allergens": [
+    "soy"
+   ],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-172886",
+   "unit_weights_g": {
+    "teaspoon": 5.5
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-OYSTER-SAUCE",
+   "name": "oyster sauce",
+   "category": "fish",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-174529",
+   "unit_weights_g": {
+    "tablespoon": 18
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-FISH-SAUCE",
+   "name": "fish sauce",
+   "category": "fish",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-174531",
+   "unit_weights_g": {
+    "tablespoon": 18
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-VINEGAR",
+   "name": "vinegar",
+   "category": "pantry",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-173469",
+   "unit_weights_g": {
+    "teaspoon": 5
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-TAMARIND",
+   "name": "tamarind",
+   "category": "pantry",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-167763",
+   "unit_weights_g": {
+    "piece": 5,
+    "tablespoon": 15
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-TOMATO-PASTE",
+   "name": "tomato paste",
+   "category": "vegetable",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-170459",
+   "unit_weights_g": {
+    "tablespoon": 16
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-PAV",
+   "name": "pav (bread rolls)",
+   "category": "staple",
+   "aliases": [],
+   "allergens": [
+    "gluten"
+   ],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-175030",
+   "unit_weights_g": {
+    "piece": 40,
+    "packet": 240
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-LEMON-JUICE",
+   "name": "lemon juice",
+   "category": "pantry",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-167747",
+   "unit_weights_g": {
+    "teaspoon": 5,
+    "tablespoon": 15,
+    "lemon": 30
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-BAKING-SODA",
+   "name": "baking soda",
+   "category": "pantry",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-175040",
+   "unit_weights_g": {
+    "teaspoon": 4.6
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)"
+  },
+  {
+   "id": "FOOD-BHAJNI",
+   "name": "mixed-grain flour (bhajni)",
+   "category": "staple",
+   "aliases": [],
+   "allergens": [
+    "gluten",
+    "chickpea"
+   ],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": null,
+   "unit_weights_g": {
+    "tablespoon": 8
+   },
+   "match_in_chat": false,
+   "source": "Healthful Diet import (FM-0.4.0)",
+   "dry_weight": true,
+   "composition": [
+    {
+     "food": "FOOD-BAJRA",
+     "grams": 1000
+    },
+    {
+     "food": "FOOD-JOWAR",
+     "grams": 500
+    },
+    {
+     "food": "FOOD-WHEAT-FLOUR",
+     "grams": 500
+    },
+    {
+     "food": "FOOD-RICE",
+     "grams": 250
+    },
+    {
+     "food": "FOOD-AMARANTH-GRAIN",
+     "grams": 250
+    },
+    {
+     "food": "FOOD-URAD-DAL",
+     "grams": 250
+    },
+    {
+     "food": "FOOD-CHICKPEAS",
+     "grams": 500
+    },
+    {
+     "food": "FOOD-CORIANDER-SEED",
+     "grams": 250
+    }
+   ],
+   "note": "Values computed from the grains of the book's mixed-grain roast flour (HD-E-05)."
   }
  ]
 }

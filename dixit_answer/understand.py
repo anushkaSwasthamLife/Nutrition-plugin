@@ -38,11 +38,11 @@ PORTION = re.compile(r"\bhow (?:much|many)\b.*\b(?:should|can|do|must|shall) (?:
                      r"\bhow (?:much|many)\b.*\b(?:do|should|must) (?:i|we)\b.*\b(?:need|require|get)\b")
 SYMPTOM = re.compile(r"\b(?:headache|headaches|dizzy|dizziness|nausea|nauseous|vomit|vomiting|fever|pain|aching|weak|weakness|tired|tiredness|fatigue|giddy|cramps?|"
                      r"constipation|diarrhoea|diarrhea|bloating|bloated|acidity|gas|rash|itching)\b")
-STATEMENT_DIET = re.compile(r"^(?:i am|i m|im|we are|i eat|we eat|my diet is|i follow)\b")
+STATEMENT_DIET = re.compile(r"^(?:i am|i'm|i m|im|we are|we're|i eat|we eat|my diet is|i follow)\b")
 STATEMENT_ALLERGY = re.compile(r"\b(?:lactose intolerant|lactose intolerance|gluten intolerant|gluten intolerance|gluten free|celiac|coeliac|dairy free|no dairy|no gluten|"
                                r"without gluten|no lactose|nut allergy|peanut allergy|egg allergy|soy allergy)\b")
-STATEMENT_VEGAN = re.compile(r"\b(?:i am|i m|im|we are)\s+(?:a\s+)?(?:vegan|plant based)\b|^(?:vegan|plant based)$")
-STATEMENT_AVOID = re.compile(r"^(?:i|we)\s+(?:do not|dont|don t|never|cannot|can t|cant)\s+(?:eat|have|take|like|touch)\s+(?P<x>.+)$|"
+STATEMENT_VEGAN = re.compile(r"\b(?:i am|i'm|i m|im|we are|we're)\s+(?:a\s+)?(?:vegan|plant based)\b|^(?:vegan|plant based)$")
+STATEMENT_AVOID = re.compile(r"^(?:i|we)\s+(?:do not|don't|dont|don t|never|cannot|can't|can t|cant)\s+(?:eat|have|take|like|touch)\s+(?P<x>.+)$|"
                              r"^(?:i|we)\s+(?:avoid|skip|stay away from)\s+(?P<y>.+)$|^no\s+(?P<z>.+?)\s+for\s+me$")
 GREETING = re.compile(r"^(hi|hello|hey|namaste|good (morning|evening|afternoon|night)|thanks?|thank you|thank you so much|ok|okay|"
                       r"ok thanks|okay thanks|thx|ty|bye|goodbye|good bye|see you|see you later|take care|bye bye)( (dixit|coach|so much|a lot|there))?"
@@ -59,6 +59,7 @@ NO_ALLERGY = re.compile(r"^(?:i have |i got |we have )?(?:no|zero|none|nil)(?: k
 INGREDIENTS = re.compile(r"\b((?:cook|make|prepare|recipes?|dishes?|meals?|ideas?)\s+(?:with|using|from)|(?<!can )(?<!could )(?<!may )(?<!should )(?<!do )(?<!shall )(?<!must )(?<!would )(?<!will )i have|i've got|i got|we have|at home (i|we) have|there is|there's|have only|only have|my paas|ingredients?\s+(?:are\s+)?(?!of\b|in\b|for\b|used\b|needed\b|required\b|list\b))\b")
 HINDI_MAKE = re.compile(r"\b(bana|banau|banaun|banaye|pakau|pakaun|pakana|pakaye|kya bana)\b")   # not "banana": that's a fruit
 DISH_AFTER = re.compile(r"(?:recipe (?:for|of)|how (?:do|to|can|should) (?:i |you |we )?(?:make|cook|prepare)|make|cook|prepare)\s+(.+)$")
+DISH_BEFORE = re.compile(r"^(?:(?:the|a|an|please|pls|give me|show me|send me|share)\s+)*(.+?)\s+(?:recipe|recipes|ki recipe|ka recipe|kaise banaye|kaise banate hai|kaise banta hai)(?:\s+please|\s+pls)?$")
 DISH_FILLER = {"please", "pls", "show", "me", "the", "a", "an", "recipe", "recipes", "for", "i", "want", "give", "ka", "ki", "ke", "ko", "dikhao", "batao",
                "chahiye", "of", "to", "and", "ok", "okay", "yes", "this", "that", "one", "sure", "make", "how"}
 GENERIC_DISH = {"recipes", "recipe", "some recipes", "a recipe", "something", "food", "a dish", "dish", "dishes", "some dishes",
@@ -141,6 +142,7 @@ class Understanding:
     slot_fill: dict = field(default_factory=dict)        # reply to our last question
     is_reply: bool = False
     unknown_food_query: str = ""                         # food-like words not in the food master
+    recipe_nutrients: str = ""                           # a recipe of ours whose nutrition is asked ("calories in jeera aloo")
     preference: str = ""
     recipe_ids: list = field(default_factory=list)       # approved recipes named in the message
     target_exclude: list = field(default_factory=list)   # words to leave out of a dish search ("paneer")
@@ -480,7 +482,7 @@ def pantry_words(cleaned: str, index: FoodIndex, stop_words: list[str], judge=No
     clause = cleaned[m.end():]
     end = CLAUSE_END.search(clause)
     clause = clause[:end.start()] if end else clause
-    clause = re.split(r"\b(?:i am|am|i m|im|allergic|allergy|allergies)\b", clause)[0]     # a statement about the person is not a food
+    clause = re.split(r"\b(?:i am|am|i'm|i m|im|allergic|allergy|allergies)\b", clause)[0]     # a statement about the person is not a food
     absent = negated_foods(clause, index)
     kept = []
     for chunk in split_chunks(clause):
@@ -517,8 +519,27 @@ def pantry_words(cleaned: str, index: FoodIndex, stop_words: list[str], judge=No
     return unknown, suggestion, absent
 
 
+ORDINALS = {"first": 1, "1st": 1, "pehla": 1, "pehli": 1, "pahla": 1, "pahli": 1, "second": 2, "2nd": 2, "dusra": 2, "dusri": 2,
+            "doosra": 2, "doosri": 2, "third": 3, "3rd": 3, "teesra": 3, "teesri": 3, "tisra": 3, "tisri": 3, "fourth": 4, "4th": 4,
+            "chautha": 4, "chauthi": 4, "fifth": 5, "5th": 5, "sixth": 6, "6th": 6}
+CHOICE_FILLER = {"the", "one", "number", "no", "option", "please", "pls", "show", "me", "wala", "wali", "vala", "vali", "dish", "recipe", "that",
+                 "i", "want", "will", "take", "give", "ok", "okay"}
+
+
+def choice_number(cleaned: str, count: int) -> int:
+    """1-based pick from a list of `count` choices: "2", "the second one", "number 3", "last one", "dusra wala". 0 = not a pick.
+    Only a short reply made of a number or ordinal and filler words counts, so "2 rotis" is not a pick."""
+    words = cleaned.split()
+    picks = [w for w in words if w not in CHOICE_FILLER]
+    if len(picks) != 1 or len(words) > 6:
+        return 0
+    word = picks[0]
+    n = count if word in {"last", "aakhri", "akhri"} else ORDINALS.get(word) or (int(word) if word.isdigit() else 0)
+    return n if 1 <= n <= count else 0
+
+
 def read_reply(cleaned: str, slot: str, foods: list[str], index: FoodIndex, word_lists: dict,
-               allergy_reader=None, recipe_ids=None) -> dict:
+               allergy_reader=None, recipe_ids=None, choices=None) -> dict:
     """Try to read the message as an answer to our last question. Returns the slot values, or {}."""
     if slot == "diabetes_status":
         found = parse_status(cleaned, reply=True)
@@ -539,7 +560,10 @@ def read_reply(cleaned: str, slot: str, foods: list[str], index: FoodIndex, word
         allergies = allergy_reader(cleaned)
         return {"allergies": allergies} if allergies is not None else {}
     if slot == "recipe_choice":
-        return {"recipe_choice": recipe_ids[0]} if recipe_ids else {}
+        if recipe_ids:
+            return {"recipe_choice": recipe_ids[0]}
+        n = choice_number(cleaned, len(choices or []))          # "2", "the second one", "dusra": a pick from the list we showed
+        return {"recipe_choice": choices[n - 1]} if n else {}
     if slot == "confirm_food":
         words = set(cleaned.split())
         if words & {"yes", "yeah", "yep", "haan", "ha", "right", "correct", "yup"}:
@@ -667,7 +691,8 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
     # Reply to our last question (only the question asked in the previous turn counts).
     last = state.last_followup
     if last and last.get("turn") == state.turn:
-        u.slot_fill = read_reply(cleaned, last["slot"], foods, index, word_lists, allergy_reader, u.recipe_ids)
+        u.slot_fill = read_reply(cleaned, last["slot"], foods, index, word_lists, allergy_reader, u.recipe_ids,
+                                 getattr(state, "recipe_choices", None))
 
     question_type = classify(cleaned, foods, index)
     u.frequency_question = bool(FREQUENCY.search(cleaned)) and question_type == "meal_protocol_application"
@@ -678,12 +703,19 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
         leftover = set(getattr(recipe_finder, "__self__", None).last_leftover) if hasattr(recipe_finder, "__self__") else set()
         if leftover <= DISH_FILLER:
             question_type = "recipe_request"
+    leftover = set(getattr(getattr(recipe_finder, "__self__", None), "last_leftover", None) or [])
+    dish = " ".join(w for w in cleaned.split() if w not in leftover)
+    if (u.recipe_ids and canonical_nutrient(cleaned) and question_type in {"neutral_nutrient_lookup", "food_allowed", "out_of_scope"}
+            and hasattr(recipe_finder, "__self__") and dish not in index.alias_to_id        # "carbs in bhindi" is the food, not our sabji
+            and all(w in ASK_FILLER or NUTRIENT_WORD_RE.fullmatch(w) for w in leftover)):
+        question_type, u.recipe_nutrients = "neutral_nutrient_lookup", u.recipe_ids[0]    # the whole dish, not its words one by one
+        u.subject, u.subject_kind = dish, "nutrient"                                       # "and protein?" next
     if question_type != "recipe_request" and not (u.slot_fill and "recipe_choice" in u.slot_fill):
         u.recipe_ids = []                # a dish name only counts when the person is asking for that recipe
     if question_type == "recipe_request" and TIME_WISH.search(cleaned):
         u.time_wish = True
     if question_type == "recipe_request" and not u.recipe_ids:
-        m = DISH_AFTER.search(cleaned)
+        m = DISH_AFTER.search(cleaned) or DISH_BEFORE.match(cleaned)          # "recipe for methi paratha", "methi paratha recipe"
         if m:
             dish = " ".join(w for w in m.group(1).split() if w not in {"please", "pls", "some", "a", "an", "the", "me", "for", "my"})
             if TIME_WISH.search(dish):
@@ -817,7 +849,9 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
             u.absent_foods = sorted(set(u.absent_foods) | absent)
             u.ingredients = [f for f in u.ingredients if f not in absent]
             u.foods = [f for f in u.foods if f not in absent]
-    if question_type in {"neutral_nutrient_lookup", "food_allowed", "protocol_permission", "personal_suitability"}:
+    if u.recipe_nutrients:
+        u.subject_nutrient = canonical_nutrient(cleaned)                # the subject stays the whole dish, set above
+    elif question_type in {"neutral_nutrient_lookup", "food_allowed", "protocol_permission", "personal_suitability"}:
         u.subject_kind = "nutrient" if question_type == "neutral_nutrient_lookup" else "allowed"
         u.subject = mentions[0].alias if mentions else ""
         if not u.subject and dish_finder:

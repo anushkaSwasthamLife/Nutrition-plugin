@@ -10,6 +10,9 @@ from __future__ import annotations
 def find_problems(data, library, index, environment: str) -> list[str]:
     problems: list[str] = []
     foods = index.foods
+    if data.food_cautions:
+        from .cautions import FoodCautions
+        problems += FoodCautions(data.food_cautions, data.word_lists, foods).problems()
 
     # ---- food master
     seen_alias: dict[str, str] = {}
@@ -32,6 +35,11 @@ def find_problems(data, library, index, environment: str) -> list[str]:
             problems.append(f"{fid}: generic food {food['generic']} does not exist")
         if not food.get("category"):
             problems.append(f"{fid}: no category")
+        for part in food.get("composition") or []:
+            if part.get("food") not in foods or (foods[part["food"]].get("composition")):
+                problems.append(f"{fid}: composition part {part.get('food')} is unknown or itself a mix")
+            elif not foods[part["food"]].get("ingredient_record"):
+                problems.append(f"{fid}: composition part {part['food']} has no USDA record")
 
     def need(food_id, where):
         if food_id not in foods:
@@ -115,6 +123,53 @@ def find_problems(data, library, index, environment: str) -> list[str]:
         for option in cfg["options"]:
             for fid in option["foods"]:
                 need(fid, f"golden rules amount option '{option['text']}'")
+
+    # ---- doctor packs: a pack may only name foods, recipes and nutrients we have, and production needs the doctor's signature
+    packs = data.doctor_packs
+    recipe_ids = {r["recipe_id"] for r in data.recipes["recipes"]}
+    if packs.get("default_doctor_id") not in packs.get("packs", {}):
+        problems.append(f"doctor packs: default doctor {packs.get('default_doctor_id')} has no pack")
+    for did, pack in packs.get("packs", {}).items():
+        if pack.get("default_programme") not in pack.get("programmes", {}):
+            problems.append(f"doctor pack {did}: default programme {pack.get('default_programme')} does not exist")
+        if environment == "production" and not (pack.get("approved_by") and pack.get("approved_on")):
+            problems.append(f"doctor pack {did}: not signed by the doctor (approved_by, approved_on)")
+        for pid, prog in pack.get("programmes", {}).items():
+            from .programme import NEUTRAL_IDENTITY, NEUTRAL_TEXTS, RULE_TYPES
+            rules = prog.get("rules") or {}
+            if rules.get("data") and rules["data"] not in (data.programme_rules or {}):
+                problems.append(f"doctor pack {did}/{pid}: rules data '{rules['data']}' is not in the manifest's programme_rules")
+            for rule_type in rules.get("rule_types") or []:
+                if rule_type not in RULE_TYPES:
+                    problems.append(f"doctor pack {did}/{pid}: unknown rule type '{rule_type}'")
+            for key in prog.get("identity") or {}:
+                if key not in NEUTRAL_IDENTITY:
+                    problems.append(f"doctor pack {did}/{pid}: unknown identity field '{key}'")
+            for key in prog.get("texts") or {}:
+                if key not in NEUTRAL_TEXTS:
+                    problems.append(f"doctor pack {did}/{pid}: unknown text '{key}'")
+            for fid in prog.get("never_foods", []):
+                need(fid, f"doctor pack {did}/{pid} never_foods")
+            for rid in prog.get("approved_recipes", []):
+                if rid not in recipe_ids:
+                    problems.append(f"doctor pack {did}/{pid}: approved recipe {rid} is not in the recipe collection")
+            for row in prog.get("limits", []):
+                if row.get("nutrient") not in NUTRIENTS:
+                    problems.append(f"doctor pack {did}/{pid}: limit on {row.get('nutrient')} is not a nutrient the recipe maths adds up")
+                if isinstance(row.get("daily_max"), bool) or not isinstance(row.get("daily_max"), (int, float)) or row["daily_max"] <= 0:
+                    problems.append(f"doctor pack {did}/{pid}: limit on {row.get('nutrient')} has a bad daily_max")
+                if not isinstance(row.get("condition"), str):
+                    problems.append(f"doctor pack {did}/{pid}: limit on {row.get('nutrient')} has no condition")
+
+    # ---- router: every main topic needs a reviewed reply (the reply the main assistant falls back to)
+    router = data.router_rules
+    for topic in [*router.get("main_topics", {}), "greeting", "thanks", "about", "general"]:
+        if not router.get("main_replies", {}).get(topic):
+            problems.append(f"router rules: no main reply for '{topic}'")
+    if not router.get("clarify_question"):
+        problems.append("router rules: no clarify question")
+    if not (router.get("model_reply_deny") or {}).get("words") or "medicine" not in (router.get("model_reply_deny") or {}).get("topics", []):
+        problems.append("router rules: model replies on medicine are not checked for medicine changes (model_reply_deny)")
 
     from .lists import list_problems
     problems += list_problems(data, library, index, environment)

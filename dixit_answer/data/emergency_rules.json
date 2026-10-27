@@ -1,7 +1,7 @@
 {
-  "version": "EM-0.1.3",
+  "version": "EM-0.1.4",
   "status": "PROPOSED",
-  "note": "Step 0 of every turn: emergency check, before anything else and without the AI. DRAFT for a doctor to sign: categories, phrases (English, Hinglish, a few Hindi), reply wording, the two blood-sugar numbers and the source links. Production refuses this file until it is signed. Hinglish and Hindi phrases also need a native speaker's review. Over-triggering is accepted; missing a real emergency is not. EM-0.1.1: a negation (\"no chest pain\") counts only inside the same clause as the symptom, so \"there is no point, I want to die\" and \"no, I fainted\" are still emergencies. Self-harm (E5) is never negated. EM-0.1.2: a symptom that is only talked about does not trigger the reply: a definition (\"what is anaphylaxis\"), something long past (\"a heart attack last year\") or a diet question (\"what to eat after a stroke\"). The normal answer then ends with the same line: call 112 if this is happening now. Self-harm is never set aside. A negation must sit right in front of the symptom (for example, without help I cannot breathe, is still an emergency). EM-0.1.3: sugar readings are also read in Hindi script (शुगर, ग्लूकोज, Hindi digits), and a few more Hindi phrases were added. A native speaker must review every Hindi and Hinglish phrase.",
+  "note": "Step 0 of every turn: emergency check, before anything else and without the AI. DRAFT for a doctor to sign: categories, phrases (English, Hinglish, a few Hindi), reply wording, the two blood-sugar numbers and the source links. Production refuses this file until it is signed. Hinglish and Hindi phrases also need a native speaker's review. Over-triggering is accepted; missing a real emergency is not. EM-0.1.1: a negation (\"no chest pain\") counts only inside the same clause as the symptom, so \"there is no point, I want to die\" and \"no, I fainted\" are still emergencies. Self-harm (E5) is never negated. EM-0.1.2: a symptom that is only talked about does not trigger the reply: a definition (\"what is anaphylaxis\"), something long past (\"a heart attack last year\") or a diet question (\"what to eat after a stroke\"). The normal answer then ends with the same line: call 112 if this is happening now. Self-harm is never set aside. A negation must sit right in front of the symptom (for example, without help I cannot breathe, is still an emergency). EM-0.1.3: sugar readings are also read in Hindi script (शुगर, ग्लूकोज, Hindi digits), and a few more Hindi phrases were added. A native speaker must review every Hindi and Hinglish phrase. EM-0.1.4: chest-pain word pairs inside one clause (E2), so a word between them (\"सीने में तेज़ दर्द\", \"seene mein bahut dard\") still counts; \"making myself vomit\" moved from E5 to the purging reply (harmful-intent H1), which carries the Tele-MANAS helpline.",
   "signed_by": null,
   "signed_on": null,
   "negation_window_words": 3,
@@ -30,10 +30,7 @@
         "harm myself",
         "self harm",
         "no reason to live",
-        "better off dead",
-        "making myself vomit",
-        "make myself vomit",
-        "making myself throw up",
+        "better off dead", "point of living", "point in living", "point to living", "end it all", "ending it all", "take my own life", "taking my own life", "not worth living", "don't want to live", "do not want to live",
         "marna chahta",
         "marna chahti",
         "mar jaana chahta",
@@ -154,7 +151,7 @@
         "weak on one side",
         "numb on one side",
         "sudden severe headache",
-        "seene mein dard",
+        "seene mein dard", "can't feel the right side", "can't feel the left side", "can't feel one side", "can't feel my face", "cannot feel my face", "face is numb", "face went numb", "numb face",
         "seene me dard",
         "chhati mein dard",
         "chhati me dard",
@@ -171,6 +168,14 @@
         "लकवा"
       ],
       "combos": [],
+      "clause_combos_note": "Both words in one clause, with any words between: 'सीने में तेज़ दर्द', 'seene mein bahut dard', 'severe pain in my chest'. A negation just before either word sets it aside ('no chest pain'). Native speaker and doctor to review.",
+      "clause_combos": [
+        [
+          ["chest", "seene", "seena", "sine", "chhati", "chhaati", "chaati", "सीने", "सीना", "छाती"],
+          ["pain", "pains", "paining", "tightness", "dard", "dardh", "jakdan", "bhaari",
+           "bharipan", "heavy", "heaviness", "pressure", "crushing", "squeezing", "दर्द", "जकड़न", "भारीपन", "भारी"]
+        ]
+      ],
       "reply": "This could be an emergency. Chest pain or tightness, or a face drooping, slurred speech or weakness on one side, needs help now: call 112. Don't drive yourself. Note the time it started.",
       "checkin": "Before we carry on: if the chest pain, weakness or speech problem is still there, please call 112 now.",
       "sources": [
