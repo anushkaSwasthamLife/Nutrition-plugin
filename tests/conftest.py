@@ -63,3 +63,24 @@ def chat(engine):
             results.append(result)
         return results
     return run
+
+
+import time as _time
+
+_STARTED = _time.time()
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """Record the run as a test report (dixit_answer/test_report.py) when DIXIT_TEST_REPORT is set. Ordinary runs leave nothing."""
+    import os
+
+    if not os.environ.get("DIXIT_TEST_REPORT"):
+        return
+    reporter = session.config.pluginmanager.get_plugin("terminalreporter")
+    if reporter is None:
+        return
+    from dixit_answer import test_report
+
+    test_report.write_report(os.environ.get("DIXIT_ENVIRONMENT", "development"), os.environ.get("DIXIT_TEST_LEVEL", "development_run"),
+                             reporter.stats, [str(a) for a in session.config.invocation_params.args],
+                             _STARTED, session.testscollected)
