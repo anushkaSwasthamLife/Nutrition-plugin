@@ -1,5 +1,5 @@
 {
-  "version": "IR-0.3.1",
+  "version": "IR-0.3.2",
   "status": "PROPOSED",
   "note": "Intent router (step R of the main pipeline), after the emergency and safety checks. Nutrition related (sent to the nutrition plugin): foods, dishes, recipes, nutrients, meals, the programme's food rules, and statements about allergies, diet or conditions. Everything else (symptoms, medicines on their own, exercise, sleep, greetings, other topics) is answered by the main assistant. A condition or health word with no food or diet word is unsure: the router asks one question. Word lists are drafts for Swastham to review against real traffic.",
   "nutrition_words": ["eat", "eats", "eating", "ate", "food", "foods", "meal", "meals", "breakfast", "lunch", "dinner", "snack", "snacks",
@@ -29,7 +29,7 @@
   "safety_topics_note": "Checked before food words, because 'can I stop metformin if I follow this diet' and 'will this diet cure my diabetes' have a food word but need the fixed line, not food advice. A change verb counts only within three words of a medicine word ('stop my insulin', 'metformin band kar du'), so 'skip lunch, I take insulin' stays a food question. Doctor to review.",
   "medicine_change": {
     "verbs_before": ["stop", "stopping", "stopped", "quit", "quitting", "skip", "skipping", "reduce", "reducing", "lower", "lowering", "cut",
-                     "cutting", "leave", "leaving", "drop", "dropping", "come off", "get off", "go off", "give up", "replace", "instead of",
+                     "cutting", "leave", "leaving", "drop", "dropping", "come off", "get off", "get me off", "take me off", "get you off", "go off", "give up", "replace", "instead of",
                      "chhod", "chhodna", "chhod du", "chhod sakta", "chhod sakti"],
     "between": ["my", "the", "all", "of", "his", "her", "their", "this", "these", "that", "those", "taking", "using", "bp", "sugar",
                 "diabetes", "thyroid", "daily", "morning", "night", "ki", "ka", "ke", "ko", "lena", "apni", "apna", "meri", "mera", "wali"],
@@ -82,6 +82,7 @@
     "words": ["stop", "stopping", "skip", "skipping", "increase", "increasing", "decrease", "decreasing", "reduce", "reducing",
               "double", "halve", "dose", "doses", "dosage", "dosing", "discontinue", "quit", "taper", "cut down", "cut back",
               "switch to", "more tablets", "fewer tablets", "extra tablet", "band karo", "band kar do", "kam karo", "kam kar do",
-              "badhao", "badha do", "chhod do", "chod do"]
+              "badhao", "badha do", "chhod do", "chod do",
+              "बंद कर", "बंद करें", "छोड़ दो", "छोड़ दें", "छोड़ दीजिए", "कम कर", "खुराक", "बढ़ा"]
   }
 }

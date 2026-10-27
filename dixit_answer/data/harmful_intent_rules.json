@@ -371,7 +371,7 @@
             "khana band",
             "khana nahi khana",
             "kuch nahi khana",
-            "khana chhodna"
+            "khana chhodna", "haven't eaten", "have not eaten", "not eaten"
           ],
           [
             "lose weight",
@@ -503,11 +503,15 @@
         "put poison in", "put poison into", "add poison to", "mix poison in", "mix poison into", "kill someone with food",
         "spike his drink", "spike her drink", "spike their drink", "spike someone s drink", "spike someone's drink", "spike a drink",
         "drug his food", "drug her food", "drug their food", "drug someone", "drug somebody",
+        "make him sick", "make her sick", "make them sick", "make my husband sick", "make my wife sick",
         "zeher dena", "zeher de du", "zeher mila", "zeher milana", "zahar dena", "zahar mila", "zahar milana", "jahar dena", "jahar mila",
         "khane mein zeher", "khane me zeher", "khane mein zahar", "khane me jahar",
         "ज़हर देना", "जहर देना", "ज़हर मिला", "जहर मिला", "खाने में ज़हर", "खाने में जहर"
       ],
-      "combos": [],
+      "combos": [
+        [["put in", "put something in", "add something to", "mix in", "mix something in", "slip into", "slip in"],
+         ["he gets sick", "she gets sick", "they get sick", "he gets ill", "she gets ill", "he falls ill", "she falls ill", "him sick", "her sick", "them sick"]]
+      ],
       "reply": "I can't help with harming anyone in any way. If someone is in danger, call 112 now. If you are feeling angry or overwhelmed, Tele-MANAS 14416 is free and open 24 hours.",
       "checkin": "",
       "needs_line": "112",

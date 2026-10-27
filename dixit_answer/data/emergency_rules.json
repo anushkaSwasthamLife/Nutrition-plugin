@@ -30,7 +30,7 @@
         "harm myself",
         "self harm",
         "no reason to live",
-        "better off dead",
+        "better off dead", "point of living", "point in living", "point to living", "end it all", "ending it all", "take my own life", "taking my own life", "not worth living", "don't want to live", "do not want to live",
         "marna chahta",
         "marna chahti",
         "mar jaana chahta",
@@ -151,7 +151,7 @@
         "weak on one side",
         "numb on one side",
         "sudden severe headache",
-        "seene mein dard",
+        "seene mein dard", "can't feel the right side", "can't feel the left side", "can't feel one side", "can't feel my face", "cannot feel my face", "face is numb", "face went numb", "numb face",
         "seene me dard",
         "chhati mein dard",
         "chhati me dard",
@@ -173,7 +173,7 @@
         [
           ["chest", "seene", "seena", "sine", "chhati", "chhaati", "chaati", "सीने", "सीना", "छाती"],
           ["pain", "pains", "paining", "tightness", "dard", "dardh", "jakdan", "bhaari",
-           "bharipan", "दर्द", "जकड़न", "भारीपन", "भारी"]
+           "bharipan", "heavy", "heaviness", "pressure", "crushing", "squeezing", "दर्द", "जकड़न", "भारीपन", "भारी"]
         ]
       ],
       "reply": "This could be an emergency. Chest pain or tightness, or a face drooping, slurred speech or weakness on one side, needs help now: call 112. Don't drive yourself. Note the time it started.",

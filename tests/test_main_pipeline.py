@@ -403,3 +403,13 @@ def test_route_state_survives_a_round_trip_and_a_bad_value():
     assert again.route_pending == {"message": "is this healthy", "turn": 3} and again.last_route == "clarify"
     bad = ChatState.from_json('{"route_pending": "oops", "last_route": 5}')
     assert bad.route_pending is None and bad.last_route == ""
+
+
+def test_a_devanagari_model_reply_naming_a_medicine_change_gets_the_template(engine):
+    out = MainAssistant(FakeModel("दवा बंद कर दें"), engine.data.router_rules).reply("my tablets", "medicine")
+    assert out.method == "template" and any("medicine change or dose" in p for p in out.problems)
+
+
+@pytest.mark.parametrize("message", ["will this programme get me off my BP medicines for good", "can this diet take me off my insulin"])
+def test_a_question_about_getting_off_medicines_gets_the_medicine_line(talk, message):
+    assert talk(message)[0].handled_by == "main"
