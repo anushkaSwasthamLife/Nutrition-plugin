@@ -413,3 +413,9 @@ def test_a_devanagari_model_reply_naming_a_medicine_change_gets_the_template(eng
 @pytest.mark.parametrize("message", ["will this programme get me off my BP medicines for good", "can this diet take me off my insulin"])
 def test_a_question_about_getting_off_medicines_gets_the_medicine_line(talk, message):
     assert talk(message)[0].handled_by == "main"
+
+
+@pytest.mark.parametrize("topic", ["exercise", "sleep"])
+def test_a_model_reply_on_exercise_or_sleep_that_changes_a_medicine_gets_the_template(engine, topic):
+    out = MainAssistant(FakeModel("Skip your tablets before a walk."), engine.data.router_rules).reply("should I walk", topic)
+    assert out.method == "template" and any("medicine change or dose" in p for p in out.problems)

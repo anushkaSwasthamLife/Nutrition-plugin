@@ -5,7 +5,11 @@ answer gets the rule's fixed line: a caution and "check with your doctor", never
 """
 from __future__ import annotations
 
+import re
+
 from .textnorm import clean, has_phrase
+
+NEGATIONS = r"(?:not|no|never|without|avoid|avoiding|dont|don t|do not|cannot|can t)"     # "I don't eat raw papaya"
 
 
 class FoodCautions:
@@ -26,6 +30,13 @@ class FoodCautions:
             return person.pregnant is True
         return False
 
+    @staticmethod
+    def _said(said: str, name: str) -> bool:
+        """The food is named in the message and not ruled out just before ("no papaya", "I don't eat papaya")."""
+        if not has_phrase(said, name):
+            return False
+        return re.search(rf"(?<!\w){NEGATIONS}\s+(?:\w+\s+){{0,2}}{re.escape(name)}(?!\w)", said) is None
+
     def lines(self, person, food_ids, name, text: str = "") -> list[tuple[str, str]]:
         """[(rule id, line)] for the rules that apply to this person and name a food in the answer, or in the message (a food that is
         not read in the chat, such as raw papaya, is still named there), in file order."""
@@ -34,7 +45,7 @@ class FoodCautions:
         said = clean(text)
         out = []
         for rule in self.rules:
-            hit = [f for f in rule["foods"] if f in food_ids or any(has_phrase(said, n) for n in self.names.get(f, []))]
+            hit = [f for f in rule["foods"] if f in food_ids or any(self._said(said, n) for n in self.names.get(f, []))]
             if hit and self._applies(rule["when"], person):
                 out.append((rule["id"], rule["line"].replace("{foods}", " and ".join(name(f) for f in hit))))
         return out
