@@ -136,6 +136,14 @@ def test_a_negation_in_another_clause_never_hides_a_real_emergency(text, expecte
     assert cat(text) == expected, text
 
 
+@pytest.mark.parametrize("text, expected", [
+    ("my chest has no pain", None), ("there is no pain in my chest", None), ("my chest is fine, but my knee has pain", None),
+    ("my knee has no pain, but my chest has pain", "E2"), ("my chest has no pain but my chest feels tight now", "E2"),
+])
+def test_chest_and_pain_in_one_clause_are_negated_per_clause(text, expected):
+    assert (cat(text) or None) == expected, text
+
+
 def test_the_same_symptom_negated_and_not_negated_is_an_emergency():
     assert cat("I do not have chest pain. Actually I have chest pain now") == "E2"
 

@@ -168,6 +168,8 @@ def find_problems(data, library, index, environment: str) -> list[str]:
             problems.append(f"router rules: no main reply for '{topic}'")
     if not router.get("clarify_question"):
         problems.append("router rules: no clarify question")
+    if not (router.get("model_reply_deny") or {}).get("words") or "medicine" not in (router.get("model_reply_deny") or {}).get("topics", []):
+        problems.append("router rules: model replies on medicine are not checked for medicine changes (model_reply_deny)")
 
     from .lists import list_problems
     problems += list_problems(data, library, index, environment)

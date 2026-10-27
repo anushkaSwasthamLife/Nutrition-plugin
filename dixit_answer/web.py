@@ -31,6 +31,7 @@ class ChatIn(BaseModel):
     profile: dict | None = None          # what the Dixit app would send: allergies, diet_type, medicines, conditions ...
     user_id: str | None = Field(default=None, max_length=64)      # who is chatting: past conversations and remembered facts hang on it
     doctor_id: str | None = Field(default=None, max_length=64)    # the patient's doctor: picks the doctor pack (default pack if unknown)
+    # Development only: user_id and doctor_id come from the client. Before production both must come from the signed-in session.
 
 
 class FeedbackIn(BaseModel):

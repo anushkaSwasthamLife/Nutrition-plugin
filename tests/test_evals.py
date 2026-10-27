@@ -1,6 +1,8 @@
 """The eval set and its runner (dixit_answer/evals.py, evals/eval_set.json). The pass rate itself is not a test: the eval set holds
-cases the rules are known to miss, so it can measure the LLM pipeline against them."""
+cases the rules are known to miss, so it can measure the LLM pipeline against them. What is a test: the rules never miss a critical
+case the baseline (evals/baselines/) did not already record as a known miss."""
 import copy
+import json
 
 import pytest
 
@@ -70,3 +72,10 @@ def test_a_critical_miss_fails_the_run(target):
     data["conversations"] = [c for c in data["conversations"] if c["id"] == "RT-01"]
     data["conversations"][0]["turns"][0]["expect"].update({"must_contain": ["no such words"], "critical": True})
     assert evals.run(data, target)["summary"]["critical_failed"] == ["RT-01.1"]
+
+
+def test_the_rules_miss_no_critical_case_beyond_the_baselines_known_misses(target):
+    baseline = json.loads((evals.EVAL_SET.parent / "baselines" / "rules-EV-0.1.0.json").read_text(encoding="utf-8"))
+    report = evals.run(evals.load(), target)
+    new = set(report["summary"]["critical_failed"]) - set(baseline["summary"]["critical_failed"])
+    assert not new, f"new critical misses: {sorted(new)}"

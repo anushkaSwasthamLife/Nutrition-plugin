@@ -50,6 +50,7 @@ class IntentRouter:
         self.conditions = [clean(w) for words in word_lists["conditions"].values() for w in words]
         self.max_follow = int(rules["continuation_max_words"])
         self.single_words = [w for w in self.nutrition_words if " " not in w and len(w) >= 5]   # for misspellings: "calries"
+        self.not_typos = {clean(w) for w in rules.get("not_typos", [])}                        # real words: "waiter" is not "water"
         alt = lambda words: "|".join(re.escape(clean(w)) for w in sorted(words, key=len, reverse=True)) or r"\0"
         change, meds = rules.get("medicine_change") or {}, alt(self.topics.get("medicine", []))
         gap = rf"(?:\s+(?:{alt(change.get('between', []))}))*\s+"      # only small words between: "stop taking my bp medicine"
@@ -129,7 +130,7 @@ class IntentRouter:
 
     def _misspelt(self, cleaned: str) -> bool:
         return any(close[:2] == word[:2]                     # same start: "looking" is not "cooking"
-                   for word in cleaned.split() if len(word) >= 5
+                   for word in cleaned.split() if len(word) >= 5 and word not in self.not_typos
                    for close in difflib.get_close_matches(word, self.single_words, n=1, cutoff=0.85))
 
     def _main_topic(self, cleaned: str) -> str:

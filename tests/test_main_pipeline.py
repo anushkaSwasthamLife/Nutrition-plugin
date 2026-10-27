@@ -97,6 +97,20 @@ def test_a_new_message_instead_of_yes_or_no_drops_the_question(talk):
     assert second.route["resolved_earlier_message"] is False
 
 
+def test_a_yes_after_the_question_was_skipped_answers_nothing_earlier(talk):
+    *_, late = talk("is this healthy", "calories in dal", "yes")
+    assert late.route["intent"] != "clarified" and late.route["resolved_earlier_message"] is False
+
+
+@pytest.mark.parametrize("pending_turn,now", [(3, 5), (3, 2)])
+def test_a_yes_or_no_on_another_turn_than_the_question_is_not_its_answer(engine, pending_turn, now):
+    from dixit_answer.router import IntentRouter
+    router = IntentRouter(engine.data.router_rules, engine.index, engine.words, [], None)
+    for reply in ("yes", "no"):
+        state = ChatState("c1", turn=now, route_pending={"message": "is this healthy", "turn": pending_turn})
+        assert router.route(reply, state).intent != "clarified"
+
+
 def test_a_reply_to_the_plugins_question_stays_in_the_plugin_but_a_main_topic_does_not(talk):
     asked, reply = talk("what can I make with aloo and onion", "none")
     assert asked.plan.get("followup") and reply.route["intent"] == "plugin_reply" and reply.handled_by == "plugin"
@@ -117,6 +131,18 @@ def test_a_misspelt_nutrition_word_goes_to_the_plugin(talk, message):
 
 def test_a_near_miss_with_a_different_start_is_not_a_nutrition_word(talk):
     assert talk("I am looking for a new job")[0].handled_by == "main"
+
+
+@pytest.mark.parametrize("message", ["I work as a waiter", "I am travelling to Hungary next month", "I am a programmer",
+                                     "the fastening on my bag broke", "where do I find a good dietician", "I booked a cab"])
+def test_a_real_word_close_to_a_nutrition_word_is_not_a_typo(talk, message):
+    assert talk(message)[0].handled_by == "main"
+
+
+@pytest.mark.parametrize("message", ["calries in poha", "protien in dal", "is breakfst important", "how much fibbre in oats",
+                                     "vitamns in spinach"])
+def test_near_miss_typos_of_nutrition_words_still_go_to_the_plugin(talk, message):
+    assert talk(message)[0].handled_by == "plugin"
 
 
 @pytest.mark.parametrize("message", ["can I stop metformin if I follow this diet", "I want to stop my insulin and just follow the diet",
@@ -204,6 +230,22 @@ def test_symptom_model_reply_always_gets_the_locked_line(engine):
     rules = engine.data.router_rules
     out = MainAssistant(FakeModel("I'm sorry you feel unwell. Please talk to your doctor."), rules).reply("dizzy", "symptom")
     assert out.method == "model" and out.text.endswith(rules["locked_lines"]["symptom"])
+
+
+@pytest.mark.parametrize("topic", ["medicine", "symptom", "general"])
+@pytest.mark.parametrize("bad", ["You can stop your tablets once you feel better.", "Try to skip the evening tablet.",
+                                 "Ask your doctor to increase the dose.", "Cut down on the pills slowly.", "Dawai band kar do."])
+def test_a_model_reply_naming_a_medicine_change_gets_the_template(engine, topic, bad):
+    rules = engine.data.router_rules
+    out = MainAssistant(FakeModel(bad), rules).reply("my tablets", topic)
+    assert out.method == "template" and out.text.startswith(rules["main_replies"][topic].split("{")[0])
+    assert any("medicine change or dose" in p for p in out.problems)
+
+
+def test_a_change_word_is_fine_outside_the_medicine_topics(engine):
+    out = MainAssistant(FakeModel("Short walks are a good way to start, and you can increase them slowly."),
+                        engine.data.router_rules).reply("should I walk", "exercise")
+    assert out.method == "model"
 
 
 # ---------------------------------------------------------------- steps 2, 4: doctor packs and constraint layers
@@ -347,6 +389,12 @@ def test_consistency_catches_a_pack_naming_a_missing_recipe_or_food(engine):
 def test_production_refuses_an_unsigned_pack(engine):
     problems = find_problems(engine.data, engine.library, engine.index, "production")
     assert any("doctor pack DR-DIXIT: not signed" in p for p in problems)
+
+
+def test_consistency_needs_the_medicine_check_on_model_replies(engine):
+    data = copy.deepcopy(engine.data)
+    del data.router_rules["model_reply_deny"]
+    assert any("model_reply_deny" in p for p in find_problems(data, engine.library, engine.index, "development"))
 
 
 def test_route_state_survives_a_round_trip_and_a_bad_value():

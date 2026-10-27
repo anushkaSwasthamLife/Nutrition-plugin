@@ -121,6 +121,13 @@ def test_a_missing_book_file_means_the_book_is_off(tmp_path):
     assert load_book(None) is None and load_book(tmp_path / "nope.json") is None
 
 
+def test_an_engine_pointed_at_a_missing_book_starts_and_still_offers_recipes(settings, tmp_path):
+    s = copy.copy(settings)
+    s.book_recipes_file = tmp_path / "nope.json"
+    result = MainPipeline(Engine(s, llm=MockLLM())).answer("what can I make with aloo and onion")
+    assert result.handled_by == "plugin" and "Healthful Diet" not in result.answer
+
+
 # ---------------------------------------------------------------- the real book in the engine
 @pytest.fixture(scope="module")
 def book_engine(settings):

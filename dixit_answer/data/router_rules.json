@@ -1,5 +1,5 @@
 {
-  "version": "IR-0.3.0",
+  "version": "IR-0.3.1",
   "status": "PROPOSED",
   "note": "Intent router (step R of the main pipeline), after the emergency and safety checks. Nutrition related (sent to the nutrition plugin): foods, dishes, recipes, nutrients, meals, the programme's food rules, and statements about allergies, diet or conditions. Everything else (symptoms, medicines on their own, exercise, sleep, greetings, other topics) is answered by the main assistant. A condition or health word with no food or diet word is unsure: the router asks one question. Word lists are drafts for Swastham to review against real traffic.",
   "nutrition_words": ["eat", "eats", "eating", "ate", "food", "foods", "meal", "meals", "breakfast", "lunch", "dinner", "snack", "snacks",
@@ -55,6 +55,7 @@
   "clarify_which_food": "Which food or dish do you mean? For example: is dal good for my health, or can I eat poha.",
   "clarify_yes": ["yes", "y", "yeah", "yep", "haan", "han", "ha", "ji", "haan ji", "food", "diet", "about food", "about diet", "it is", "yes it is"],
   "clarify_no": ["no", "n", "nope", "nahi", "nahin", "na", "not food", "not about food", "no it isn't", "no it isn t", "no it is not", "general"],
+  "not_typos": ["waiter", "hungary", "programmer", "programmers", "fastening", "panty", "panties"],
   "continuation_max_words": 6,
   "main_replies": {
     "greeting": "Hello! I'm {assistant}. Ask me about food, meals, recipes or the programme's food rules.",
@@ -74,5 +75,13 @@
     "cure": "Please don't start, stop or change a medicine without your doctor.",
     "symptom": "If you feel shaky, sweaty or dizzy, especially if you take diabetes medicine, eat something and contact your doctor."
   },
-  "max_words": 90
+  "max_words": 90,
+  "model_reply_deny": {
+    "note": "A model reply on these topics that names a medicine change or a dose is refused and the reviewed template is sent. The locked line is added after this check.",
+    "topics": ["medicine", "symptom", "general"],
+    "words": ["stop", "stopping", "skip", "skipping", "increase", "increasing", "decrease", "decreasing", "reduce", "reducing",
+              "double", "halve", "dose", "doses", "dosage", "dosing", "discontinue", "quit", "taper", "cut down", "cut back",
+              "switch to", "more tablets", "fewer tablets", "extra tablet", "band karo", "band kar do", "kam karo", "kam kar do",
+              "badhao", "badha do", "chhod do", "chod do"]
+  }
 }

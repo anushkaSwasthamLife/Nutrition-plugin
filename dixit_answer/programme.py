@@ -81,6 +81,8 @@ def current() -> Programme:
 
 
 def set_fallback(programme: Programme) -> None:
+    """Set once at start-up (Engine.__init__), never per request: the list is shared by every request. A request names its
+    programme with `use`, which is per request."""
     _fallback[0] = programme
 
 
