@@ -516,3 +516,21 @@ no AI was called. Tests: `tests/test_test_report.py`.
 
 **Not built (decisions needed first):** what to do when the audit log cannot be written, the "can't check your limits right now" reply, and
 the one-ladder order of authority. They are listed on the workflow page as proposals for the doctor, dietitian and client.
+
+**Phase 4: when the system cannot do its job (proposed policy, to confirm).**
+- *The audit log cannot be written* (`pipeline.AuditLog`): lines wait in memory and are written, in order, when the file works again.
+  Emergency and harmful-intent replies never wait for it. Other answers go out while up to 50 lines wait; after that the answer is withheld
+  and the chat shows the fixed "can't keep a record" reply. `/api/info` shows `audit.queued` and `audit.write_failures`.
+- *The rules or limits cannot be loaded* (`web.py`): the chat answers with a fixed reply (no recipe, no food advice, 112 and Tele-MANAS
+  14416) and nothing is cached, so the next message tries to load again. A bug while answering is not hidden: it stays a 500.
+- Both replies live in `unavailable.py`, in English only, with no data-file dependency. Tests: `tests/test_unavailable.py`.
+
+**Phase 5: what the approved sources do not cover.** Where `compose.py` already says "we don't have ..." (special diets, no reliable
+nutrition value), and when the safe fallback replaces an answer that failed a check, the pipeline logs a `knowledge_gap` line with the
+topic. The audit report adds "Not covered by approved data" by topic. Reply wording is unchanged. Tests: `tests/test_knowledge_gaps.py`.
+
+**Phase 6: the authority ladder (advisory).** `data/authority_ladder.json` (AUTH-0.1.0, PROPOSED, `binding: false`) puts nine sources in one
+order and marks the rules that apply on every rung. `ladder.py` checks at start-up that every rule in `rules_registry.json` has a place;
+its version goes into every audit record. It is **not** the Dixit priority integer and decides nothing in the pipeline yet
+(the registry says binding priorities need the Dixit base package). One thing to confirm: the ladder puts limits (rung 3) above Golden
+Rules (rung 4), while the registry's application order runs the Golden Rules first. Tests: `tests/test_authority_ladder.py`.
