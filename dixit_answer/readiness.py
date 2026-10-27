@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 
 from .config import DATA_DIR
+from . import release as release_record
 from .lists import unsigned_counts
 from .sign_off import _unfilled, file_problems, limit_problems
 from .textnorm import clean
@@ -76,6 +77,10 @@ def check(manifest_path: Path = MANIFEST_PATH, data_dir: Path = DATA_DIR) -> dic
         missing = sum(1 for f in foods for a in {clean(f["name"]), *(clean(x) for x in f.get("aliases", []))} if (f["id"], a) not in approved)
         if missing:
             add("lists", "white_lists.json", f"ingredient_aliases: {missing} food names are not approved for production")
+
+    checked = release_record.verify(manifest, data_dir)
+    for problem in checked["problems"]:
+        add("release", manifest_path.name, problem)
 
     production = (manifest.get("environments") or {}).get("production")
     if not isinstance(production, dict):

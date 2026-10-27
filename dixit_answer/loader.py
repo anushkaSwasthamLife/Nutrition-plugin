@@ -10,6 +10,7 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from . import release as release_record
 from .config import DATA_DIR, Settings
 
 # Indian serving units that are a real measure. A count unit ("4 chapati", "3 parantha") with a quantity other than 1 is
@@ -79,6 +80,8 @@ class SwasthamData:
     manifest: dict
     programme_rules: dict = None          # programme id -> its rules file (manifest "programme_rules"); one per doctor's programme
     food_cautions: dict = None            # condition / medicine / pregnancy food cautions (cautions.py)
+    release: dict | None = None           # result of checking the files against the release record (release.py)
+    authority_ladder: dict = None         # which source wins when two disagree (advisory; ladder.py)
 
 
 def sha256_of(path: Path) -> str:
@@ -184,9 +187,11 @@ def load_swastham_data(settings: Settings, manifest: dict | None = None) -> Swas
     env = manifest["environments"][settings.environment]
     names = manifest["swastham_data"]
     loaded = {}
+    contents: dict[str, bytes] = {}          # the bytes as read, so the release check looks at exactly what was loaded
     for key, name in names.items():
         try:
-            loaded[key] = json.loads((DATA_DIR / name).read_text(encoding="utf-8"))
+            contents[name] = (DATA_DIR / name).read_bytes()
+            loaded[key] = json.loads(contents[name].decode("utf-8"))
         except (OSError, ValueError) as exc:
             raise LoadError(f"{name}: cannot be read ({exc.__class__.__name__})") from exc
         if not isinstance(loaded[key], dict):
@@ -194,7 +199,8 @@ def load_swastham_data(settings: Settings, manifest: dict | None = None) -> Swas
     rules: dict = {}
     for pid, name in (manifest.get("programme_rules") or {}).items():
         try:
-            rules[pid] = json.loads((DATA_DIR / name).read_text(encoding="utf-8"))
+            contents[name] = (DATA_DIR / name).read_bytes()
+            rules[pid] = json.loads(contents[name].decode("utf-8"))
         except (OSError, ValueError) as exc:
             raise LoadError(f"{name}: cannot be read ({exc.__class__.__name__})") from exc
     if not env.get("allow_test_only_data"):
@@ -202,4 +208,9 @@ def load_swastham_data(settings: Settings, manifest: dict | None = None) -> Swas
         for name, data in checked.items():
             if str(data.get("status", "")).upper() in {"TEST ONLY", "STUB", "PARTIAL", "PROPOSED", "DRAFT"}:
                 raise LoadError(f"Production refuses {name}: status is {data['status']}.")
-    return SwasthamData(manifest=manifest, programme_rules=rules, **loaded)
+    # The release record pins the exact bytes of every file. Development only reports a difference; production refuses it.
+    release = release_record.verify(manifest, DATA_DIR, contents)
+    if not env.get("allow_test_only_data") and not release["verified"]:
+        problems = "; ".join(release["problems"][:20])
+        raise LoadError("Production refuses a set of data files that is not the signed release: " + problems)
+    return SwasthamData(manifest=manifest, programme_rules=rules, release=release, **loaded)

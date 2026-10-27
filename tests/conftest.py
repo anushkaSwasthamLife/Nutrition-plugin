@@ -1,12 +1,17 @@
 import copy
+import os
+import time
 
 import pytest
 
 import dixit_answer.pipeline as pipeline_module
 
+from dixit_answer import test_report
 from dixit_answer.config import load_settings
 from dixit_answer.llm import MockLLM
 from dixit_answer.pipeline import Engine
+
+_STARTED = time.time()           # when this test run began (for the test report)
 
 
 # The first eight approved recipes (RCP-0.1.0). Most tests were written against them; the larger collection (RCP-0.2.0) is tested
@@ -63,3 +68,16 @@ def chat(engine):
             results.append(result)
         return results
     return run
+
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """Record the run as a test report (dixit_answer/test_report.py) when DIXIT_TEST_REPORT is set. Ordinary runs leave nothing."""
+    if not os.environ.get("DIXIT_TEST_REPORT"):
+        return
+    reporter = session.config.pluginmanager.get_plugin("terminalreporter")
+    if reporter is None:
+        return
+    test_report.write_report(os.environ.get("DIXIT_ENVIRONMENT", "development"), os.environ.get("DIXIT_TEST_LEVEL", "development_run"),
+                             reporter.stats, [str(a) for a in session.config.invocation_params.args],
+                             _STARTED, session.testscollected)

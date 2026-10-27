@@ -8,17 +8,20 @@ Then the chat stays open to the network, but the dietitian review pages and thei
 from __future__ import annotations
 
 import re
+import sys
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse, PlainTextResponse
 from pydantic import BaseModel, Field
 
+from . import unavailable
 from .config import DATA_DIR, is_loopback, load_settings
 from .foods import LibrarySearch
 from .lists import bad_mapping_pairs
 from .memory import clean_user_id, export_markdown
 from .main_pipeline import MainPipeline
+from .loader import LoadError
 from .pipeline import Engine
 from .review_queue import ApplyError, QueueError, ReviewQueue
 
@@ -84,6 +87,8 @@ def create_app(engine: Engine | None = None, data_dir=None) -> FastAPI:
             app.state.main = MainPipeline(get_engine())
         return app.state.main
 
+    app.state.load_error = None
+
     @app.get("/")
     def index():
         return FileResponse(STATIC / "chat.html", headers={"Cache-Control": "no-cache"})     # a changed page shows on a plain reload
@@ -97,11 +102,24 @@ def create_app(engine: Engine | None = None, data_dir=None) -> FastAPI:
                      "notes": list(pack.notes)}
         return {"environment": eng.settings.environment, "programme": programme, "llm": {"provider": getattr(eng.llm, "name", "mock"),
                 "model": getattr(eng.llm, "model", "")}, "versions": eng.versions, "library": eng.library.report,
-                "book": eng.book.summary() if eng.book else {"status": "off"}}
+                "book": eng.book.summary() if eng.book else {"status": "off"},
+                "audit": {"queued": eng.audit.queued, "write_failures": eng.audit.failures}}
 
     @app.post("/api/chat")
     def chat(body: ChatIn):
-        result = get_main().answer(body.message, body.conversation_id, body.profile, body.user_id, body.doctor_id)
+        # If the rules and limits cannot be loaded, say so in fixed words (no recipe, no food advice, 112 line). Nothing is cached,
+        # so the next message tries to load them again.
+        try:
+            main = get_main()
+        except (LoadError, OSError, ValueError, KeyError) as exc:
+            app.state.load_error = f"{exc.__class__.__name__}: {str(exc)[:300]}"
+            print("rules or limits could not be loaded: " + app.state.load_error, file=sys.stderr)
+            return unavailable.reply("limits", body.conversation_id)
+        app.state.load_error = None
+        try:
+            result = main.answer(body.message, body.conversation_id, body.profile, body.user_id, body.doctor_id)
+        except unavailable.AuditUnavailable:
+            return unavailable.reply("audit", body.conversation_id)
         return {"conversation_id": result.conversation_id, "turn": result.turn, "answer": result.answer,
                 "type": result.type, "plan": result.plan, "checks": result.checks, "ai_used": result.ai_used,
                 "fallback": result.fallback, "records": result.records, "ms": result.timing_ms, "language": result.language,
