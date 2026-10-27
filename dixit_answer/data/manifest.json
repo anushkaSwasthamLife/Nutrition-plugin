@@ -71,7 +71,8 @@
     "doctor_packs": "doctor_packs.json",
     "router_rules": "router_rules.json",
     "book_ingredient_map": "book_ingredient_map.json",
-    "food_cautions": "food_cautions_test.json"
+    "food_cautions": "food_cautions_test.json",
+    "authority_ladder": "authority_ladder.json"
   },
   "release": {
     "hash_rule": "SHA-256 of the file with line endings made LF",
@@ -88,6 +89,12 @@
         "version": "0.1.0",
         "status": "TEST ONLY",
         "sha256": "2a15a2e016bfb2d8103d3733e417b03bd04928093328a51d8a010ca9aaec1130"
+      },
+      "authority_ladder": {
+        "name": "authority_ladder.json",
+        "version": "AUTH-0.1.0",
+        "status": "PROPOSED",
+        "sha256": "98985b046f5c813e5e65e8c3bc546050c395b5a096736786f31ad93c24487917"
       },
       "black_lists": {
         "name": "black_lists.json",

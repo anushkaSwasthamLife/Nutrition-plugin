@@ -192,6 +192,7 @@ class Engine:
             "condition_limits": self.data.condition_limits["version"],
             "swap_table": self.data.swap_table["version"],
             "rules_registry": self.data.rules_registry["version"],
+            "authority_ladder": self.data.authority_ladder["version"],
             "cooking_factors": self.data.cooking_factors["version"],
             "emergency_rules": self.data.emergency_rules["version"],
             "harmful_intent_rules": self.data.harmful_intent_rules["version"],

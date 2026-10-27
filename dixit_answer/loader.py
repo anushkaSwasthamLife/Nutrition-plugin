@@ -81,6 +81,7 @@ class SwasthamData:
     programme_rules: dict = None          # programme id -> its rules file (manifest "programme_rules"); one per doctor's programme
     food_cautions: dict = None            # condition / medicine / pregnancy food cautions (cautions.py)
     release: dict | None = None           # result of checking the files against the release record (release.py)
+    authority_ladder: dict = None         # which source wins when two disagree (advisory; ladder.py)
 
 
 def sha256_of(path: Path) -> str:

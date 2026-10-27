@@ -171,6 +171,10 @@ def find_problems(data, library, index, environment: str) -> list[str]:
     if not (router.get("model_reply_deny") or {}).get("words") or "medicine" not in (router.get("model_reply_deny") or {}).get("topics", []):
         problems.append("router rules: model replies on medicine are not checked for medicine changes (model_reply_deny)")
 
+    from .ladder import problems as ladder_problems
+    if getattr(data, "authority_ladder", None) is not None:
+        problems += ladder_problems(data.authority_ladder, data.rules_registry)
+
     from .lists import list_problems
     problems += list_problems(data, library, index, environment)
     return problems
