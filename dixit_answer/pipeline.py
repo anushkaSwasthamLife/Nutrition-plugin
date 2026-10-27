@@ -42,7 +42,7 @@ from .recipes import RecipeService, recipe_badge
 from .services import Services
 from .sources import answer_sources
 from .status import apply_status, parse_status
-from .state import ChatState, StateStore
+from .state import ChatState, StateStore, audit_view
 from .understand import understand
 
 MAX_MESSAGE_CHARS = 1000
@@ -148,6 +148,9 @@ class Engine:
         self.packs = DoctorPacks(self.data.doctor_packs, self.data.programme_rules)
         programmes.set_fallback(self.packs.resolve().programme_obj)     # for code that runs outside a request
         self.production_sources = set(manifest["environments"]["production"]["sources"])
+        env = manifest["environments"][self.settings.environment]
+        self.licence = {"sources": list(self.library.sources_on), "indian_flag": self.library.indian_flag or None,
+                        "test_only_data_allowed": bool(env.get("allow_test_only_data"))}
         self.versions = {
             "runtime": manifest["runtime_id"],
             "release": (self.data.release or {}).get("release_id"),
@@ -403,6 +406,8 @@ class Engine:
             "environment": self.settings.environment, "versions": self.versions,
             "release": {"id": (self.data.release or {}).get("release_id"), "verified": (self.data.release or {}).get("verified"),
                         "drifted": (self.data.release or {}).get("drifted", [])},
+            "state": audit_view(state), "licence": self.licence,
+            "operational_actions": [],           # only actions the platform really completed; none exist yet, so no answer may claim one (N30)
             "type": plan.type, "plan": plan.as_dict(),
             "risk_level": state.risk_level(), "records": result.records, "locked": draft.locked, "template": template,
             "checks": all_checks, "ai": {"provider": getattr(self.llm, "name", "mock"), "model": getattr(self.llm, "model", ""),
