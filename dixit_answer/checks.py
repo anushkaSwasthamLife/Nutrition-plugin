@@ -33,18 +33,22 @@ OPERATIONAL_CLAIMS = [re.compile(p) for p in (
     r"\b(i|we)('ve| ve| have)? (booked|scheduled|arranged|set up) (an |your |a )?(appointment|call|consultation|callback)\b",
 )]
 
-CONDITIONAL_WORDS = {"when", "whenever", "if", "once", "until", "unless", "after", "before", "should", "can", "could", "may", "might"}
+# A conditional only excuses a phrase when it sits in the same clause, in front of it ("only when your expert has checked your
+# results"). "If you need help, I've notified your coach" and "You can relax, your coach has been notified" are claims: the
+# conditional belongs to an earlier clause. "can", "could", "may" and "might" are not conditionals.
+CONDITIONAL_WORDS = {"when", "whenever", "if", "once", "until", "unless", "after", "before", "should", "only"}
+CLAUSE_BREAK = re.compile(r"[,.;:!?\n]+|\s[-–—]\s")
 
 
 def operational_claims(text: str) -> list[str]:
     """The phrases in `text` that claim an action or a review that did not happen."""
-    cleaned = clean(text)
     found = []
-    for pattern in OPERATIONAL_CLAIMS:
-        for m in pattern.finditer(cleaned):
-            # "This changes only when your Dixit expert has checked your results" states a condition, not an action taken.
-            if not CONDITIONAL_WORDS.intersection(cleaned[:m.start()].split()[-6:]):
-                found.append(m.group(0))
+    for clause in CLAUSE_BREAK.split(text):
+        cleaned = clean(clause)
+        for pattern in OPERATIONAL_CLAIMS:
+            for m in pattern.finditer(cleaned):
+                if not CONDITIONAL_WORDS.intersection(cleaned[:m.start()].split()):
+                    found.append(m.group(0))
     return found
 
 

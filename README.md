@@ -483,8 +483,11 @@ A second pass over many more prompts. The chat now repairs common typos ("calrie
 Taken from the Knee AI handover and written up on the workflow page (`Nutrition\workflow.html`, section "Lessons from the Knee workflow").
 The rules-first order of the pipeline did not change. What is new is how a release is pinned, what a turn logs, and what a test run claims.
 
-**Phase 1: release record in the manifest.** `data/manifest.json` already pinned the library files. It now also has a `release` block:
-a release ID and the version, status and SHA-256 of every Swastham data file (line endings ignored, so Windows and Linux agree).
+**Phase 1: release record in the manifest.** `data/manifest.json` already pinned the library files. It now also has a `release` block with the version, status and SHA-256 of
+**every file the manifest names** (`swastham_data`, `programme_rules`, and any section added later: found by shape, so none is forgotten).
+Line endings are ignored, so Windows and Linux agree. The record holds no date and no stored ID: the release ID (`DIXIT-REL-` plus 8
+characters of the digest) is worked out from the files, rebuilding with no change leaves the manifest byte for byte the same, and two PRs
+that change different data files do not touch the same lines.
 
 ```
 .venv\Scripts\python.exe -m dixit_answer.release build     # write the record, after the files are reviewed
@@ -496,8 +499,8 @@ record, or a file added or dropped. The readiness report lists the same problems
 release ID changes with the files. Tests: `tests/test_release.py`.
 
 **Phase 2: state and operational truth.** Every audit record now has `release` (ID, verified, drifted files), `state` (emergency,
-search memory, risk flags, diabetes status as the person said it, language: separate named fields), `licence` (sources on, Indian flag,
-whether test-only data is allowed) and `operational_actions` (always empty: nothing in the app notifies, books or escalates).
+search memory, risk flags, diabetes status as the person said it, language: separate named fields), the data licence (sources on, Indian flag,
+whether test-only data is allowed, as one short `versions.data_licence` string) and `operational_actions` (always empty: nothing in the app notifies, books or escalates).
 New check **N30**: no answer may say that a coach, doctor or team was told, has reviewed something or will call. Conditions
 ("only when your expert has checked your results") are not claims. Tests: `tests/test_operational_truth.py`.
 

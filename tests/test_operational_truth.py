@@ -18,6 +18,9 @@ from dixit_answer.checks import operational_claims
     "I've booked an appointment for you.",
     "Swastham has flagged this.",
     "The team is looking at it now.",
+    "If you need help, I've notified your coach.",
+    "You can relax, your coach has been notified.",
+    "You may rest: the team has been alerted.",
 ])
 def test_false_action_claims_are_caught(text):
     assert operational_claims(text)
@@ -92,10 +95,11 @@ def test_the_audit_log_keeps_state_in_separate_named_fields(engine, chat):
     assert row["operational_actions"] == []
 
 
-def test_the_audit_log_records_the_licence_switches(engine, chat):
+def test_the_licence_switches_are_logged_once_per_line_in_the_versions_not_as_a_block(engine, chat):
     chat("what is a good lunch with dal")
-    licence = _last(engine)["licence"]
-    assert licence["test_only_data_allowed"] is True and "usda" in licence["sources"]
+    row = _last(engine)
+    assert "licence" not in row
+    assert "sources=usda" in row["versions"]["data_licence"] and "test_only_data=allowed" in row["versions"]["data_licence"]
 
 
 def test_an_emergency_is_kept_in_the_emergency_field_only(engine, chat):

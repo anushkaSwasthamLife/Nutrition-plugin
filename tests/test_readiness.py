@@ -310,3 +310,12 @@ def test_a_console_that_cannot_show_a_character_does_not_crash_the_report(signed
     out = subprocess.run([sys.executable, "-m", "dixit_answer.readiness"], capture_output=True,
                          env={**__import__("os").environ, "PYTHONIOENCODING": "cp1252"}, cwd=str(DATA_DIR.parent.parent))
     assert out.returncode == 1 and b"NOT READY" in out.stdout
+
+
+def test_readiness_lists_a_file_edited_after_the_release_record(signed_copy):
+    """The signed copy is built with a release record; a hand edit after that shows up as a 'release' open point."""
+    assert run(signed_copy)["ready"]
+    _edit(signed_copy, "dish_rules.json", lambda doc: doc.update(note="hand edit after the release record"))
+    res = run(signed_copy)
+    items = [i for i in res["items"] if i["area"] == "release"]
+    assert not res["ready"] and len(items) == 1 and "dish_rules.json" in items[0]["problem"]

@@ -70,7 +70,7 @@ def test_a_partial_run_is_shown_as_partial_not_pass(tmp_path):
 def test_a_run_on_an_older_release_is_marked(tmp_path):
     test_report.write_report("development", "development_run", STATS, ["tests"], time.time(), 3, tmp_path)
     manifest = copy.deepcopy(load_manifest())
-    manifest["release"]["release_id"] = "DIXIT-REL-20300101-deadbeef"
+    manifest["release"]["files"]["dish_rules"]["sha256"] = "0" * 64         # a different set of files is a different release ID
     assert "older release" in rows(tmp_path, manifest)["development_run"]["detail"]
 
 

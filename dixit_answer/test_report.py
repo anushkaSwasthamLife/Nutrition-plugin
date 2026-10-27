@@ -98,7 +98,7 @@ def summary(directory: Path | None = None, manifest: dict | None = None) -> list
     """One row per level: {'level', 'status', 'detail'}. Status is PASS, FAIL, PARTIAL or NOT_RUN, never a guess."""
     manifest = manifest or json.loads((DATA_DIR / "manifest.json").read_text(encoding="utf-8"))
     reports = latest(directory)
-    current = manifest.get("release", {}).get("release_id")
+    current = release.verify(manifest)["release_id"]
     rows = []
     for level in LEVELS:
         rep = reports.get(level)

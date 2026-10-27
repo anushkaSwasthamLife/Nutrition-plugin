@@ -23,13 +23,65 @@ def _manifest(folder):
     return json.loads((folder / "manifest.json").read_text(encoding="utf-8"))
 
 
-def test_the_committed_manifest_carries_a_release_record_for_every_data_file():
+def test_the_committed_manifest_carries_a_release_record_for_every_file_it_names():
     manifest = load_manifest()
     record = manifest["release"]
-    assert record["release_id"].startswith("DIXIT-REL-") and record["release_id"].endswith(record["digest"][:8])
-    assert set(record["files"]) == set(manifest["swastham_data"])
+    listed = release.listed_files(manifest)
+    assert set(record["files"]) == set(listed)
+    assert set(manifest["swastham_data"]) <= set(listed) and "programme_rules.dixit_lifestyle" in listed
     for key, entry in record["files"].items():
-        assert entry["name"] == manifest["swastham_data"][key] and len(entry["sha256"]) == 64
+        assert entry["name"] == listed[key] and len(entry["sha256"]) == 64
+    assert "built_at" not in record and "release_id" not in record and "digest" not in record      # nothing in the record changes without a file
+
+
+def test_the_release_id_comes_from_the_content_only():
+    manifest = load_manifest()
+    result = release.verify(manifest)
+    assert result["release_id"] == "DIXIT-REL-" + release.digest_of(manifest["release"]["library_digest"], manifest["release"]["files"])[:8]
+    assert len(result["release_id"]) == len("DIXIT-REL-") + 8
+
+
+def test_rebuilding_with_no_change_leaves_the_manifest_byte_for_byte_the_same(data_copy):
+    before = (data_copy / "manifest.json").read_bytes()
+    release.build(data_copy / "manifest.json", data_copy)
+    assert (data_copy / "manifest.json").read_bytes() == before
+
+
+def test_a_changed_programme_rules_file_is_caught(data_copy):
+    # Today the one programme's rules file is golden_rules.json, which is also in swastham_data. Give it its own file so the
+    # programme_rules section is pinned on its own.
+    shutil.copy(data_copy / "golden_rules.json", data_copy / "programme_extra.json")
+    manifest = _manifest(data_copy)
+    manifest["programme_rules"]["dixit_lifestyle"] = "programme_extra.json"
+    (data_copy / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    release.build(data_copy / "manifest.json", data_copy)
+    assert release.verify(_manifest(data_copy), data_copy)["verified"]
+    path = data_copy / "programme_extra.json"
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    doc["note"] = "edited after the release record"
+    path.write_text(json.dumps(doc, indent=2), encoding="utf-8")
+    result = release.verify(_manifest(data_copy), data_copy)
+    assert not result["verified"] and result["drifted"] == ["programme_rules.dixit_lifestyle"]
+
+
+def test_a_manifest_section_added_later_is_pinned_without_changing_the_code(data_copy):
+    manifest = _manifest(data_copy)
+    manifest["recipe_maps"] = {"book_a": "book_ingredient_map.json"}
+    result = release.verify(manifest, data_copy)
+    assert not result["verified"] and "recipe_maps.book_a" in result["drifted"]
+    assert "named in the manifest but not in the release record" in result["problems"][0]
+    (data_copy / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    release.build(data_copy / "manifest.json", data_copy)
+    assert "recipe_maps.book_a" in _manifest(data_copy)["release"]["files"]
+
+
+def test_every_file_named_by_the_manifest_is_in_the_record():
+    manifest = load_manifest()
+    named = set()
+    for section, value in manifest.items():
+        if isinstance(value, dict) and value and all(isinstance(v, str) and v.endswith(".json") for v in value.values()):
+            named |= set(value.values())
+    assert named == {entry["name"] for entry in manifest["release"]["files"].values()}
 
 
 def test_a_fresh_record_verifies(data_copy):
@@ -54,7 +106,7 @@ def test_a_new_version_label_is_reported_as_such(data_copy):
     doc["version"] = old + "-next"
     path.write_text(json.dumps(doc, indent=2), encoding="utf-8")
     problems = release.verify(_manifest(data_copy), data_copy)["problems"]
-    assert len(problems) == 1 and f"was {old}" in problems[0]
+    assert len(set(problems)) == 1 and f"was {old}" in problems[0]      # golden_rules.json is named twice (data and programme rules)
 
 
 def test_line_endings_do_not_change_the_hash(data_copy):
@@ -80,7 +132,7 @@ def test_a_file_added_to_or_dropped_from_the_manifest_is_a_problem(data_copy):
     assert any("not in the release record" in p for p in release.verify(added, data_copy)["problems"])
     dropped = copy.deepcopy(manifest)
     del dropped["swastham_data"]["dish_rules"]
-    assert any("no longer listed" in p for p in release.verify(dropped, data_copy)["problems"])
+    assert any("no longer named" in p for p in release.verify(dropped, data_copy)["problems"])
 
 
 def test_changed_library_pins_change_the_digest(data_copy):
@@ -98,14 +150,14 @@ def test_no_release_record_is_a_problem():
 
 
 def test_rebuilding_after_a_change_gives_a_new_id(data_copy):
-    first = _manifest(data_copy)["release"]["release_id"]
+    first = release.verify(_manifest(data_copy), data_copy)["release_id"]
     path = data_copy / "hinglish_glossary.json"
     doc = json.loads(path.read_text(encoding="utf-8"))
     doc["note"] = str(doc.get("note", "")) + " edited"
     path.write_text(json.dumps(doc, indent=2), encoding="utf-8")
     release.build(data_copy / "manifest.json", data_copy)
-    second = _manifest(data_copy)["release"]
-    assert second["release_id"] != first and release.verify(_manifest(data_copy), data_copy)["verified"]
+    second = release.verify(_manifest(data_copy), data_copy)
+    assert second["release_id"] != first and second["verified"]
 
 
 def test_development_loads_a_drifted_set_and_reports_it(data_copy, settings, monkeypatch):
@@ -120,7 +172,7 @@ def test_development_loads_a_drifted_set_and_reports_it(data_copy, settings, mon
 
 def _sign_everything(folder):
     """Mark every file APPROVED and rebuild the record, so only the release check is left to refuse."""
-    for name in _manifest(folder)["swastham_data"].values():
+    for name in release.listed_files(_manifest(folder)).values():
         doc = json.loads((folder / name).read_text(encoding="utf-8"))
         doc["status"] = "APPROVED"
         (folder / name).write_text(json.dumps(doc, indent=2), encoding="utf-8")
@@ -163,7 +215,7 @@ def test_production_refuses_signed_files_with_no_release_record(data_copy, setti
 def test_every_answer_is_audited_with_its_release(engine, chat):
     chat("what is a good lunch with dal")
     last = [json.loads(line) for line in engine.settings.audit_log.read_text(encoding="utf-8").splitlines()][-1]
-    assert last["release"]["id"] == engine.versions["release"] == load_manifest()["release"]["release_id"]
+    assert last["release"]["id"] == engine.versions["release"] == release.verify(load_manifest())["release_id"]
     assert last["release"]["verified"] is True and last["release"]["drifted"] == []
     assert last["versions"]["release"] == last["release"]["id"]
 

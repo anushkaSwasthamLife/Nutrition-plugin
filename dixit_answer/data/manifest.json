@@ -72,5 +72,173 @@
     "router_rules": "router_rules.json",
     "book_ingredient_map": "book_ingredient_map.json",
     "food_cautions": "food_cautions_test.json"
+  },
+  "release": {
+    "hash_rule": "SHA-256 of the file with line endings made LF",
+    "library_digest": "5bcbc32439e409f6bbd521b09a50a786608ca24773094e87c8fada383ffadefd",
+    "files": {
+      "allergen_map": {
+        "name": "allergen_map.json",
+        "version": "AL-0.1.0",
+        "status": "TEST ONLY",
+        "sha256": "5a0d5fe08bc51efbf96f983dc5888c82b47e70960d79ef04dfff45b2a829d02f"
+      },
+      "approved_list": {
+        "name": "approved_list_test.json",
+        "version": "0.1.0",
+        "status": "TEST ONLY",
+        "sha256": "2a15a2e016bfb2d8103d3733e417b03bd04928093328a51d8a010ca9aaec1130"
+      },
+      "black_lists": {
+        "name": "black_lists.json",
+        "version": "BL-0.1.0",
+        "status": "PROPOSED",
+        "sha256": "3f23371855376f54e102b97dc87ad5d66e3b21a0de18b4edb8fbfbe3ac611129"
+      },
+      "book_ingredient_map": {
+        "name": "book_ingredient_map.json",
+        "version": "BM-0.1.0",
+        "status": "TEST ONLY",
+        "sha256": "61487725a788b99bd67328467fd145ba8ea67198ccf68ba895bc5dcc1c87a2d8"
+      },
+      "book_measures": {
+        "name": "book_measures_draft.json",
+        "version": "BM-0.1.0",
+        "status": "DRAFT",
+        "sha256": "457193aed7ca652b442506e8e88059bf7dbd91f5ea0511be3f27463448ffc3e3"
+      },
+      "condition_limits": {
+        "name": "condition_limits_test.json",
+        "version": "CL-0.2.0",
+        "status": "TEST ONLY",
+        "sha256": "bf19e611b760adf04a5c899433b1e4ee4624545c48b2e39d5c3197c25c73abb3"
+      },
+      "cooking_factors": {
+        "name": "cooking_factors.json",
+        "version": "CF-0.2.0",
+        "status": "TEST ONLY",
+        "sha256": "9a64955ab36080d66db9769858d16e3e1065430bccd56d0ae96c41cef780231c"
+      },
+      "cooking_tips": {
+        "name": "cooking_tips_test.json",
+        "version": "0.1.0",
+        "status": "TEST ONLY",
+        "sha256": "8c0ab50323a1e25b41058f905592f8f4c89de06a976f5c6c8d0c439cb79cd3a1"
+      },
+      "decision_logic": {
+        "name": "decision_logic_draft.json",
+        "version": "DL-0.1.0",
+        "status": "DRAFT",
+        "sha256": "b7a23aa2d82d7b25fb358eed695509aa6bc72be374811d0e7f147b5e43b35ead"
+      },
+      "dish_rules": {
+        "name": "dish_rules.json",
+        "version": "DR-0.2.0",
+        "status": "PROPOSED",
+        "sha256": "8a1a68508d2357f8e001be5d21b49b74a211a11e913fc4b675bcca36e94336b4"
+      },
+      "doctor_packs": {
+        "name": "doctor_packs.json",
+        "version": "DP-0.3.0",
+        "status": "TEST ONLY",
+        "sha256": "17238b3be311a6c1c6fe84e5c4ee4f232549681e2cbaf2d6fa64017f0e6aa3a2"
+      },
+      "emergency_rules": {
+        "name": "emergency_rules.json",
+        "version": "EM-0.1.4",
+        "status": "PROPOSED",
+        "sha256": "199282a40719a63dd798f2b94679438522a13a93cb068b97060addd0b720b59a"
+      },
+      "food_cautions": {
+        "name": "food_cautions_test.json",
+        "version": "FC-0.1.0",
+        "status": "TEST ONLY",
+        "sha256": "ac35a97e31db13da8aa5c3e30b913a8b90e8bf5f222f15e60efbc121867d71a2"
+      },
+      "food_master": {
+        "name": "food_master.json",
+        "version": "FM-0.4.0",
+        "status": "TEST ONLY",
+        "sha256": "c261f0a47a4a6076bdb90294926f635850ad6ac74cbc6080361d6821d35f436d"
+      },
+      "general_recipe_rules": {
+        "name": "general_recipe_rules.json",
+        "version": "GR-0.1.0",
+        "status": "PROPOSED",
+        "sha256": "cd7414bfa60f1045d013e9214ecd2e56f840dc242cdca7fa1b941efd0fe78e92"
+      },
+      "golden_rules": {
+        "name": "golden_rules.json",
+        "version": "GR-PARTIAL-0.3",
+        "status": "PARTIAL",
+        "sha256": "f035ab4817386e3e50bb35eefa5a6877d21b16c472ae81414251b3b0c8fece74"
+      },
+      "harmful_intent_rules": {
+        "name": "harmful_intent_rules.json",
+        "version": "HI-0.2.0",
+        "status": "PROPOSED",
+        "sha256": "18b24322958ca1f4aba2a3eef59456984bb60852785ec62aa51184128e2493b3"
+      },
+      "hinglish_glossary": {
+        "name": "hinglish_glossary.json",
+        "version": "HG-0.1.0",
+        "status": "PROPOSED",
+        "sha256": "ccbaceb832824ab470177f39727d9ab0d9488e8d7d2d1f6116a0a17851f05e20"
+      },
+      "programme_rules.dixit_lifestyle": {
+        "name": "golden_rules.json",
+        "version": "GR-PARTIAL-0.3",
+        "status": "PARTIAL",
+        "sha256": "f035ab4817386e3e50bb35eefa5a6877d21b16c472ae81414251b3b0c8fece74"
+      },
+      "recipes": {
+        "name": "recipes_test.json",
+        "version": "RCP-0.2.0",
+        "status": "TEST ONLY",
+        "sha256": "844ab0b5775843fe018677da303174f4bfa273a73c8a1b347da8406359b9087e"
+      },
+      "reply_translations": {
+        "name": "reply_translations.json",
+        "version": "RT-0.1.0",
+        "status": "PROPOSED",
+        "sha256": "33ce07f4fc783c4c7f8f88e9ffa62d56e407a0029b9c3f4363a357700fe28190"
+      },
+      "router_rules": {
+        "name": "router_rules.json",
+        "version": "IR-0.3.2",
+        "status": "PROPOSED",
+        "sha256": "c5eae0f6b7dce681dee8e75acad1a647af336534ac44bf09a46140264e8a10ea"
+      },
+      "rules_registry": {
+        "name": "rules_registry.json",
+        "version": "RR-0.1.0",
+        "status": "PROPOSED",
+        "sha256": "ebe9a58ce109496ded855a7d1e86f2d2eba6f7cf80ba8286ae4bd7176c9e2ac1"
+      },
+      "support_content": {
+        "name": "support_content.json",
+        "version": "SC-0.1.0",
+        "status": "PROPOSED",
+        "sha256": "3724bcd3527ee80b5a98b8a77ccb341decf8b4bb23705cca787f629089386c9f"
+      },
+      "swap_table": {
+        "name": "swap_table_test.json",
+        "version": "SW-0.2.0",
+        "status": "TEST ONLY",
+        "sha256": "f9751a02c8e0303f107e4d0276627b5e4a79f7e073e38786bda031426dac2eac"
+      },
+      "white_lists": {
+        "name": "white_lists.json",
+        "version": "WL-0.2.0",
+        "status": "PROPOSED",
+        "sha256": "7ec54d1b520edae30b37bfccf1031e02bbd629d270c7752e039ef22cc9535ec8"
+      },
+      "word_lists": {
+        "name": "word_lists.json",
+        "version": "WL-0.4.0",
+        "status": "TEST ONLY",
+        "sha256": "6d3c2562a23518f51e0d5cbc7b383a540354b738ad642a05066a952645afdb26"
+      }
+    }
   }
 }
