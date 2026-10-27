@@ -62,3 +62,17 @@ def test_caution_problems_are_caught_at_start_up(engine):
     data.food_cautions["cautions"][1]["when"] = {"condition": "gout"}
     problems = "\n".join(find_problems(data, engine.library, engine.index, "development"))
     assert "unknown food FOOD-NOPE" in problems and "unknown condition 'gout'" in problems
+
+
+@pytest.mark.parametrize("message", ["I never eat raw papaya, can I eat mango", "no papaya for me, what else can I have"])
+def test_a_food_the_person_rules_out_in_the_message_gets_no_caution(main, message):
+    assert "During pregnancy" not in ask(main, message, PREGNANT).answer
+
+
+@pytest.mark.parametrize("name, said, expected", [
+    ("raw papaya", "can i eat raw papaya", True), ("raw papaya", "i do not eat raw papaya", False),
+    ("papaya", "avoid papaya in pregnancy", False), ("papaya", "is there no harm in eating papaya", True),
+])
+def test_the_message_scan_skips_a_food_ruled_out_just_before(name, said, expected):
+    from dixit_answer.cautions import FoodCautions
+    assert FoodCautions._said(said, name) is expected

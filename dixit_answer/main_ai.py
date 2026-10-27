@@ -33,6 +33,7 @@ class MainAssistant:
         deny = rules.get("model_reply_deny") or {}
         self.deny_topics = set(deny.get("topics", []))
         self.deny_words = [clean(w) for w in deny.get("words", [])]
+        self.medicine_words = [clean(w) for w in (rules.get("main_topics") or {}).get("medicine", [])]   # any topic that names a medicine
 
     def reply(self, message: str, topic: str, noted: bool = False) -> MainReply:
         fill = programme().fill                        # the programme's names in the reviewed wording
@@ -63,8 +64,8 @@ class MainAssistant:
             out.append("has a number")
         if _MARKUP.search(text) or any(ord(ch) < 32 and ch not in "\n" for ch in text):
             out.append("markup, links or control characters")
-        if topic in self.deny_topics:
-            cleaned = clean(text)
+        cleaned = clean(text)
+        if topic in self.deny_topics or any(has_phrase(cleaned, m) for m in self.medicine_words):   # exercise or sleep: only if a medicine is named
             hits = [w for w in self.deny_words if has_phrase(cleaned, w)]
             if hits:
                 out.append(f"names a medicine change or dose: {hits[0]}")
