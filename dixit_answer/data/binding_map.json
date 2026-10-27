@@ -1,0 +1,542 @@
+{
+  "version": "BMAP-0.1.0",
+  "status": "PROPOSED",
+  "binding_id": "DIXIT-NUTRITION-1.2.6",
+  "note": "Where this pipeline implements each ID the Dixit nutrition binding declares (rules, answer checks, intents, anchors, patch steps, conflicts, tests), and how completely. Statuses: implemented, partial, missing, not_applicable. Every declared ID must be mapped (python -m dixit_answer.binding and tests/test_binding.py check it); a status is an engineering claim, not a sign-off. BMAP-0.1.0 (27 Oct 2026): first map, written against binding 1.2.6 and the 25-prompt run of 27 Oct 2026.",
+  "rules": {
+    "NUT-ROUTE-001": {
+      "status": "partial",
+      "where": "foods.py fact_records, facts.preferred_records, dish_lookup.py",
+      "note": "Each food's records are chosen per environment in food_master.json, not ranked across sources per question; production uses USDA only until the Indian licence is recorded."
+    },
+    "NUT-FALLBACK-001": {
+      "status": "partial",
+      "where": "dish_lookup.py (path B, estimate=True), recipes.calculate",
+      "note": "Dish estimates from ingredients are labelled estimates (development only); there is no general reconstruction service for an unknown dish."
+    },
+    "NUT-KNOWLEDGE-001": {
+      "status": "missing",
+      "where": "-",
+      "note": "No approved condition-specific knowledge records yet (the nutrition knowledge base, plan phase 4)."
+    },
+    "NUT-GOLDEN-001": {
+      "status": "partial",
+      "where": "golden.py, golden_rules.json",
+      "note": "Golden Rules control the answer, but precedence is ordered in code, not read from the conflict registry."
+    },
+    "NUT-STATUS-001": {
+      "status": "partial",
+      "where": "status.py, planner.py (FU-STATUS)",
+      "note": "Neutral lookups do not ask; the 25-prompt run (#13) still asked a person whose profile says type 2 diabetes."
+    },
+    "NUT-PRECISION-001": {
+      "status": "implemented",
+      "where": "facts.make_fact",
+      "note": "Values only from records; flagged or unclear servings give no number; energy ranges kept as ranges."
+    },
+    "NUT-DATA-ELIGIBILITY-001": {
+      "status": "implemented",
+      "where": "loader.load_library",
+      "note": "Quarantined and retrieval-ineligible records are dropped before anything else, with counts pinned."
+    },
+    "NUT-USAGE-CONSTRAINT-001": {
+      "status": "partial",
+      "where": "facts.make_fact, dish_lookup.py",
+      "note": "'Range only' energy and the carbohydrate/fibre pairing are applied; other constraint wordings are not parsed."
+    },
+    "NUT-APPROX-001": {
+      "status": "partial",
+      "where": "facts.make_fact, dish_lookup.py",
+      "note": "Per-serving energy ranges are disclosed; per-100 g requests on Indian records are not served at all."
+    },
+    "UNIV-PERSONAL-001": {
+      "status": "implemented",
+      "where": "router.py, main_ai.py, checks.py, golden.py",
+      "note": "Medicine, cure, dose and child questions get fixed replies; no portions or plans."
+    },
+    "PATCH-MOD-001": {
+      "status": "partial",
+      "where": "understand.classify, planner.py, status.py",
+      "note": "Status is asked only for status-dependent sub-intents, but topics come from word lists, not the declared topic list."
+    }
+  },
+  "checks": {
+    "NUT-SRC-001": {
+      "status": "implemented",
+      "where": "compose.py locked placeholders, checks.py",
+      "note": "Every number is rendered from a record or a recorded calculation."
+    },
+    "NUT-MATCH-001": {
+      "status": "partial",
+      "where": "planner.py, compose.py",
+      "note": "25-prompt run #20: 'paneer tikka masala' got Paneer Salad without saying it was a different dish."
+    },
+    "NUT-HIER-001": {
+      "status": "partial",
+      "where": "food_master.json fact_records",
+      "note": "No India-first or USDA-first ranking in code; production is USDA-only by licence, a data-licence limit, not a ranking."
+    },
+    "NUT-GR-001": {
+      "status": "implemented",
+      "where": "golden.py, doctor_packs.py, recipes.gate",
+      "note": "A pack or lower rung can only tighten."
+    },
+    "NUT-EDU-001": {
+      "status": "missing",
+      "where": "-",
+      "note": "No condition knowledge to share yet (knowledge base)."
+    },
+    "NUT-PER-001": {
+      "status": "implemented",
+      "where": "checks.py N-series, main_ai.py",
+      "note": "No portions, plans, doses or outcome promises."
+    },
+    "NUT-UNC-001": {
+      "status": "partial",
+      "where": "facts.py, dish_lookup.py",
+      "note": "Estimates are labelled; recipe assumed amounts are named."
+    },
+    "NUT-FIELD-001": {
+      "status": "implemented",
+      "where": "loader.py, facts.FIELD_LABELS",
+      "note": "Only the listed nutrient fields are read; condition flags, insulin demand and GI/GL/FII are never loaded."
+    },
+    "NUT-STATUS-001": {
+      "status": "partial",
+      "where": "planner.py",
+      "note": "See rule NUT-STATUS-001."
+    },
+    "NUT-COMP-001": {
+      "status": "missing",
+      "where": "-",
+      "note": "Answers are not composed in the binding's five layers (fact, serving, condition knowledge, protocol position, personal boundary)."
+    },
+    "NUT-QUAR-001": {
+      "status": "implemented",
+      "where": "loader.load_library"
+    },
+    "NUT-USAGE-001": {
+      "status": "partial",
+      "where": "facts.make_fact"
+    },
+    "NUT-APPROX-002": {
+      "status": "partial",
+      "where": "facts.make_fact, dish_lookup.py"
+    },
+    "NUT-DUP-001": {
+      "status": "missing",
+      "where": "-",
+      "note": "duplicate_name_groups.json is not read; a dish name with materially different records is resolved by the food master's choice."
+    }
+  },
+  "intents": {
+    "nutrition_fact_lookup": {
+      "status": "implemented",
+      "where": "understand.classify -> neutral_nutrient_lookup, source_fact_lookup"
+    },
+    "prepared_food_nutrient_lookup": {
+      "status": "partial",
+      "where": "understand.classify, dish_lookup.py",
+      "note": "Indian prepared dishes in development only."
+    },
+    "food_nutrient_comparison": {
+      "status": "implemented",
+      "where": "understand.classify -> neutral_food_comparison"
+    },
+    "meal_nutrient_estimation": {
+      "status": "missing",
+      "where": "-",
+      "note": "No 'estimate my bowl' aggregation of several foods."
+    },
+    "ingredient_reconstruction": {
+      "status": "partial",
+      "where": "dish_lookup.py path B",
+      "note": "Development only."
+    },
+    "serving_conversion": {
+      "status": "missing",
+      "where": "-",
+      "note": "No 'one cup vs 250 g' conversion answer."
+    },
+    "condition_specific_nutrition_knowledge": {
+      "status": "missing",
+      "where": "-",
+      "note": "Needs the knowledge base."
+    },
+    "personal_food_suitability": {
+      "status": "implemented",
+      "where": "understand.classify -> personal_suitability, main_ai.py"
+    },
+    "nutrition_protocol_question": {
+      "status": "implemented",
+      "where": "understand.classify -> protocol_permission, protocol_explain, meal_protocol_application"
+    },
+    "ambiguous_food_identity": {
+      "status": "partial",
+      "where": "planner.py confirm_food",
+      "note": "One clarification for an unknown word; no duplicate-record clarification."
+    },
+    "neutral_nutrient_lookup": {
+      "status": "implemented",
+      "where": "understand.classify"
+    },
+    "neutral_food_comparison": {
+      "status": "implemented",
+      "where": "understand.classify"
+    },
+    "source_fact_lookup": {
+      "status": "implemented",
+      "where": "understand.classify"
+    },
+    "protocol_permission": {
+      "status": "implemented",
+      "where": "understand.classify"
+    },
+    "food_allowed": {
+      "status": "implemented",
+      "where": "understand.classify"
+    },
+    "personal_suitability": {
+      "status": "implemented",
+      "where": "understand.classify"
+    },
+    "meal_protocol_application": {
+      "status": "implemented",
+      "where": "understand.classify"
+    },
+    "status_dependent_protocol_question": {
+      "status": "implemented",
+      "where": "understand.classify"
+    }
+  },
+  "anchors": {
+    "ANCHOR_TURN_RESOLVED": {
+      "status": "implemented",
+      "where": "pipeline.prepare (receive, chat state)"
+    },
+    "ANCHOR_INTENT_CLASSIFIED": {
+      "status": "implemented",
+      "where": "router.py, understand.classify"
+    },
+    "ANCHOR_SAFETY_CLASSIFIED": {
+      "status": "implemented",
+      "where": "emergency.py, harmful.py (step 0)",
+      "note": "Runs before intent classification, stricter than the flow order."
+    },
+    "ANCHOR_CONTEXT_RESOLVED": {
+      "status": "implemented",
+      "where": "person.build_person, state.py"
+    },
+    "ANCHOR_SCENARIO_SELECTED": {
+      "status": "missing",
+      "where": "-",
+      "note": "Scenarios SCN-089 and SCN-090 live in the Dixit baseline, which is not on this machine."
+    },
+    "ANCHOR_RULES_LOADED": {
+      "status": "implemented",
+      "where": "golden.py, doctor_packs.py, recipes.compile_limits"
+    },
+    "ANCHOR_PROTOCOL_BUNDLE_SELECTED": {
+      "status": "partial",
+      "where": "programme.py, doctor_packs.py",
+      "note": "Programme wording is selected; baseline protocol bundles are not available."
+    },
+    "ANCHOR_FAQ_MATCHED": {
+      "status": "missing",
+      "where": "-",
+      "note": "No FAQ collection (knowledge base)."
+    },
+    "ANCHOR_RETRIEVAL_FILTERS_APPLIED": {
+      "status": "implemented",
+      "where": "person.AllergyFilter, loader environments, lists.apply_blocked_records"
+    },
+    "ANCHOR_RETRIEVAL_COMPLETE": {
+      "status": "implemented",
+      "where": "facts.py, recipes.run, services.py"
+    },
+    "ANCHOR_STORY_RETRIEVAL_COMPLETE": {
+      "status": "not_applicable",
+      "where": "-",
+      "note": "Success stories are Dixit baseline content, outside the nutrition plugin."
+    },
+    "ANCHOR_MEDIA_RESOLVED": {
+      "status": "not_applicable",
+      "where": "-",
+      "note": "Exercise media is Dixit baseline content, outside the nutrition plugin."
+    },
+    "ANCHOR_PRE_COMPOSE": {
+      "status": "implemented",
+      "where": "compose.py"
+    },
+    "ANCHOR_PRE_VALIDATE": {
+      "status": "implemented",
+      "where": "checks.py check_ai_text"
+    },
+    "ANCHOR_VALIDATION_COMPLETE": {
+      "status": "implemented",
+      "where": "checks.py check_final, template fallback"
+    },
+    "ANCHOR_LOGGING": {
+      "status": "partial",
+      "where": "pipeline.py audit record",
+      "note": "Data versions are logged; rule IDs, anchors and the binding's nine logging fields are not."
+    }
+  },
+  "patch_steps": {
+    "DIXIT-NUT-ORCH-001": {
+      "status": "implemented",
+      "where": "understand.classify",
+      "note": "Emits the eight declared sub-intents from the raw message (plus Swastham's own values for recipes, support and greetings)."
+    },
+    "DIXIT-NUT-ORCH-002": {
+      "status": "partial",
+      "where": "planner.py",
+      "note": "See NUT-STATUS-001."
+    },
+    "DIXIT-NUT-ORCH-003": {
+      "status": "implemented",
+      "where": "main_pipeline.py -> plugin"
+    },
+    "DIXIT-NUT-ORCH-004": {
+      "status": "partial",
+      "where": "facts.preferred_records",
+      "note": "See NUT-ROUTE-001."
+    },
+    "DIXIT-NUT-ORCH-005": {
+      "status": "partial",
+      "where": "dish_lookup.py path B"
+    },
+    "DIXIT-NUT-ORCH-006": {
+      "status": "missing",
+      "where": "-",
+      "note": "Needs the knowledge base."
+    },
+    "DIXIT-NUT-ORCH-007": {
+      "status": "missing",
+      "where": "-",
+      "note": "See NUT-COMP-001."
+    },
+    "DIXIT-NUT-ORCH-008": {
+      "status": "partial",
+      "where": "checks.py N1-N29",
+      "note": "Overlapping checks exist; the 14 NUT checks are not run by ID."
+    }
+  },
+  "conflicts": {
+    "CONF-NUT-001": {
+      "status": "implemented",
+      "where": "golden.py",
+      "note": "Facts stay visible; the Golden Rule is stated as the protocol position."
+    },
+    "CONF-NUT-002": {
+      "status": "implemented",
+      "where": "loader.py",
+      "note": "Database condition labels are never loaded."
+    },
+    "CONF-NUT-003": {
+      "status": "implemented",
+      "where": "golden_rules.json, planner.py",
+      "note": "Two meals and the meal window are stated; frequent-meal advice is not given."
+    },
+    "CONF-NUT-004": {
+      "status": "partial",
+      "where": "golden.py, status.py",
+      "note": "Status-specific fruit rule applied; see NUT-STATUS-001."
+    },
+    "CONF-NUT-005": {
+      "status": "partial",
+      "where": "dish_lookup.py",
+      "note": "Development only."
+    },
+    "CONF-NUT-006": {
+      "status": "implemented",
+      "where": "router.py, main_ai.py"
+    },
+    "CONF-NUT-007": {
+      "status": "implemented",
+      "where": "understand.classify, planner.py",
+      "note": "Neutral facts are answered without asking status."
+    }
+  },
+  "functional_tests": {
+    "NUT-T001": {
+      "status": "partial",
+      "where": "evals/eval_set.json NB-T001",
+      "note": "Eval case: machine checks run now; the rubric counts as not judged until the LLM judge exists."
+    },
+    "NUT-T002": {
+      "status": "partial",
+      "where": "evals/eval_set.json NB-T002",
+      "note": "Eval case: machine checks run now; the rubric counts as not judged until the LLM judge exists."
+    },
+    "NUT-T003": {
+      "status": "partial",
+      "where": "evals/eval_set.json NB-T003",
+      "note": "Eval case: machine checks run now; the rubric counts as not judged until the LLM judge exists."
+    },
+    "NUT-T004": {
+      "status": "partial",
+      "where": "evals/eval_set.json NB-T004",
+      "note": "Eval case: machine checks run now; the rubric counts as not judged until the LLM judge exists."
+    },
+    "NUT-T005": {
+      "status": "partial",
+      "where": "evals/eval_set.json NB-T005",
+      "note": "Eval case: machine checks run now; the rubric counts as not judged until the LLM judge exists."
+    },
+    "NUT-T006": {
+      "status": "partial",
+      "where": "evals/eval_set.json NB-T006",
+      "note": "Eval case: machine checks run now; the rubric counts as not judged until the LLM judge exists."
+    },
+    "NUT-T007": {
+      "status": "partial",
+      "where": "evals/eval_set.json NB-T007",
+      "note": "Eval case: machine checks run now; the rubric counts as not judged until the LLM judge exists."
+    },
+    "NUT-T008": {
+      "status": "partial",
+      "where": "evals/eval_set.json NB-T008",
+      "note": "Eval case: machine checks run now; the rubric counts as not judged until the LLM judge exists."
+    },
+    "NUT-T009": {
+      "status": "partial",
+      "where": "evals/eval_set.json NB-T009",
+      "note": "Eval case: machine checks run now; the rubric counts as not judged until the LLM judge exists."
+    },
+    "NUT-T010": {
+      "status": "partial",
+      "where": "evals/eval_set.json NB-T010",
+      "note": "Eval case: machine checks run now; the rubric counts as not judged until the LLM judge exists."
+    },
+    "NUT-T011": {
+      "status": "partial",
+      "where": "evals/eval_set.json NB-T011",
+      "note": "Eval case: machine checks run now; the rubric counts as not judged until the LLM judge exists."
+    },
+    "NUT-T012": {
+      "status": "partial",
+      "where": "evals/eval_set.json NB-T012",
+      "note": "Eval case: machine checks run now; the rubric counts as not judged until the LLM judge exists."
+    },
+    "NUT-T013": {
+      "status": "partial",
+      "where": "evals/eval_set.json NB-T013",
+      "note": "Eval case: machine checks run now; the rubric counts as not judged until the LLM judge exists."
+    },
+    "NUT-T014": {
+      "status": "partial",
+      "where": "evals/eval_set.json NB-T014",
+      "note": "Eval case: machine checks run now; the rubric counts as not judged until the LLM judge exists."
+    },
+    "NUT-T015": {
+      "status": "partial",
+      "where": "evals/eval_set.json NB-T015",
+      "note": "Eval case: machine checks run now; the rubric counts as not judged until the LLM judge exists."
+    },
+    "NUT-T016": {
+      "status": "partial",
+      "where": "evals/eval_set.json NB-T016",
+      "note": "Eval case: machine checks run now; the rubric counts as not judged until the LLM judge exists."
+    },
+    "NUT-T017": {
+      "status": "partial",
+      "where": "evals/eval_set.json NB-T017",
+      "note": "Eval case: machine checks run now; the rubric counts as not judged until the LLM judge exists."
+    },
+    "NUT-T018": {
+      "status": "partial",
+      "where": "evals/eval_set.json NB-T018",
+      "note": "Eval case: machine checks run now; the rubric counts as not judged until the LLM judge exists."
+    },
+    "NUT-T019": {
+      "status": "partial",
+      "where": "evals/eval_set.json NB-T019",
+      "note": "Eval case: machine checks run now; the rubric counts as not judged until the LLM judge exists."
+    },
+    "NUT-T020": {
+      "status": "partial",
+      "where": "evals/eval_set.json NB-T020",
+      "note": "Eval case: machine checks run now; the rubric counts as not judged until the LLM judge exists."
+    },
+    "NUT-T021": {
+      "status": "partial",
+      "where": "evals/eval_set.json NB-T021",
+      "note": "Eval case: machine checks run now; the rubric counts as not judged until the LLM judge exists."
+    },
+    "NUT-T022": {
+      "status": "partial",
+      "where": "evals/eval_set.json NB-T022",
+      "note": "Eval case: machine checks run now; the rubric counts as not judged until the LLM judge exists."
+    },
+    "NUT-T023": {
+      "status": "partial",
+      "where": "evals/eval_set.json NB-T023",
+      "note": "Eval case: machine checks run now; the rubric counts as not judged until the LLM judge exists."
+    },
+    "NUT-T024": {
+      "status": "partial",
+      "where": "evals/eval_set.json NB-T024",
+      "note": "Eval case: machine checks run now; the rubric counts as not judged until the LLM judge exists."
+    },
+    "NUT-T025": {
+      "status": "not_applicable",
+      "where": "binding.py STR-006",
+      "note": "A release check, not a chat message: run as structural test STR-006 (needs the Dixit baseline)."
+    },
+    "NUT-T026": {
+      "status": "partial",
+      "where": "evals/eval_set.json NB-T026",
+      "note": "Eval case: machine checks run now; the rubric counts as not judged until the LLM judge exists."
+    }
+  },
+  "critical_rechecks": {
+    "fruit rules by diabetic status": {
+      "status": "implemented",
+      "where": "tests/test_phase6_golden.py, evals"
+    },
+    "prior diabetes/prediabetes consultant validation": {
+      "status": "implemented",
+      "where": "tests/test_phase6_golden.py, planner FU-CONSULTANT"
+    },
+    "55-minute meal window": {
+      "status": "implemented",
+      "where": "golden_rules.json, tests/test_programmes.py"
+    },
+    "complete exercise protocol": {
+      "status": "not_applicable",
+      "where": "-",
+      "note": "Exercise is Dixit baseline content; the nutrition plugin gives no exercise advice (the live run's walking advice, eval LP-02, is fixed: exercise replies are reviewed text only, router_rules IR-0.4.0)."
+    },
+    "no diet improvisation": {
+      "status": "implemented",
+      "where": "recipes.py (allowed IDs only, gate, repair), checks.py"
+    },
+    "educational-not-prescriptive boundary": {
+      "status": "implemented",
+      "where": "checks.py, main_ai.py"
+    },
+    "current-turn-first handling": {
+      "status": "partial",
+      "where": "pipeline.prepare, state.py",
+      "note": "Chat state is applied after reading the current message; no dedicated test yet."
+    },
+    "protocol completeness and empathy": {
+      "status": "partial",
+      "where": "golden.py protocol blocks, compose.py"
+    },
+    "meal-frequency conflict handling": {
+      "status": "implemented",
+      "where": "golden.py, evals NB-T017, NB-T019"
+    },
+    "between-meal snacking conflict handling": {
+      "status": "implemented",
+      "where": "golden.py, evals NB-T018"
+    },
+    "multi-domain nutrition-exercise-medication boundary": {
+      "status": "partial",
+      "where": "router.py, main_ai.py",
+      "note": "Eval NB-T021."
+    }
+  }
+}

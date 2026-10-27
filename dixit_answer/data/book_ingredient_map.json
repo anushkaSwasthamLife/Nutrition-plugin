@@ -1,7 +1,7 @@
 {
- "version": "BM-0.1.0",
+ "version": "BM-0.1.1",
  "status": "TEST ONLY",
- "note": "How the Healthful Diet book's ingredient lines become food IDs and grams, so each dish is calculated from USDA records. Drafted by code for dietitian review (26 Oct 2026). One entry per line text in the book. 'food' = one food; 'split' = the grams are shared equally between the foods; 'trace' = a pinch or a few leaves, not counted (listed in the answer); 'skip' = water; 'optional' = left out and not counted; 'exclude' = the dish cannot be calculated and is not offered. 'default_g' = the grams assumed when the book gives no amount ('to taste', 'as needed'): the answer names every assumed amount. 'per' = grams for one unit of this line, where the food's own unit weight does not fit.",
+ "note": "How the Healthful Diet book's ingredient lines become food IDs and grams, so each dish is calculated from USDA records. Drafted by code for dietitian review (26 Oct 2026). One entry per line text in the book. 'food' = one food; 'split' = the grams are shared equally between the foods; 'trace' = a pinch or a few leaves, not counted (listed in the answer); 'skip' = water; 'optional' = left out and not counted; 'exclude' = the dish cannot be calculated and is not offered. 'default_g' = the grams assumed when the book gives no amount ('to taste', 'as needed'): the answer names every assumed amount. 'per' = grams for one unit of this line, where the food's own unit weight does not fit. BM-0.1.1 (27 Oct 2026): book.credit is the name the patient sees ('A recipe from Healthful Diet, page N').",
  "units": {
   "vati": 60,
   "g": 1,
@@ -23,6 +23,7 @@
  "book": {
   "id": "healthful_diet",
   "short_title": "Healthful Diet",
+  "credit": "Healthful Diet",
   "citation": "Healthful Diet: Think wise. Eat twice. Drop size (ADORE Trust, 2021)",
   "source_id": "healthful_diet_book",
   "title": "Healthful Diet: Think wise. Eat twice. Drop size",

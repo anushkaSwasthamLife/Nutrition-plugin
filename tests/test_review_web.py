@@ -55,7 +55,7 @@ def test_decide_and_apply_through_the_api(engine, tmp_path):
     assert reopened.json() == {"ok": True}
     assert client.post("/api/review/apply", json={"by": ""}).status_code == 400
     result = client.post("/api/review/apply", json={"by": "Dr Rao"}).json()
-    assert result["applied"] == 1 and result["version"] == "FM-0.4.1"
+    assert result["applied"] == 1 and result["version"] == "FM-0.5.1"
     fm = json.loads((tmp_path / "food_master.json").read_text(encoding="utf-8"))
     assert "zzlady finger stir fry" in next(f for f in fm["foods"] if f["id"] == "FOOD-BHINDI")["aliases"]
     after = {(i["word"], i["kind"]): i for i in client.get("/api/review/items").json()["items"]}

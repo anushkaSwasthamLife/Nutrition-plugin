@@ -6,7 +6,7 @@ import threading
 import pytest
 
 from dixit_answer import programme as programmes
-from dixit_answer.config import DEFAULT_BOOK_RECIPES
+from dixit_answer.config import recipe_book_paths
 from dixit_answer.consistency import find_problems
 from dixit_answer.llm import MockLLM
 from dixit_answer.main_pipeline import MainPipeline
@@ -140,15 +140,15 @@ def test_pack_problems_are_caught_at_start_up(engine):
         assert bit in problems
 
 
-@pytest.mark.skipif(not DEFAULT_BOOK_RECIPES.is_file(), reason="the book file is not on this machine")
+@pytest.mark.skipif(not recipe_book_paths()["healthful_diet"].is_file(), reason="the book file is not on this machine")
 def test_a_programme_gets_only_the_recipe_books_its_pack_lists(settings, monkeypatch):
     s = copy.copy(settings)
-    s.book_recipes_file = DEFAULT_BOOK_RECIPES
+    s.recipe_books = {"healthful_diet": recipe_book_paths()["healthful_diet"]}
     engine = Engine(s, llm=MockLLM())
     main = MainPipeline(engine)
     plain = add_pack(engine, monkeypatch, "DR-PLAIN")
     with_book = add_pack(engine, monkeypatch, "DR-BOOK", books=["healthful_diet"])
     assert chat(main, plain, "methi paratha recipe")[0].badge is None or chat(main, plain, "methi paratha recipe")[0].badge["kind"] != "programme"
     r = chat(main, with_book, "methi paratha recipe")[0]
-    assert r.badge["kind"] == "programme" and r.badge["text"] == "Healthful Diet recipe · Heart Care programme (test)"
-    assert "A recipe from the Heart Care programme's Healthful Diet book" in r.answer
+    assert r.badge["kind"] == "programme" and r.badge["text"] == "Recipe from Healthful Diet (test)"
+    assert "A recipe from Healthful Diet, page" in r.answer

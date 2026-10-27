@@ -1,6 +1,6 @@
 {
   "runtime_id": "DIXIT-ANSWER-0.3.0-dev",
-  "note": "Release bundle for the Dixit answer pipeline. The loader checks every pin at start and stops on any mismatch.",
+  "note": "Release bundle for the Dixit answer pipeline. The loader checks every pin at start and stops on any mismatch. 27 Oct 2026: adds programme_binding, the Dixit nutrition binding package (Knee-style handover: rules, answer checks, intents, orchestration anchors, tests) that this pipeline is measured against; read from outside the repo and hash-pinned.",
   "library": {
     "name": "Swastham_Nutrition_Data_Library",
     "version": "1.0.5",
@@ -70,7 +70,51 @@
     "decision_logic": "decision_logic_draft.json",
     "doctor_packs": "doctor_packs.json",
     "router_rules": "router_rules.json",
-    "book_ingredient_map": "book_ingredient_map.json",
-    "food_cautions": "food_cautions_test.json"
-  }
+    "food_cautions": "food_cautions_test.json",
+    "binding_map": "binding_map.json"
+  },
+  "programme_binding": {
+    "id": "DIXIT-NUTRITION-1.2.6",
+    "package": "Dixit_AI_Nutrition_Data_Integration_Amendment_v1_2_6/Dixit_AI_Nutrition_Data_Integration_Amendment_v1_2_6",
+    "env": "DIXIT_BINDING_DIR",
+    "release_manifest": "06_release/file_manifest.json",
+    "release_manifest_sha256": "f597da3d2e1ad08f25be5cf99b0ed353d55d2112f94c8dfdd58bc8343e740ec9",
+    "files": {
+      "package_manifest": "01_manifest/amendment_manifest.json",
+      "flow": "02_registration/orchestration_flow_v1_1_1_anchored.json",
+      "library_registration": "02_registration/nutrition_library_registration.json",
+      "priority_registry": "02_registration/rule_priority_registry.json",
+      "conflicts": "03_rules/conflict_supersession_registry_addendum.json",
+      "patch_rules": "03_rules/immediate_runtime_patch_rules_v1_1_1_update.json",
+      "answer_checks": "03_rules/nutrition_answer_validator_addendum.json",
+      "rules": "03_rules/nutrition_lookup_and_composition_rules.json",
+      "universal_rules": "03_rules/universal_knowledge_and_personal_boundary_rules.json",
+      "intents": "04_conversation/nutrition_intent_taxonomy_addendum.json",
+      "orchestration_patch": "04_conversation/nutrition_orchestration_patch.json",
+      "functional_tests": "05_tests/nutrition_integration_tests.json",
+      "structural_tests": "05_tests/structural_acceptance_tests.json",
+      "critical_rechecks": "05_tests/critical_regression_addendum.json"
+    },
+    "runtime": {
+      "dixit_baseline": null,
+      "required_overlay": null
+    },
+    "note": "The Dixit baseline (v1.1) and overlay (v1.1.1) this binding patches are not on this machine, so they are null: the effective runtime is then not a validated combination and production refuses it. Fill each version only when that package is installed and its tests run."
+  },
+  "recipe_books": [
+    {
+      "id": "healthful_diet",
+      "map": "book_ingredient_map.json",
+      "file": "healthful-diet/healthful-diet-recipes.json",
+      "env": "DIXIT_BOOK_RECIPES",
+      "note": "Healthful Diet (ADORE Trust, 2021), the Dixit programme's recipe book."
+    },
+    {
+      "id": "adore_90_days",
+      "map": "deck_ingredient_map.json",
+      "file": "adore-90-days/adore-90-days-recipes.json",
+      "env": "DIXIT_DECK_RECIPES",
+      "note": "The ADORE 90 Days Weight Loss & Diabetes Reversal Challenge diet charts (Aug-Oct 2023)."
+    }
+  ]
 }

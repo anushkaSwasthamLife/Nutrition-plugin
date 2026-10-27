@@ -1,7 +1,7 @@
 {
-  "version": "DP-0.3.0",
+  "version": "DP-0.3.1",
   "status": "TEST ONLY",
-  "note": "Doctor packs: what each doctor's programme adds on top of the shared data (step 2 of the plugin). Constraint layers merge strictest first: the doctor pack, then the patient's safety (allergies, conditions, medicines), then preferences (diet, avoid list). A pack can only add restrictions (never_foods, lower limits); it can never relax a patient's safety layer. approved_recipes are recipe IDs from the recipe collection that the doctor recommends: they are searched first and shown with the doctor's badge. DP-0.1.0 (26 Oct 2026): development pack only. The doctor has not reviewed it, so never_foods and limits are empty and the eight first recipes stand in for the doctor's list. Production refuses this file until the doctor signs it (approved_by, approved_on). DP-0.2.0 (26 Oct 2026): the eight stand-in recipes are gone (no doctor has picked recipes yet); recipe_books names the programme's Healthful Diet book, whose dishes are searched right after the doctor's own list. DP-0.3.0 (26 Oct 2026): a pack now carries everything that differs between doctors: the programme's identity (names used in wording), its own lines (texts), its rules (rules.data = a programme in manifest programme_rules, rules.rule_types = the rule types it switches on; any type left out behaves neutrally), recipe books, never-foods and limits. Everything else is shared by every doctor.",
+  "note": "Doctor packs: what each doctor's programme adds on top of the shared data (step 2 of the plugin). Constraint layers merge strictest first: the doctor pack, then the patient's safety (allergies, conditions, medicines), then preferences (diet, avoid list). A pack can only add restrictions (never_foods, lower limits); it can never relax a patient's safety layer. approved_recipes are recipe IDs from the recipe collection that the doctor recommends: they are searched first and shown with the doctor's badge. DP-0.1.0 (26 Oct 2026): development pack only. The doctor has not reviewed it, so never_foods and limits are empty and the eight first recipes stand in for the doctor's list. Production refuses this file until the doctor signs it (approved_by, approved_on). DP-0.2.0 (26 Oct 2026): the eight stand-in recipes are gone (no doctor has picked recipes yet); recipe_books names the programme's Healthful Diet book, whose dishes are searched right after the doctor's own list. DP-0.3.0 (26 Oct 2026): a pack now carries everything that differs between doctors: the programme's identity (names used in wording), its own lines (texts), its rules (rules.data = a programme in manifest programme_rules, rules.rule_types = the rule types it switches on; any type left out behaves neutrally), recipe books, never-foods and limits. Everything else is shared by every doctor. DP-0.3.1 (27 Oct 2026): the Dixit programme also gets the ADORE 90 Days Challenge recipes (recipe book adore_90_days).",
   "default_doctor_id": "DR-DIXIT",
   "packs": {
     "DR-DIXIT": {
@@ -46,7 +46,8 @@
           "limits": [],
           "approved_recipes": [],
           "recipe_books": [
-            "healthful_diet"
+            "healthful_diet",
+            "adore_90_days"
           ]
         }
       }

@@ -18,7 +18,7 @@ NOTES = {
     BOOK: "{Programme}'s recipe book: the dish, ingredients and steps. Its printed calories are not used; the numbers come from USDA.",
 }
 BOOK_UNSIGNED = " Transcribed for this app; our dietitian has not yet checked the transcription."
-SHORT = {USDA: "USDA FoodData Central", INDIAN: "INDB (Indian library)", INDB_CALC: "INDB recipe, calculated", BOOK: "Healthful Diet book"}
+SHORT = {USDA: "USDA FoodData Central", INDIAN: "INDB (Indian library)", INDB_CALC: "INDB recipe, calculated", BOOK: "Recipe book"}     # a book is named by its own title
 MAX_RECORDS = 12
 
 
@@ -26,10 +26,11 @@ def answer_sources(draft, library, index, dishes, production_sources) -> list[di
     """[{"key", "name", "short", "trusted", "note", "used_for", "records": [{"id", "food"}]}], trusted sources first."""
     groups: dict[str, dict] = {}
 
-    def add(key: str, name: str, used_for: str, record_id: str, food: str, trusted: bool | None = None, note: str = "") -> None:
+    def add(key: str, name: str, used_for: str, record_id: str, food: str, trusted: bool | None = None, note: str = "",
+            short: str = "") -> None:
         if trusted is None:
             trusted = (INDIAN if key == INDB_CALC else key) in production_sources
-        group = groups.setdefault(name, {"key": key, "name": name, "short": SHORT[key], "trusted": trusted,
+        group = groups.setdefault(name, {"key": key, "name": name, "short": short or SHORT[key], "trusted": trusted,
                                          "note": programme().fill(NOTES[key]) + note, "used_for": used_for, "records": []})
         if used_for not in group["used_for"]:
             group["used_for"] += f", {used_for}"
@@ -62,9 +63,10 @@ def answer_sources(draft, library, index, dishes, production_sources) -> list[di
         book = getattr(draft.recipe, "book", None)
         if book:
             signed = bool(getattr(draft.recipe, "source_signed", False))
-            page = f", page {book['page']}" if book.get("page") else ""
+            page = f", {book.get('page_label', 'page')} {book['page']}" if book.get("page") else ""
             add(BOOK, book.get("citation") or book.get("title", "Recipe book"), "the recipe",
-                f"{book['id']}{page}", draft.recipe.name, trusted=signed, note="" if signed else BOOK_UNSIGNED)
+                f"{book['id']}{page}", draft.recipe.name, trusted=signed, note="" if signed else BOOK_UNSIGNED,
+                short=f"{book['title']} book" if book.get("title") else "")
         for item in draft.recipe.ingredients:
             food = index.foods.get(item["food"]) or {}
             for fid in [p["food"] for p in food.get("composition") or []] or [item["food"]]:      # a mixed flour: its grains

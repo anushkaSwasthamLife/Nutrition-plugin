@@ -139,6 +139,9 @@ def find_problems(data, library, index, environment: str) -> list[str]:
             rules = prog.get("rules") or {}
             if rules.get("data") and rules["data"] not in (data.programme_rules or {}):
                 problems.append(f"doctor pack {did}/{pid}: rules data '{rules['data']}' is not in the manifest's programme_rules")
+            for book in prog.get("recipe_books") or []:
+                if book not in (data.recipe_book_maps or {}):
+                    problems.append(f"doctor pack {did}/{pid}: recipe book '{book}' is not in the manifest's recipe_books")
             for rule_type in rules.get("rule_types") or []:
                 if rule_type not in RULE_TYPES:
                     problems.append(f"doctor pack {did}/{pid}: unknown rule type '{rule_type}'")
@@ -166,10 +169,20 @@ def find_problems(data, library, index, environment: str) -> list[str]:
     for topic in [*router.get("main_topics", {}), "greeting", "thanks", "about", "general"]:
         if not router.get("main_replies", {}).get(topic):
             problems.append(f"router rules: no main reply for '{topic}'")
+    for topic in router.get("model_topics") or []:
+        if topic in ("cure", "child"):
+            problems.append(f"router rules: model_topics lists '{topic}', whose reply only reviewed text may give")
+        elif not router.get("main_replies", {}).get(topic):
+            problems.append(f"router rules: model_topics lists '{topic}', which has no reviewed reply")
     if not router.get("clarify_question"):
         problems.append("router rules: no clarify question")
     if not (router.get("model_reply_deny") or {}).get("words") or "medicine" not in (router.get("model_reply_deny") or {}).get("topics", []):
         problems.append("router rules: model replies on medicine are not checked for medicine changes (model_reply_deny)")
+
+    # ---- the binding map describes the programme binding the manifest names (binding.py checks every ID once the package loads)
+    binding_id = (data.manifest.get("programme_binding") or {}).get("id")
+    if data.binding_map is not None and data.binding_map.get("binding_id") != binding_id:
+        problems.append(f"binding map is for {data.binding_map.get('binding_id')!r}, the manifest's programme binding is {binding_id!r}")
 
     from .lists import list_problems
     problems += list_problems(data, library, index, environment)

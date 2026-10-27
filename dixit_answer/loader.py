@@ -75,10 +75,11 @@ class SwasthamData:
     decision_logic: dict
     doctor_packs: dict
     router_rules: dict
-    book_ingredient_map: dict
     manifest: dict
     programme_rules: dict = None          # programme id -> its rules file (manifest "programme_rules"); one per doctor's programme
+    recipe_book_maps: dict = None         # recipe book id -> its ingredient map (manifest "recipe_books"); the recipes stay outside
     food_cautions: dict = None            # condition / medicine / pregnancy food cautions (cautions.py)
+    binding_map: dict = None              # where the pipeline implements each ID of the programme binding (binding.py)
 
 
 def sha256_of(path: Path) -> str:
@@ -197,9 +198,18 @@ def load_swastham_data(settings: Settings, manifest: dict | None = None) -> Swas
             rules[pid] = json.loads((DATA_DIR / name).read_text(encoding="utf-8"))
         except (OSError, ValueError) as exc:
             raise LoadError(f"{name}: cannot be read ({exc.__class__.__name__})") from exc
+    maps: dict = {}
+    for book in manifest.get("recipe_books") or []:
+        try:
+            maps[book["id"]] = json.loads((DATA_DIR / book["map"]).read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise LoadError(f"{book['map']}: cannot be read ({exc.__class__.__name__})") from exc
+        if (maps[book["id"]].get("book") or {}).get("id") != book["id"]:
+            raise LoadError(f"{book['map']}: its book id is not '{book['id']}' as the manifest says")
     if not env.get("allow_test_only_data"):
-        checked = {**{names[k]: v for k, v in loaded.items()}, **{manifest["programme_rules"][p]: v for p, v in rules.items()}}
+        checked = {**{names[k]: v for k, v in loaded.items()}, **{manifest["programme_rules"][p]: v for p, v in rules.items()},
+                   **{b["map"]: maps[b["id"]] for b in manifest.get("recipe_books") or []}}
         for name, data in checked.items():
             if str(data.get("status", "")).upper() in {"TEST ONLY", "STUB", "PARTIAL", "PROPOSED", "DRAFT"}:
                 raise LoadError(f"Production refuses {name}: status is {data['status']}.")
-    return SwasthamData(manifest=manifest, programme_rules=rules, **loaded)
+    return SwasthamData(manifest=manifest, programme_rules=rules, recipe_book_maps=maps, **loaded)

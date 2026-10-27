@@ -51,6 +51,7 @@ class ChatState:
     target_shown: list = field(default_factory=list)         # dish codes already listed for it ("what else" skips them)
     avoid_foods: list = field(default_factory=list)          # food IDs the person said they do not eat ("i don't eat onion")
     recipes_shown: list = field(default_factory=list)        # approved recipe IDs already shown in this chat ("what else" skips them)
+    drafts_shown: list = field(default_factory=list)         # names of AI-drafted dishes shown in this chat (a new draft must differ)
     diabetes_status: str = "unknown"                         # unknown | diabetic | prediabetic | non_diabetic | currently_non_diabetic
     prior_diabetes_history: bool | None = None
     consultant_validated: bool | None = None

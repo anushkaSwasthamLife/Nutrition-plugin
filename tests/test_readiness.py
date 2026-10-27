@@ -113,8 +113,10 @@ def test_one_unsigned_row_is_enough(engine):
 
 # ---- readiness report
 @pytest.fixture
-def signed_copy(tmp_path):
-    """A copy of the data folder with every file signed and every limit filled in."""
+def signed_copy(tmp_path, monkeypatch):
+    """A copy of the data folder with every file signed and every limit filled in, and a validated programme binding (the
+    binding's own checks are in test_binding.py)."""
+    monkeypatch.setattr(readiness, "binding_problems", lambda manifest: [])
     d = tmp_path / "data"
     shutil.copytree(DATA_DIR, d)
     manifest = json.loads((d / "manifest.json").read_text(encoding="utf-8"))

@@ -1,10 +1,12 @@
 """The main assistant (main pipeline, the non-nutrition branch of step R).
 
 Answers greetings, questions about the assistant, and topics outside food (exercise, sleep, medicines, symptoms, anything else).
-With a real model it writes a short reply; the reply is refused and the reviewed template from `data/router_rules.json` is sent
-instead when it is not plain text, is too long, or has any digit (no doses, readings or amounts ever come from here). On medicine,
-symptom and general topics a reply naming a change or a dose ("stop", "skip", "dose"...: `model_reply_deny`) is refused too.
-Medicine and symptom replies always end with a fixed safety line. Without a model (mock), the template is the reply.
+Every topic has a reviewed reply in `data/router_rules.json`. A real model may word the reply only for the topics in
+`model_topics` (medicine and symptom today); greeting, about, exercise, sleep and anything else get the reviewed text, so the
+model can never widen what the assistant does ("write me a poem", walking advice). A model reply is refused, and the template sent,
+when it is not plain text, is too long, or has any digit (no doses, readings or amounts ever come from here); on medicine, symptom
+and general topics a reply naming a change or a dose ("stop", "skip", "dose"...: `model_reply_deny`) is refused too. Medicine and
+symptom replies always end with a fixed safety line. Without a model (mock), the template is the reply.
 """
 from __future__ import annotations
 
@@ -15,7 +17,7 @@ from .programme import current as programme
 from .textnorm import clean, has_phrase
 
 _MARKUP = re.compile(r"[<>{}\[\]|\\`#~]|https?:|www\.|://|@", re.IGNORECASE)
-TEMPLATE_ONLY = {"thanks", "cure", "child"}        # a model must never word a cure or a child's diet answer
+NEVER_MODEL = {"cure", "child"}        # a model must never word a cure or a child's diet answer, whatever the data says
 
 
 @dataclass
@@ -30,6 +32,7 @@ class MainAssistant:
         self.llm = llm
         self.rules = rules
         self.max_words = int(rules["max_words"])
+        self.model_topics = set(rules.get("model_topics") or []) - NEVER_MODEL
         deny = rules.get("model_reply_deny") or {}
         self.deny_topics = set(deny.get("topics", []))
         self.deny_words = [clean(w) for w in deny.get("words", [])]
@@ -41,7 +44,7 @@ class MainAssistant:
         locked = fill(self.rules["locked_lines"].get(topic, ""))
         prefix = fill(self.rules["noted_line"]) + " " if noted else ""     # a risk word was read (insulin, pregnancy): say it was kept
         text, method, problems = template, "template", []
-        if getattr(self.llm, "name", "mock") != "mock" and topic not in TEMPLATE_ONLY:
+        if getattr(self.llm, "name", "mock") != "mock" and topic in self.model_topics:
             try:
                 drafted = self.llm.general_reply({"user_message": message[:500], "topic": topic, "max_words": self.max_words})
             except Exception as exc:                 # noqa: BLE001 - any provider failure falls back to the template

@@ -1,7 +1,7 @@
 {
-  "version": "IR-0.3.2",
+  "version": "IR-0.4.0",
   "status": "PROPOSED",
-  "note": "Intent router (step R of the main pipeline), after the emergency and safety checks. Nutrition related (sent to the nutrition plugin): foods, dishes, recipes, nutrients, meals, the programme's food rules, and statements about allergies, diet or conditions. Everything else (symptoms, medicines on their own, exercise, sleep, greetings, other topics) is answered by the main assistant. A condition or health word with no food or diet word is unsure: the router asks one question. Word lists are drafts for Swastham to review against real traffic.",
+  "note": "Intent router (step R of the main pipeline), after the emergency and safety checks. Nutrition related (sent to the nutrition plugin): foods, dishes, recipes, nutrients, meals, the programme's food rules, and statements about allergies, diet or conditions. Everything else (symptoms, medicines on their own, exercise, sleep, greetings, other topics) is answered by the main assistant. A condition or health word with no food or diet word is unsure: the router asks one question. Word lists are drafts for Swastham to review against real traffic. IR-0.4.0 (27 Oct 2026): model_topics lists the only main-assistant topics a model may word; every other topic gets its reviewed reply. The live run with Groq showed the model writing a poem for an off-topic request, giving walking advice and describing itself as chatting about medicines and symptoms (evals LP-01 to LP-03).",
   "nutrition_words": ["eat", "eats", "eating", "ate", "food", "foods", "meal", "meals", "breakfast", "lunch", "dinner", "snack", "snacks",
                       "recipe", "recipes", "cook", "cooking", "cooked", "make", "dish", "dishes", "diet", "dieting", "calorie", "calories", "kcal",
                       "protein", "proteins", "carb", "carbs", "carbohydrate", "carbohydrates", "fat", "fats", "fibre", "fiber", "vitamin",
@@ -76,6 +76,8 @@
     "symptom": "If you feel shaky, sweaty or dizzy, especially if you take diabetes medicine, eat something and contact your doctor."
   },
   "max_words": 90,
+  "model_topics_note": "Topics whose reply a model may word, after the checks below. Greeting, about, exercise, sleep and other topics define what the assistant does, so they are sent as reviewed text only (the binding's behaviour rule: an unsupported request is answered from approved wording, not improvised). Cure and child can never be listed: a start-up check refuses them.",
+  "model_topics": ["medicine", "symptom"],
   "model_reply_deny": {
     "note": "A model reply on these topics that names a medicine change or a dose is refused and the reviewed template is sent. The locked line is added after this check.",
     "topics": ["medicine", "symptom", "general"],

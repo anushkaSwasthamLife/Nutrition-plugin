@@ -75,7 +75,7 @@ def test_a_critical_miss_fails_the_run(target):
 
 
 def test_the_rules_miss_no_critical_case_beyond_the_baselines_known_misses(target):
-    baseline = json.loads((evals.EVAL_SET.parent / "baselines" / "rules-EV-0.1.0.json").read_text(encoding="utf-8"))
+    baseline = json.loads((evals.EVAL_SET.parent / "baselines" / f"rules-{evals.load()['version']}.json").read_text(encoding="utf-8"))
     report = evals.run(evals.load(), target)
     new = set(report["summary"]["critical_failed"]) - set(baseline["summary"]["critical_failed"])
     assert not new, f"new critical misses: {sorted(new)}"

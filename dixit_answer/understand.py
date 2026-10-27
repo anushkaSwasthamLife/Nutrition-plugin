@@ -27,6 +27,9 @@ TYPES = [
 CREATIVE = re.compile(r"\b(?:write|compose|draft)\b.*\b(?:poem|poetry|story|essay|song|code|script|letter|email|speech)\b|\b(?:poem|poetry|joke|riddle|lyrics)\b")
 PLAN_REQUEST = re.compile(r"\b(?:meal plan|diet plan|diet chart|meal chart|food chart|menu plan|weekly plan|weekly menu|week plan|plan for the week|plan for a week|"
                           r"(?:\d+|seven|7|three|five|ten|14|30) day (?:meal |diet |food )?(?:plan|chart|menu)|full day (?:meal |diet )?plan|daily meal plan)\b")
+# Values the nutrition binding excludes from the approved release (prohibited_runtime_fields): never given, never estimated.
+EXCLUDED_METRIC = re.compile(r"\b(?:insulin (?:demand|index|load|score)|food insulin index|fii|glyca?emic (?:index|load|value)|"
+                             r"(?:gi|gl) (?:of|value|score|for|kya|kitna)|what(?: is|s| s) the (?:gi|gl)|ka (?:gi|gl))\b")
 DEFINITION = re.compile(r"^(?:what is|what are|what s|whats|define|meaning of|explain|tell me about|what does)\s+(?:a |an |the )?"
                         r"(?:calorie|calories|kcal|protein|proteins|carb|carbs|carbohydrate|carbohydrates|fat|fats|fibre|fiber|nutrient|nutrients|macro|macros)(?: mean)?$")
 COOK_ASK = re.compile(r"\b(?:what (?:to|should i|can i|do i|shall i) (?:cook|make|prepare)|(?:cook|make|prepare) today|what (?:to|can i) (?:cook|make) (?:today|tonight|now|for (?:lunch|dinner|breakfast))|"
@@ -157,6 +160,7 @@ class Understanding:
     statement: dict = field(default_factory=dict)        # what the person said about themselves: {"allergies", "diet", "avoid", "label"}
     reading: float | None = None                         # a blood sugar reading the person shared (mg/dL)
     refuse_plan: bool = False                            # asked for a meal plan or diet chart: answered with a plain "I can't", then the programme
+    excluded_metric: bool = False                        # asked for insulin demand, GI, GL or FII: not approved values (binding check NUT-FIELD-001)
     subject: str = ""                                    # the food or dish this question is about (for "and protein?" next)
     subject_kind: str = ""
     subject_nutrient: str = ""
@@ -695,6 +699,10 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
                                  getattr(state, "recipe_choices", None))
 
     question_type = classify(cleaned, foods, index)
+    if EXCLUDED_METRIC.search(cleaned):
+        rest = classify(" ".join(EXCLUDED_METRIC.sub(" ", cleaned).split()), foods, index)
+        if rest in {"neutral_nutrient_lookup", "neutral_food_comparison"}:
+            question_type = rest                           # "calories and GI of dal": the calories are answered, the GI declined
     u.frequency_question = bool(FREQUENCY.search(cleaned)) and question_type == "meal_protocol_application"
     if question_type == "out_of_scope" and not u.slot_fill and parse_status(cleaned):
         question_type = "status_dependent_protocol_question"       # "yes, my consultant confirmed it": a status statement
@@ -787,6 +795,8 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
                 question_type = "profile_statement"                    # only a statement: acknowledged. With a question in it, the question is answered too
     if PLAN_REQUEST.search(cleaned) and question_type == "food_choice_guidance":
         u.refuse_plan = True
+    if EXCLUDED_METRIC.search(cleaned):
+        u.excluded_metric = True
     if question_type == "out_of_scope" and not u.slot_fill and INGREDIENTS.search(cleaned) and not u.conditions and not (HARMFUL_WORDS | HEALTH_WORDS) & set(cleaned.split()) and not SYMPTOM.search(cleaned) and not subject_of(cleaned):
         unknown_pantry, _s, _a = pantry_words(scrub_conditions(cleaned, word_lists), index, word_lists.get("ingredient_stop_words", []))
         if foods or unknown_pantry:

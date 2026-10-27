@@ -34,6 +34,8 @@ EMERGENCY_ANSWER = ("This sounds like it could be an emergency. If you feel shak
                     "If you take insulin or sugar tablets and feel shaky, follow the low-sugar steps your doctor gave you.")
 
 _AGE_RE = re.compile(r"\b(?:i am|i'm|im|age|aged)\s+(\d{1,2})\b|\b(\d{1,2})\s*(?:years? old|yrs? old|yo)\b")
+# An age that follows "my ..." is someone else's ("my 5 year old", "my son is 8 years old"): it never changes the person's own status.
+_SOMEONE_ELSES = re.compile(r"\b(?:my|our|his|her|mera|meri|mere)\s+(?:\S+\s+){0,3}$")
 
 
 @dataclass
@@ -72,7 +74,7 @@ def check(text: str, state: ChatState, word_lists: dict, emergency_rules: Emerge
                 result.updates[field_name] = "no" if _negated(cleaned, term_c, negations) else "yes"
                 break
 
-    age = _AGE_RE.search(cleaned)
+    age = next((m for m in _AGE_RE.finditer(cleaned) if not _SOMEONE_ELSES.search(cleaned[:m.start()])), None)
     if age:
         years = int(age.group(1) or age.group(2))
         if 5 <= years <= 99:

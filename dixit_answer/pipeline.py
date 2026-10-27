@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import safety as safety_gate
+from .binding import open_binding
 from .checks import CheckResult, blocking, check_ai_text, check_final
 from .cautions import FoodCautions
 from .compose import Composer
@@ -118,15 +119,19 @@ class Engine:
         self.emergency = EmergencyRules(self.data.emergency_rules)
         self.harmful = HarmfulRules(self.data.harmful_intent_rules)
         self.index = FoodIndex(self.data.food_master, self.words["spelling_map"])
-        # The Dixit programme's recipe book: its dishes join the collection (as the programme tier) when the file is there.
-        self.book = None
-        book_raw = load_book(self.settings.book_recipes_file)
-        if book_raw is not None:
-            self.book = convert_book(book_raw, self.data.book_ingredient_map, self.index.foods)
-            self.data.recipes["recipes"] = self.data.recipes["recipes"] + self.book.recipes
+        # Programmes' recipe books (manifest "recipe_books"): their dishes join the collection (as the programme tier) when the
+        # book's recipes file is there. Each book has its own ingredient map; a doctor pack lists the books its patients get.
+        self.books = {}
+        for entry in self.data.manifest.get("recipe_books") or []:
+            raw = load_book(self.settings.recipe_books.get(entry["id"]))
+            if raw is not None:
+                book = self.books[entry["id"]] = convert_book(raw, self.data.recipe_book_maps[entry["id"]], self.index.foods)
+                self.data.recipes["recipes"] = self.data.recipes["recipes"] + book.recipes
         problems = find_problems(self.data, self.library, self.index, self.settings.environment)
         if problems:
             raise LoadError("data files disagree with each other:\n  - " + "\n  - ".join(problems[:20]))
+        # The programme binding (manifest "programme_binding"): production refuses a missing, changed or unvalidated one.
+        self.binding, self.binding_status = open_binding(self.settings, manifest)
         apply_blocked_records(self.library, self.data.black_lists, self.settings.environment)
         self.services = Services(self.library, self.data, self.index)
         self.allergy = AllergyFilter(self.data.allergen_map, self.index, self.data.black_lists)
@@ -175,10 +180,15 @@ class Engine:
             "decision_logic": self.data.decision_logic["version"],
             "doctor_packs": self.data.doctor_packs["version"],
             "router_rules": self.data.router_rules["version"],
-            "book_ingredient_map": self.data.book_ingredient_map["version"],
             "food_cautions": self.data.food_cautions["version"],
-            "book_recipes": f"Healthful Diet, {len(self.book.recipes)} dishes" if self.book else "off",
+            "binding_map": self.data.binding_map["version"],
+            "binding": f"{(manifest.get('programme_binding') or {}).get('id', 'none')}, {self.binding_status['state']}",
+            "effective_runtime": self.binding_status["runtime_id"] or "none",
         }
+        for book_id, mapping in self.data.recipe_book_maps.items():        # "recipe_book:<id>": "<map version>, <dishes> dishes" or "off"
+            book = self.books.get(book_id)
+            self.versions[f"recipe_book:{book_id}"] = (f"{mapping['version']}, {mapping['book'].get('short_title', book_id)}, "
+                                                       f"{len(book.recipes)} dishes" if book else f"{mapping['version']}, off")
 
     def _dish_in_text(self, cleaned: str) -> list[dict]:
         """The dishes a message names, for understand(): [{"span", "exact"}]. exact = the words are a known dish name."""

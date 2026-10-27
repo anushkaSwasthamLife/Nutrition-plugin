@@ -97,7 +97,7 @@ def create_app(engine: Engine | None = None, data_dir=None) -> FastAPI:
                      "notes": list(pack.notes)}
         return {"environment": eng.settings.environment, "programme": programme, "llm": {"provider": getattr(eng.llm, "name", "mock"),
                 "model": getattr(eng.llm, "model", "")}, "versions": eng.versions, "library": eng.library.report,
-                "book": eng.book.summary() if eng.book else {"status": "off"}}
+                "books": {key: book.summary() for key, book in eng.books.items()}}
 
     @app.post("/api/chat")
     def chat(body: ChatIn):
