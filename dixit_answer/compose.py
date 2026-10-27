@@ -47,6 +47,7 @@ class Draft:
     backlog_request: bool = False                           # no checked recipe: goes to the dietitian's recipe backlog
     suppress: set = field(default_factory=set)              # blocks the recipe flow drops (this request only: Composer is shared)
     general: dict | None = None                             # general recipe fallback: what was asked, tried and shown (audit)
+    gaps: list = field(default_factory=list)                # [{"topic", "reason"}]: questions the approved sources do not cover (audit: knowledge_gap)
 
     def template(self) -> str:
         return "\n".join(self.lines)
@@ -184,6 +185,7 @@ class Composer:
                 d.lines.append(lock("T", "Thank you. I can't work out calorie needs, a target weight or a plan from body measurements; please talk to your doctor or "
                                          "dietitian about that. I can still look up foods and dishes for you."))
             elif block == "special_diet":
+                d.gaps.append({"topic": "special diet (fasting, keto)", "reason": "no approved guidance"})
                 d.lines.append(lock("T", P.fill("I don't have guidance for fasting or special diets such as keto yet. "
                                                 "Please ask {coach} how to fit the programme with what you follow.")))
             elif block == "plan_refusal":
@@ -303,6 +305,7 @@ class Composer:
                     if fact:
                         d.lines.append(fact_line(fact, fid))
                     elif not group:
+                        d.gaps.append({"topic": f"nutrition numbers: {name(fid)}", "reason": "no reliable value"})
                         d.lines.append(lock("T", f"We don't have reliable nutrition numbers for {name(fid)} yet."))
             elif block == "lookup_facts":
                 self._lookup_lines(plan, u, d, given, fact_line, name, person, lock)
@@ -762,6 +765,7 @@ class Composer:
                 if each:
                     d.lines.append(lock("F", each))
             else:
+                d.gaps.append({"topic": f"nutrition numbers: {recipe.name} recipe", "reason": "no reliable value"})
                 d.lines.append(lock("T", f"We don't have reliable nutrition numbers for our {recipe.name} recipe yet."))
             return
         if field in {"sugars_g", "sodium_mg"} and len(plan.focus_foods) > 1:           # "sugar in mango": sugar is what is asked, not a second food
@@ -778,6 +782,7 @@ class Composer:
                     grams = grams_in(u.cleaned)
                     d.lines.append(fact_line(scaled_fact(fact, grams) if grams else fact, fid))
                 else:
+                    d.gaps.append({"topic": f"{field.split('_')[0]}: {name(fid)}", "reason": "no reliable value"})
                     d.lines.append(f"We don't have a reliable {field.split('_')[0]} value for {name(fid)} yet.")
             first = self.index.foods[plan.focus_foods[0]]
             per100 = getattr(d.facts[-1], "serving", "") == "per 100 g" if d.facts else False
@@ -1085,6 +1090,7 @@ class Composer:
                     return True
             shown = dish_fact_text(result, self.DISH_FIELDS.get(field, "energy_kcal"))
             if shown is None:
+                d.gaps.append({"topic": f"{field.split('_')[0]}: dish", "reason": "no reliable value"})
                 d.lines.append(lock("T", f"We don't have a reliable value for that in {name} yet."))
                 return True
             source = "calculated from ingredients" if result.path == "B" else "Swastham library"

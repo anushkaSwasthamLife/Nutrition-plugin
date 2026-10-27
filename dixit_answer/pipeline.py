@@ -460,6 +460,13 @@ class Engine:
         }
         self.audit.append(record)
         result.audit = record
+        gaps = list(draft.gaps)
+        if english == SAFE_FALLBACK:
+            failed = sorted({r.check_id for r in final_results if r.level == "critical" and not r.passed})
+            gaps.append({"topic": plan.type, "reason": "the answer failed a safety check: " + (", ".join(failed) or "unknown")})
+        for gap in gaps[:5]:                      # the approved sources did not cover the question: logged for the dietitian
+            self.audit.append({"kind": "knowledge_gap", "at": time.strftime("%Y-%m-%dT%H:%M:%S"), "conversation_id": conversation_id,
+                               "turn": state.turn, "plan_type": plan.type, "topic": str(gap["topic"])[:80], "reason": str(gap["reason"])[:120]})
         if user_id:
             self.memory.remember(user_id, collect(state), conversation_id)
             self.memory.record_turn(user_id, conversation_id, state.turn, original, final,
