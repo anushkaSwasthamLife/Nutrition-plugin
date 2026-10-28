@@ -1,0 +1,20 @@
+{
+  "version": "AUTH-0.1.0",
+  "status": "PROPOSED",
+  "signed_by": null,
+  "signed_on": null,
+  "binding": false,
+  "note": "One list of which source wins when two disagree (proposal of 27 Oct 2026, from the workflow page 'Which source wins'). A lower rung number wins; a lower rung may make an answer stricter, never looser. Advisory: this is NOT the Dixit priority integer. rules_registry.json says binding priorities must be checked against the Dixit base package, which is not available, so nothing in the pipeline is decided by this file yet. It is a reference for review, for tests and for the audit log (its version is logged with every answer). A doctor, the dietitian and the client still need to confirm the order, especially rung 2 above rung 3. 'universal' lists registry rules that apply on every rung and are not ranked.",
+  "rungs": [
+    {"rung": 1, "id": "EMERGENCY_HARM", "name": "Emergency and harmful-intent rules (doctor-signed)", "controls": "The fixed reply and the end of the turn", "must_never": "Be softened by a food rule or the model", "registry_rules": ["DIXIT-EMERGENCY"]},
+    {"rung": 2, "id": "PERSON_TOLD_US", "name": "What the person told us: allergies, avoids, diet, risk group", "controls": "Foods removed; caution first", "must_never": "Be overridden by a recipe or a preference", "registry_rules": ["NUT-ALLERGEN-001", "NUT-SAFE-PRE-001"]},
+    {"rung": 3, "id": "LIMITS_FOOD_SAFETY", "name": "Condition limits and food-safety rules", "controls": "Salt, sugar, saturated fat, potassium, phosphorus; unsafe foods", "must_never": "Be relaxed by a Golden Rule", "registry_rules": ["NUT-LIMIT-001"]},
+    {"rung": 4, "id": "GOLDEN_RULES", "name": "Golden Rule Core and Dr. Ratna's Q&A", "controls": "The programme: two meals, 55 minutes, fruit by status", "must_never": "Give a medicine, dose or portion", "registry_rules": ["NUT-GOLDEN-001", "NUT-STATUS-001"]},
+    {"rung": 5, "id": "DECISION_LOGIC", "name": "Decision Logic", "controls": "Second-condition changes", "must_never": "Relax a rule above it", "registry_rules": []},
+    {"rung": 6, "id": "APPROVED_FOODS", "name": "Approved swaps and recipes (dietitian)", "controls": "Which foods are offered", "must_never": "Add a food that is not on the list", "registry_rules": ["NUT-SWAP-001", "NUT-RECIPE-001"]},
+    {"rung": 7, "id": "CONTEXT_TEXT", "name": "Condition Context, Companion, Myth-Busting", "controls": "Explanation text", "must_never": "Change a route or a limit", "registry_rules": []},
+    {"rung": 8, "id": "BOOK", "name": "The Healthful Diet book", "controls": "Background only", "must_never": "Supply a limit (withdrawn)", "registry_rules": []},
+    {"rung": 9, "id": "MODEL_KNOWLEDGE", "name": "General model knowledge", "controls": "Phrasing only", "must_never": "Add a food, a number, a claim or a rule", "registry_rules": []}
+  ],
+  "universal": ["SEC-INPUT-001", "CHAT-STATE-001", "UNIV-PERSONAL-001"]
+}

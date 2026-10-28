@@ -49,6 +49,8 @@ class DayStats:
     harmful_by_category: Counter = field(default_factory=Counter)
     negated_mentions: int = 0             # a symptom was mentioned with "no" in front
     unknown_words: int = 0                # food words we did not recognise
+    knowledge_gaps: int = 0               # questions the approved sources did not cover (no approved guidance or no reliable value)
+    gap_by_topic: Counter = field(default_factory=Counter)
     feedback_helpful: int = 0
     feedback_problem: int = 0
 
@@ -56,6 +58,8 @@ class DayStats:
         out = {k: getattr(self, k) for k in ("day", *COUNT_FIELDS)}
         out["emergency_by_category"] = dict(sorted(self.emergency_by_category.items()))
         out["harmful_by_category"] = dict(sorted(self.harmful_by_category.items()))
+        out["knowledge_gaps"] = self.knowledge_gaps
+        out["gap_by_topic"] = dict(sorted(self.gap_by_topic.items()))
         return out
 
 
@@ -146,6 +150,10 @@ def summarise(records) -> dict[str, DayStats]:
             continue
         if kind == "unknown_item":
             continue                        # counted from the turn's trace, so one word is not counted twice
+        if kind == "knowledge_gap":
+            stats.knowledge_gaps += 1
+            stats.gap_by_topic[str(record.get("topic") or "unknown")[:60]] += 1
+            continue
         if kind != "turn":
             continue
         stats.turns += 1
@@ -297,6 +305,8 @@ def format_report(days: dict[str, DayStats], day: str, alerts: list[Alert], show
               (", ".join(f"{k} {v}" for k, v in sorted(today.harmful_by_category.items())) or "-"),
               f"  Symptom mentioned with 'no'   {today.negated_mentions}",
               f"  Unknown food words            {today.unknown_words}",
+              f"  Not covered by approved data  {today.knowledge_gaps}  " +
+              (", ".join(f"{k} {v}" for k, v in today.gap_by_topic.most_common(5)) or "-"),
               f"  Feedback                      helpful {today.feedback_helpful}, problem {today.feedback_problem}", ""]
     recent = sorted(days)[-shown_days:]
     if len(recent) > 1:

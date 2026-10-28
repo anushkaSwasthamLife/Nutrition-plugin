@@ -71,7 +71,8 @@
     "doctor_packs": "doctor_packs.json",
     "router_rules": "router_rules.json",
     "food_cautions": "food_cautions_test.json",
-    "binding_map": "binding_map.json"
+    "binding_map": "binding_map.json",
+    "authority_ladder": "authority_ladder.json"
   },
   "programme_binding": {
     "id": "DIXIT-NUTRITION-1.2.6",
@@ -116,5 +117,191 @@
       "env": "DIXIT_DECK_RECIPES",
       "note": "The ADORE 90 Days Weight Loss & Diabetes Reversal Challenge diet charts (Aug-Oct 2023)."
     }
-  ]
+  ],
+  "release": {
+    "hash_rule": "SHA-256 of the file with line endings made LF",
+    "library_digest": "5bcbc32439e409f6bbd521b09a50a786608ca24773094e87c8fada383ffadefd",
+    "files": {
+      "allergen_map": {
+        "name": "allergen_map.json",
+        "version": "AL-0.1.0",
+        "status": "TEST ONLY",
+        "sha256": "5a0d5fe08bc51efbf96f983dc5888c82b47e70960d79ef04dfff45b2a829d02f"
+      },
+      "approved_list": {
+        "name": "approved_list_test.json",
+        "version": "0.1.0",
+        "status": "TEST ONLY",
+        "sha256": "2a15a2e016bfb2d8103d3733e417b03bd04928093328a51d8a010ca9aaec1130"
+      },
+      "authority_ladder": {
+        "name": "authority_ladder.json",
+        "version": "AUTH-0.1.0",
+        "status": "PROPOSED",
+        "sha256": "98985b046f5c813e5e65e8c3bc546050c395b5a096736786f31ad93c24487917"
+      },
+      "binding_map": {
+        "name": "binding_map.json",
+        "version": "BMAP-0.1.0",
+        "status": "PROPOSED",
+        "sha256": "00b925debc31db485caa78e4f05fddfca93d52b1ff663858b6948be0055e2cf0"
+      },
+      "black_lists": {
+        "name": "black_lists.json",
+        "version": "BL-0.1.0",
+        "status": "PROPOSED",
+        "sha256": "3f23371855376f54e102b97dc87ad5d66e3b21a0de18b4edb8fbfbe3ac611129"
+      },
+      "book_measures": {
+        "name": "book_measures_draft.json",
+        "version": "BM-0.1.0",
+        "status": "DRAFT",
+        "sha256": "457193aed7ca652b442506e8e88059bf7dbd91f5ea0511be3f27463448ffc3e3"
+      },
+      "condition_limits": {
+        "name": "condition_limits_test.json",
+        "version": "CL-0.2.0",
+        "status": "TEST ONLY",
+        "sha256": "bf19e611b760adf04a5c899433b1e4ee4624545c48b2e39d5c3197c25c73abb3"
+      },
+      "cooking_factors": {
+        "name": "cooking_factors.json",
+        "version": "CF-0.2.0",
+        "status": "TEST ONLY",
+        "sha256": "9a64955ab36080d66db9769858d16e3e1065430bccd56d0ae96c41cef780231c"
+      },
+      "cooking_tips": {
+        "name": "cooking_tips_test.json",
+        "version": "0.1.0",
+        "status": "TEST ONLY",
+        "sha256": "8c0ab50323a1e25b41058f905592f8f4c89de06a976f5c6c8d0c439cb79cd3a1"
+      },
+      "decision_logic": {
+        "name": "decision_logic_draft.json",
+        "version": "DL-0.1.0",
+        "status": "DRAFT",
+        "sha256": "b7a23aa2d82d7b25fb358eed695509aa6bc72be374811d0e7f147b5e43b35ead"
+      },
+      "dish_rules": {
+        "name": "dish_rules.json",
+        "version": "DR-0.2.0",
+        "status": "PROPOSED",
+        "sha256": "8a1a68508d2357f8e001be5d21b49b74a211a11e913fc4b675bcca36e94336b4"
+      },
+      "doctor_packs": {
+        "name": "doctor_packs.json",
+        "version": "DP-0.3.1",
+        "status": "TEST ONLY",
+        "sha256": "f1774ce27a86b110e9238b0fa31b5a364830a9a855d5897a82db45808be00bb4"
+      },
+      "emergency_rules": {
+        "name": "emergency_rules.json",
+        "version": "EM-0.1.4",
+        "status": "PROPOSED",
+        "sha256": "199282a40719a63dd798f2b94679438522a13a93cb068b97060addd0b720b59a"
+      },
+      "food_cautions": {
+        "name": "food_cautions_test.json",
+        "version": "FC-0.1.0",
+        "status": "TEST ONLY",
+        "sha256": "ac35a97e31db13da8aa5c3e30b913a8b90e8bf5f222f15e60efbc121867d71a2"
+      },
+      "food_master": {
+        "name": "food_master.json",
+        "version": "FM-0.5.0",
+        "status": "TEST ONLY",
+        "sha256": "dee826f792569695f768bd3348ae66867a496fbc7303874cb318153608c51984"
+      },
+      "general_recipe_rules": {
+        "name": "general_recipe_rules.json",
+        "version": "GR-0.1.0",
+        "status": "PROPOSED",
+        "sha256": "cd7414bfa60f1045d013e9214ecd2e56f840dc242cdca7fa1b941efd0fe78e92"
+      },
+      "golden_rules": {
+        "name": "golden_rules.json",
+        "version": "GR-PARTIAL-0.3",
+        "status": "PARTIAL",
+        "sha256": "f035ab4817386e3e50bb35eefa5a6877d21b16c472ae81414251b3b0c8fece74"
+      },
+      "harmful_intent_rules": {
+        "name": "harmful_intent_rules.json",
+        "version": "HI-0.2.0",
+        "status": "PROPOSED",
+        "sha256": "18b24322958ca1f4aba2a3eef59456984bb60852785ec62aa51184128e2493b3"
+      },
+      "hinglish_glossary": {
+        "name": "hinglish_glossary.json",
+        "version": "HG-0.1.0",
+        "status": "PROPOSED",
+        "sha256": "ccbaceb832824ab470177f39727d9ab0d9488e8d7d2d1f6116a0a17851f05e20"
+      },
+      "programme_rules.dixit_lifestyle": {
+        "name": "golden_rules.json",
+        "version": "GR-PARTIAL-0.3",
+        "status": "PARTIAL",
+        "sha256": "f035ab4817386e3e50bb35eefa5a6877d21b16c472ae81414251b3b0c8fece74"
+      },
+      "recipe_books.adore_90_days": {
+        "name": "deck_ingredient_map.json",
+        "version": "DM-0.1.1",
+        "status": "TEST ONLY",
+        "sha256": "5af8c99dbf41f7be9b1b25bd2889088ac78ac7a3a0fb984250287e666b1a5024"
+      },
+      "recipe_books.healthful_diet": {
+        "name": "book_ingredient_map.json",
+        "version": "BM-0.1.1",
+        "status": "TEST ONLY",
+        "sha256": "c58607e68f08a0ae390c7b226a9701cdd25d5d8d27f90d4b79ef15243f53a277"
+      },
+      "recipes": {
+        "name": "recipes_test.json",
+        "version": "RCP-0.2.0",
+        "status": "TEST ONLY",
+        "sha256": "844ab0b5775843fe018677da303174f4bfa273a73c8a1b347da8406359b9087e"
+      },
+      "reply_translations": {
+        "name": "reply_translations.json",
+        "version": "RT-0.1.0",
+        "status": "PROPOSED",
+        "sha256": "33ce07f4fc783c4c7f8f88e9ffa62d56e407a0029b9c3f4363a357700fe28190"
+      },
+      "router_rules": {
+        "name": "router_rules.json",
+        "version": "IR-0.4.0",
+        "status": "PROPOSED",
+        "sha256": "b3cc8743731012631082803575628878bc08a74cdbf5abf9e1bd76fbecb30c06"
+      },
+      "rules_registry": {
+        "name": "rules_registry.json",
+        "version": "RR-0.1.0",
+        "status": "PROPOSED",
+        "sha256": "ebe9a58ce109496ded855a7d1e86f2d2eba6f7cf80ba8286ae4bd7176c9e2ac1"
+      },
+      "support_content": {
+        "name": "support_content.json",
+        "version": "SC-0.1.0",
+        "status": "PROPOSED",
+        "sha256": "3724bcd3527ee80b5a98b8a77ccb341decf8b4bb23705cca787f629089386c9f"
+      },
+      "swap_table": {
+        "name": "swap_table_test.json",
+        "version": "SW-0.2.1",
+        "status": "TEST ONLY",
+        "sha256": "064f993e7b3e858047c227f2408c0793c486f881860f5301feb5f2ac1b08c2a6"
+      },
+      "white_lists": {
+        "name": "white_lists.json",
+        "version": "WL-0.2.1",
+        "status": "PROPOSED",
+        "sha256": "8d6568a39eca91a465006c9f38edbaad3256bb10f3a04657a69b1a042f816c00"
+      },
+      "word_lists": {
+        "name": "word_lists.json",
+        "version": "WL-0.4.0",
+        "status": "TEST ONLY",
+        "sha256": "6d3c2562a23518f51e0d5cbc7b383a540354b738ad642a05066a952645afdb26"
+      }
+    }
+  }
 }

@@ -3,7 +3,7 @@
 Implemented now: N1/N15 numbers, N4 Golden Rules wording, N6 personal claims, N9 status for plain facts, N16 foods,
 N17c eating portions, N18 caution with timing advice, N19 outcome claims, N20 jargon, N21 tone and filler praise,
 N22 protocol repetition, N23 question answered, N27 instructions from the message, plus placeholder integrity and length.
-Phase 5 adds N24-N26 (allergens, recipe gate, recipe steps).
+Phase 5 adds N24-N26 (allergens, recipe gate, recipe steps). N30: no claim that a person was told or has reviewed anything.
 """
 from __future__ import annotations
 
@@ -20,6 +20,36 @@ NUMBER_RE = re.compile(r"\d+(?:\.\d+)?")
 # Answers shown to a person are plain text with light markdown (bold, bullets). Links, images, HTML and control characters are
 # never allowed, whoever wrote them (the AI, a data file, or an echoed message).
 MARKUP_RE = re.compile(r"https?:|www\.|://|<\s*/?[a-zA-Z!]|!\[|\]\(|javascript:|data:[a-z]+/|[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", re.IGNORECASE)
+
+# N30: the app takes no action on a person's behalf (no notification, no booking, no review by a coach or doctor), so an answer
+# must never say it did. Checked on cleaned text, where "I've" has become "i ve". If a real action is added later, it is recorded in
+# the audit log's operational_actions and this check is relaxed for exactly that action.
+OPERATIONAL_CLAIMS = [re.compile(p) for p in (
+    r"\b(i|we|swastham|dixit)('ve| ve| have| has| had)? (just |already |now )?(notified|alerted|informed|contacted|escalated|messaged|emailed|flagged)\b",
+    r"\b(your|the|a) (dixit )?(coach|doctor|dietitian|dietician|team|nutritionist|clinician|expert|consultant)s?( has| have| had| is| are| will| would)( been)? "
+    r"(notified|alerted|informed|contacted|flagged|reviewing|reviewed|checked|seen|looking at|looked at|calling|reaching out|checking)\b",
+    r"\b(has|have) been (notified|alerted|informed|escalated|forwarded|flagged|passed on)\b",
+    r"\b(will|shall|would) (call|contact|reach out to|get back to|follow up with|message) you\b",
+    r"\b(i|we)('ve| ve| have)? (booked|scheduled|arranged|set up) (an |your |a )?(appointment|call|consultation|callback)\b",
+)]
+
+# A conditional only excuses a phrase when it sits in the same clause, in front of it ("only when your expert has checked your
+# results"). "If you need help, I've notified your coach" and "You can relax, your coach has been notified" are claims: the
+# conditional belongs to an earlier clause. "can", "could", "may" and "might" are not conditionals.
+CONDITIONAL_WORDS = {"when", "whenever", "if", "once", "until", "unless", "after", "before", "should", "only"}
+CLAUSE_BREAK = re.compile(r"[,.;:!?\n]+|\s[-–—]\s")
+
+
+def operational_claims(text: str) -> list[str]:
+    """The phrases in `text` that claim an action or a review that did not happen."""
+    found = []
+    for clause in CLAUSE_BREAK.split(text):
+        cleaned = clean(clause)
+        for pattern in OPERATIONAL_CLAIMS:
+            for m in pattern.finditer(cleaned):
+                if not CONDITIONAL_WORDS.intersection(cleaned[:m.start()].split()):
+                    found.append(m.group(0))
+    return found
 
 
 @dataclass
@@ -63,6 +93,9 @@ def check_ai_text(ai_text: str, draft: Draft, plan: AnswerPlan, index: FoodIndex
     if extra_foods:
         results.append(_fail("N16", "critical", f"names foods not in the answer plan: {extra_foods}"))
     results += _word_checks(cleaned, words)
+    claims = operational_claims(free_text)
+    if claims:
+        results.append(_fail("N30", "critical", f"claims an action or a review that did not happen: {claims[:3]}"))
     if golden is not None and golden.relaxing_claims(free_text):
         results.append(_fail("N4", "critical", f"relaxes a Golden Rule: {golden.relaxing_claims(free_text)}"))
     if word_count(draft.fill(ai_text)) > plan.max_words * 1.25:
@@ -123,6 +156,9 @@ def check_final(final_text: str, draft: Draft, plan: AnswerPlan, state: ChatStat
         if any(has_phrase(cleaned, clean(t)) for t in ("two meals", "2 meals", "nothing in between")):
             results.append(_fail("N22", "major", "protocol text appeared although the plan said none"))
     results += _word_checks(clean(PLACEHOLDER_RE.sub(" ", draft.template())), words)   # our own template must pass too
+    claims = operational_claims(final_text)
+    if claims:
+        results.append(_fail("N30", "critical", f"claims an action or a review that did not happen: {claims[:3]}"))
     if golden is not None and golden.relaxing_claims(final_text):
         results.append(_fail("N4", "critical", f"relaxes a Golden Rule: {golden.relaxing_claims(final_text)}"))
     if plan.type == "emergency":

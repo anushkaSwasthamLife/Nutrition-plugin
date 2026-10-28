@@ -568,3 +568,60 @@ The client sent a nine-sheet Golden Rules KB. The combined table and the list of
 ## Prompt review, round 2 (21 Oct 2026)
 
 A second pass over many more prompts. The chat now repairs common typos ("calries", "protien"), reads calorie and nutrient ranges ("between 200 and 300 kcal", "need 20 g protein"), answers "who are you" and body facts, and says honestly that fasting and special diets such as keto are not covered. It also handles goodbyes and "no allergies", adds foods said later ("i also have onion") to what is at home, lets "what about veg" narrow a dish search, and answers bare unlisted foods, "nutrition of ...", kinds of food ("are nuts allowed") and cheat days. Roman-Hindi shapes were added. A prompt snapshot (`tests/prompt_snapshot.py`, 369 prompts) and `tests/test_prompt_review2.py` guard these. Still open: "which is lower/better" after two lookups.
+
+## New architecture, built in phases (27 Oct 2026, branch `feature/new-architecture`)
+
+Taken from the Knee AI handover and written up on the workflow page (`Nutrition\workflow.html`, section "Lessons from the Knee workflow").
+The rules-first order of the pipeline did not change. What is new is how a release is pinned, what a turn logs, and what a test run claims.
+
+**Phase 1: release record in the manifest.** `data/manifest.json` already pinned the library files. It now also has a `release` block with the version, status and SHA-256 of
+**every file the manifest names** (`swastham_data`, `programme_rules`, and any section added later: found by shape, so none is forgotten).
+Line endings are ignored, so Windows and Linux agree. The record holds no date and no stored ID: the release ID (`DIXIT-REL-` plus 8
+characters of the digest) is worked out from the files, rebuilding with no change leaves the manifest byte for byte the same, and two PRs
+that change different data files do not touch the same lines.
+
+```
+.venv\Scripts\python.exe -m dixit_answer.release build     # write the record, after the files are reviewed
+.venv\Scripts\python.exe -m dixit_answer.release verify    # exit 1 if any file differs from the record
+```
+
+Development only reports a difference (`release.drifted` in the audit log). **Production refuses to start** on any difference, a missing
+record, or a file added or dropped. The readiness report lists the same problems. After you change a data file, run `build` again; the
+release ID changes with the files. Tests: `tests/test_release.py`.
+
+**Phase 2: state and operational truth.** Every audit record now has `release` (ID, verified, drifted files), `state` (emergency,
+search memory, risk flags, diabetes status as the person said it, language: separate named fields), the data licence (sources on, Indian flag,
+whether test-only data is allowed, as one short `versions.data_licence` string) and `operational_actions` (always empty: nothing in the app notifies, books or escalates).
+New check **N30**: no answer may say that a coach, doctor or team was told, has reviewed something or will call. Conditions
+("only when your expert has checked your results") are not claims. Tests: `tests/test_operational_truth.py`.
+
+**Phase 3: test reports per level.** Defined, static, development run, staging run and soft launch are reported separately and never merged.
+
+```
+.venv\Scripts\python.exe -m dixit_answer.test_report run       # whole suite, recorded in var\test_reports (mock model, so level = development_run)
+.venv\Scripts\python.exe -m dixit_answer.test_report summary   # PASS / FAIL / PARTIAL / NOT_RUN per level
+```
+
+A run of some tests is `PARTIAL`, never `PASS`. A report older than the current release is marked. A development run says in its note that
+no AI was called. Tests: `tests/test_test_report.py`.
+
+**Not built (decisions needed first):** what to do when the audit log cannot be written, the "can't check your limits right now" reply, and
+the one-ladder order of authority. They are listed on the workflow page as proposals for the doctor, dietitian and client.
+
+**Phase 4: when the system cannot do its job (proposed policy, to confirm).**
+- *The audit log cannot be written* (`pipeline.AuditLog`): lines wait in memory and are written, in order, when the file works again.
+  Emergency and harmful-intent replies never wait for it. Other answers go out while up to 50 lines wait; after that the answer is withheld
+  and the chat shows the fixed "can't keep a record" reply. `/api/info` shows `audit.queued` and `audit.write_failures`.
+- *The rules or limits cannot be loaded* (`web.py`): the chat answers with a fixed reply (no recipe, no food advice, 112 and Tele-MANAS
+  14416) and nothing is cached, so the next message tries to load again. A bug while answering is not hidden: it stays a 500.
+- Both replies live in `unavailable.py`, in English only, with no data-file dependency. Tests: `tests/test_unavailable.py`.
+
+**Phase 5: what the approved sources do not cover.** Where `compose.py` already says "we don't have ..." (special diets, no reliable
+nutrition value), and when the safe fallback replaces an answer that failed a check, the pipeline logs a `knowledge_gap` line with the
+topic. The audit report adds "Not covered by approved data" by topic. Reply wording is unchanged. Tests: `tests/test_knowledge_gaps.py`.
+
+**Phase 6: the authority ladder (advisory).** `data/authority_ladder.json` (AUTH-0.1.0, PROPOSED, `binding: false`) puts nine sources in one
+order and marks the rules that apply on every rung. `ladder.py` checks at start-up that every rule in `rules_registry.json` has a place;
+its version goes into every audit record. It is **not** the Dixit priority integer and decides nothing in the pipeline yet
+(the registry says binding priorities need the Dixit base package). One thing to confirm: the ladder puts limits (rung 3) above Golden
+Rules (rung 4), while the registry's application order runs the Golden Rules first. Tests: `tests/test_authority_ladder.py`.

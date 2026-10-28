@@ -183,6 +183,9 @@ def find_problems(data, library, index, environment: str) -> list[str]:
     binding_id = (data.manifest.get("programme_binding") or {}).get("id")
     if data.binding_map is not None and data.binding_map.get("binding_id") != binding_id:
         problems.append(f"binding map is for {data.binding_map.get('binding_id')!r}, the manifest's programme binding is {binding_id!r}")
+    from .ladder import problems as ladder_problems
+    if getattr(data, "authority_ladder", None) is not None:
+        problems += ladder_problems(data.authority_ladder, data.rules_registry)
 
     from .lists import list_problems
     problems += list_problems(data, library, index, environment)

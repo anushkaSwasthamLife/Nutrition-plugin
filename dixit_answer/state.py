@@ -142,3 +142,16 @@ class StateStore:
         with self._lock:
             self._db.execute("DELETE FROM chat_state WHERE conversation_id = ?", (conversation_id,))
             self._db.commit()
+
+
+def audit_view(state: ChatState) -> dict:
+    """The state a turn ended with, as separate named fields for the audit log (each field has one meaning)."""
+    return {
+        "emergency": {"turn": state.emergency_turn, "category": state.emergency_category or None, "checkin_done": state.emergency_checkin_done},
+        "search_memory": {"open": state.target_open, "include": list(state.target_include), "exclude": list(state.target_exclude),
+                          "diet": state.target_diet or None, "targets": len(state.last_targets), "turn": state.last_targets_turn},
+        "risk_flags": {k: v for k, v in state.safety_status.items() if v != "unknown"},
+        "diabetes": {"status": state.diabetes_status, "prior_history": state.prior_diabetes_history,
+                     "consultant_validated": state.consultant_validated},
+        "language": state.language,
+    }

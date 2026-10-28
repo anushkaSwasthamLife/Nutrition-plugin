@@ -6,7 +6,7 @@ from datetime import date
 
 import pytest
 
-from dixit_answer import readiness
+from dixit_answer import readiness, release
 from dixit_answer.config import DATA_DIR
 from dixit_answer.consistency import find_problems
 from dixit_answer.sign_off import limit_problems
@@ -141,6 +141,7 @@ def signed_copy(tmp_path, monkeypatch):
                     e.update(reviewer="Dr Rao", review_date="2026-10-01")
             doc["unsafe_ingredients"].update(reviewed_empty_by="Dr Rao", reviewed_empty_on="2026-10-01")
         (d / name).write_text(json.dumps(doc), encoding="utf-8")
+    release.build(d / "manifest.json", d)       # the signed files are the release
     return d
 
 
@@ -311,3 +312,12 @@ def test_a_console_that_cannot_show_a_character_does_not_crash_the_report(signed
     out = subprocess.run([sys.executable, "-m", "dixit_answer.readiness"], capture_output=True,
                          env={**__import__("os").environ, "PYTHONIOENCODING": "cp1252"}, cwd=str(DATA_DIR.parent.parent))
     assert out.returncode == 1 and b"NOT READY" in out.stdout
+
+
+def test_readiness_lists_a_file_edited_after_the_release_record(signed_copy):
+    """The signed copy is built with a release record; a hand edit after that shows up as a 'release' open point."""
+    assert run(signed_copy)["ready"]
+    _edit(signed_copy, "dish_rules.json", lambda doc: doc.update(note="hand edit after the release record"))
+    res = run(signed_copy)
+    items = [i for i in res["items"] if i["area"] == "release"]
+    assert not res["ready"] and len(items) == 1 and "dish_rules.json" in items[0]["problem"]
