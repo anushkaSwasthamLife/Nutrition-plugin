@@ -764,6 +764,8 @@ class Composer:
             if re.search(rf"\b{word}s?\b", u.cleaned):
                 field = fld
         recipe = self.recipes.nutrition_of(u.recipe_nutrients, person or Person()) if (u.recipe_nutrients and self.recipes) else None
+        if recipe is not None and self._dish_named_not_recipe(recipe, u, plan):
+            recipe = None       # "calories in pizza": a book's other name for its Sprout Base Pizza; the pizza record answers
         if recipe is not None:                      # one of our recipes: its own totals, worked out from its ingredients
             totals, each = self.recipes.totals_text(recipe), self.recipes.per_unit_text(recipe)
             if totals:
@@ -920,6 +922,14 @@ class Composer:
             d.lines.append(lock("T", "These are facts for information only, not permission."))
 
     DISH_FIELDS = {"energy_kcal": "energy_kcal", "carbohydrate_g": "carb_g", "protein_g": "protein_g", "fat_g": "fat_g", "fiber_g": "fibre_g"}
+
+    def _dish_named_not_recipe(self, recipe, u, plan) -> bool:
+        """The message names our recipe only by another name ("pizza" for Sprout Base Pizza, "dalma" for Mixed vegetable with dal)
+        and the dish data holds a dish of exactly that name: the dish is what was asked. "calories in aloo gobhi" still gets
+        our Aloo Gobhi (dry), because it names the recipe itself."""
+        if self.dishes is None or f" {clean(recipe.name.split(' (')[0])} " in f" {u.cleaned} ":
+            return False
+        return any(result.status == FOUND and span in self.dishes.exact for span, result in self._dish_hits(u, plan))
 
     def _dish_hits(self, u, plan) -> list:
         """The dishes the message names, leaving out words that are only a food from the food list ("dal" is the food, not a dish)."""

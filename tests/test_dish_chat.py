@@ -1,7 +1,6 @@
 """Dishes in the chat: nutrient questions answered from the INDB dish lookup, and the pieces that make that safe."""
 import re
 import zipfile
-from pathlib import Path
 
 import pytest
 
@@ -12,7 +11,7 @@ from dixit_answer.llm import MockLLM
 from dixit_answer.loader import Library
 from dixit_answer.pipeline import Engine
 
-NUTRITION = Path(__file__).resolve().parents[2] / "Nutrition"
+NUTRITION = load_settings().nutrition_dir          # DIXIT_NUTRITION_DIR, as the app reads it
 needs_data = pytest.mark.skipif(not (NUTRITION / "indb_source" / "recipes.xlsx").exists() or not list((NUTRITION / "releases").glob("*/alias_table.csv")),
                                 reason="INDB files are not on this PC")
 

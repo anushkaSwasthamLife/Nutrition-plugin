@@ -1,7 +1,6 @@
 """Edge cases for dishes in the chat: hostile text, several dishes in one question, allergy sentences, generic words, fuzz."""
 import random
 import re
-from pathlib import Path
 
 import pytest
 
@@ -9,9 +8,10 @@ from dixit_answer import dish_lookup as dl
 from dixit_answer.config import load_settings
 from dixit_answer.llm import MockLLM
 from dixit_answer.pipeline import Engine
+from dixit_answer.textnorm import clean
 from dixit_answer.understand import question_part
 
-NUTRITION = Path(__file__).resolve().parents[2] / "Nutrition"
+NUTRITION = load_settings().nutrition_dir          # DIXIT_NUTRITION_DIR, as the app reads it
 needs_data = pytest.mark.skipif(not (NUTRITION / "indb_source" / "recipes.xlsx").exists() or not list((NUTRITION / "releases").glob("*/alias_table.csv")),
                                 reason="INDB files are not on this PC")
 
@@ -133,9 +133,22 @@ def test_each_dish_name_answers_about_that_dish(eng):
         if result.status != dl.FOUND:
             continue
         r = ask(eng, f"calories in {name}")
+        ours = re.match(r"For our (.+?)(?: \(.*?\))? recipe \(", r.answer)          # our own recipe of that dish, named by its own name
+        if ours and f" {clean(ours.group(1))} " in f" {clean(name)} ":
+            continue
         if f"DISH-{result.code}" not in r.records and not r.records and "won't suit you" not in r.answer:      # a blocked food is a valid answer
             wrong.append((name, r.answer[:70]))
     assert not wrong, wrong[:5]
+
+
+@needs_data
+@pytest.mark.parametrize("dish, recipe", [("pizza", "Sprout Base Pizza"), ("dalma", "Mixed vegetable with dal")])
+def test_a_dish_that_is_only_another_name_for_a_book_recipe_answers_from_the_dish_record(eng, dish, recipe):
+    # A book's other name for its recipe ("Pizza" for Sprout Base Pizza) must not answer for every pizza.
+    r = ask(eng, f"calories in {dish}")
+    assert recipe not in r.answer and any(rec.startswith("DISH-") for rec in r.records), r.answer[:120]
+    r = ask(eng, f"calories in {recipe.lower()}")
+    assert f"For our {recipe} recipe" in r.answer                       # naming the recipe itself still gets its own totals
 
 
 # ---------------------------------------------------------------- fuzz
