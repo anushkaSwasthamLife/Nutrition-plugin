@@ -5,7 +5,7 @@ import re
 import pytest
 
 from dixit_answer import dish_lookup as dl
-from dixit_answer.config import load_settings
+from dixit_answer.config import load_settings, recipe_book_paths
 from dixit_answer.llm import MockLLM
 from dixit_answer.pipeline import Engine
 from dixit_answer.textnorm import clean
@@ -141,14 +141,43 @@ def test_each_dish_name_answers_about_that_dish(eng):
     assert not wrong, wrong[:5]
 
 
+BOOK_DISHES = [("pizza", "Sprout Base Pizza", "adore_90_days"), ("dalma", "Mixed vegetable with dal", "healthful_diet")]
+
+
+def _needs_book(book):
+    path = recipe_book_paths().get(book)
+    if path is None:
+        pytest.skip(f"the {book} recipe book is switched off in .env")
+    if not path.is_file():
+        pytest.skip(f"the {book} recipe file is not on this PC ({path}); set its variable in .env")
+
+
+@pytest.fixture(scope="module")
+def eng_no_dishes(tmp_path_factory):
+    """As production runs: no INDB dish lookup."""
+    return Engine(load_settings(llm_provider="mock", llm_api_key="", var_dir=tmp_path_factory.mktemp("nodish"), dish_lookup=False),
+                  llm=MockLLM())
+
+
 @needs_data
-@pytest.mark.parametrize("dish, recipe", [("pizza", "Sprout Base Pizza"), ("dalma", "Mixed vegetable with dal")])
-def test_a_dish_that_is_only_another_name_for_a_book_recipe_answers_from_the_dish_record(eng, dish, recipe):
+@pytest.mark.parametrize("dish, recipe, book", BOOK_DISHES)
+def test_a_dish_that_is_only_another_name_for_a_book_recipe_answers_from_the_dish_record(eng, dish, recipe, book):
     # A book's other name for its recipe ("Pizza" for Sprout Base Pizza) must not answer for every pizza.
     r = ask(eng, f"calories in {dish}")
     assert recipe not in r.answer and any(rec.startswith("DISH-") for rec in r.records), r.answer[:120]
-    r = ask(eng, f"calories in {recipe.lower()}")
-    assert f"For our {recipe} recipe" in r.answer                       # naming the recipe itself still gets its own totals
+
+
+@pytest.mark.parametrize("dish, recipe, book", BOOK_DISHES)
+def test_without_the_dish_lookup_a_book_recipe_never_answers_by_another_name(eng_no_dishes, dish, recipe, book):
+    # PR #5 review: production has no dish lookup, so the rule must hold without it.
+    r = ask(eng_no_dishes, f"calories in {dish}")
+    assert recipe not in r.answer and "For our" not in r.answer, r.answer[:120]
+
+
+@pytest.mark.parametrize("dish, recipe, book", BOOK_DISHES)
+def test_naming_the_book_recipe_itself_still_gets_its_totals(eng_no_dishes, dish, recipe, book):
+    _needs_book(book)
+    assert f"For our {recipe} recipe" in ask(eng_no_dishes, f"calories in {recipe.lower()}").answer
 
 
 # ---------------------------------------------------------------- fuzz

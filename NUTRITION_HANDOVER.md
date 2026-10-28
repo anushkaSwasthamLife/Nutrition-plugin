@@ -213,3 +213,8 @@ Still to add (binding `ANCHOR_LOGGING` and orchestration patch): rule IDs by bin
    programme books may be indexed as text or only used through derived rules.
 5. **Profile condition as status:** whether "type 2 diabetes" in the profile's conditions counts as the person's stated status
    (eval LP-07).
+6. **A book's other names for its recipes.** The 90 Days deck gives "Pizza" as the other name of Sprout Base Pizza (day 68), and
+   Healthful Diet gives "Dalma" for Mixed vegetable with dal. Since 28 Oct 2026 these names never answer a nutrition question
+   with the recipe's totals (only the recipe's own name does), but they still find the recipe for a recipe request: "pizza recipe"
+   gives the Sprout Base Pizza. The programme decides whether a book's other names should find its recipe; until then this is
+   current behaviour, not a decision.
