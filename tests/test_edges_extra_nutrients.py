@@ -8,7 +8,7 @@ from decimal import Decimal
 
 import pytest
 
-from dixit_answer.config import DATA_DIR, DEFAULT_LIBRARY_DIR
+from dixit_answer.config import DATA_DIR
 from dixit_answer.loader import LoadError, load_library, load_manifest
 from dixit_answer.person import Person, sanitize_profile
 from dixit_answer.recipes import EXTRA_NUTRIENTS, MACROS, NUTRIENTS, CheckedRecipe
@@ -226,6 +226,14 @@ def test_every_approved_recipe_computes_and_has_whole_dish_sodium(engine):
         assert r.totals["sodium_mg"] >= 0 and r.totals["potassium_mg"] >= 0, raw["recipe_id"]
 
 
+def _library(engine, sub=""):
+    """The library folder the engine loaded (DIXIT_LIBRARY_DIR or the default), or a folder beside it; skip when it is absent."""
+    path = engine.settings.library_dir.parent / sub if sub else engine.settings.library_dir
+    if not path.exists():
+        pytest.skip(f"{path} is not on this PC; set DIXIT_LIBRARY_DIR to the nutrition library")
+    return path
+
+
 def _settings(engine, library_dir, environment="development"):
     s = copy.copy(engine.settings)
     s.library_dir, s.environment = library_dir, environment
@@ -233,7 +241,7 @@ def _settings(engine, library_dir, environment="development"):
 
 
 def test_production_mode_loads_the_new_library_with_the_same_fields(engine):
-    lib = load_library(_settings(engine, DEFAULT_LIBRARY_DIR, "production"), load_manifest())
+    lib = load_library(_settings(engine, _library(engine), "production"), load_manifest())
     rec = next(iter(lib.records.values()))
     assert lib.report["library_version"] == "1.0.5" and all(k in rec["nutrients_per_100g"] for k in EXTRA_NUTRIENTS)
     assert not any(lib.is_indian(r) for r in lib.records)
@@ -241,7 +249,7 @@ def test_production_mode_loads_the_new_library_with_the_same_fields(engine):
 
 @pytest.mark.parametrize("how", ["flip a byte", "append a space", "delete a line", "empty the file", "remove the file"])
 def test_a_tampered_or_damaged_library_stops_start_up(engine, tmp_path, how):
-    shutil.copytree(DEFAULT_LIBRARY_DIR / "01_data", tmp_path / "01_data")
+    shutil.copytree(_library(engine) / "01_data", tmp_path / "01_data")
     target = tmp_path / "01_data" / "nutrition_usda_reference.jsonl"
     data = target.read_bytes()
     if how == "flip a byte":
@@ -259,9 +267,7 @@ def test_a_tampered_or_damaged_library_stops_start_up(engine, tmp_path, how):
 
 
 def test_the_old_library_is_refused_because_the_pins_moved(engine):
-    old = DEFAULT_LIBRARY_DIR.parent / "Swastham_Nutrition_Data_Library_v1_0_3"
-    if not old.exists():
-        pytest.skip("library v1.0.3 is not on this PC")
+    old = _library(engine, "Swastham_Nutrition_Data_Library_v1_0_3")
     with pytest.raises(LoadError, match="Hash mismatch"):
         load_library(_settings(engine, old), load_manifest())
 
@@ -283,7 +289,7 @@ def test_a_checkable_nutrient_with_no_value_anywhere_stops_start_up(engine):
 def test_the_workbook_release_and_library_sodium_agree_for_every_food_in_the_food_list(engine):
     released = {}
     import csv
-    release_dir = DEFAULT_LIBRARY_DIR.parent / "releases"
+    release_dir = _library(engine, "releases")
     newest = sorted(p.name for p in release_dir.iterdir())[-1]
     with open(release_dir / newest / "nutrition_usda.csv", encoding="utf-8-sig", newline="") as f:
         for r in csv.DictReader(f):
