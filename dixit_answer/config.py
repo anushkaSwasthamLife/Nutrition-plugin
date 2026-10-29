@@ -7,6 +7,7 @@ from another `.env` named by LLM_ENV_FILE, so the Swastham Report analysis key i
 from __future__ import annotations
 
 import ipaddress
+import json
 import os
 import re
 from dataclasses import dataclass, field
@@ -23,8 +24,12 @@ _BESIDE_PROJECT = PROJECT_DIR.parent / "Nutrition" / LIBRARY_NAME
 DEFAULT_LIBRARY_DIR = _BESIDE_PROJECT if _BESIDE_PROJECT.is_dir() else Path.home() / "Desktop" / "Nutrition" / LIBRARY_NAME
 
 
-# The Dixit programme's recipe book (Healthful Diet), transcribed to JSON. Private circulation: it is never copied into the repo.
-DEFAULT_BOOK_RECIPES = PROJECT_DIR.parent / "Nutrition" / "healthful-diet" / "healthful-diet-recipes.json"
+# Programmes' recipe books are listed in data/manifest.json ("recipe_books"): no book is named in code. Their recipe files are
+# kept outside the repo (private circulation) in this folder unless the book's own environment variable points elsewhere.
+DEFAULT_RECIPE_BOOKS_DIR = PROJECT_DIR.parent / "Nutrition"
+# The programme binding package (manifest "programme_binding") is kept outside git too: in the project's own nutrition folder
+# (git-ignored) or beside the project, unless DIXIT_BINDING_DIR points at it.
+BINDING_SEARCH_DIRS = (PROJECT_DIR / "nutrition", PROJECT_DIR.parent / "Nutrition")
 LOOPBACK_HOST = "127.0.0.1"
 _HOST_NAME = re.compile(r"^(?=.{1,253}$)[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$")
 
@@ -74,7 +79,8 @@ class Settings:
     var_dir: Path = PROJECT_DIR / "var"          # chat state and audit log (gitignored)
     nutrition_dir: Path = PROJECT_DIR.parent / "Nutrition"   # INDB source files and releases (development only)
     dish_lookup: bool = True                     # answer "calories in poha" from INDB dishes (development only; off in production)
-    book_recipes_file: Path | None = DEFAULT_BOOK_RECIPES   # the Healthful Diet recipes file (kept outside the repo); None = off
+    recipe_books: dict = field(default_factory=dict)  # book id (manifest "recipe_books") -> its recipes file; a book left out is off
+    binding_dir: Path | None = None              # the programme binding package (manifest "programme_binding"); None = not installed
     llm_provider: str = "mock"                   # mock | groq
     llm_api_key: str = field(default="", repr=False)
     llm_base_url: str = "https://api.groq.com/openai/v1"
@@ -98,11 +104,36 @@ class Settings:
         return self.var_dir / "audit.jsonl"
 
 
-def _book_path(value: str) -> Path | None:
-    value = value.strip()
+def recipe_book_paths(env: dict | None = None, books_dir: Path | None = None) -> dict[str, Path]:
+    """Each recipe book in the manifest -> its recipes file: the book's environment variable if set ("off" turns the book off),
+    else its "file" inside the recipe books folder."""
+    env = dict(os.environ) if env is None else env
+    books_dir = Path(books_dir or env.get("DIXIT_RECIPE_BOOKS_DIR") or DEFAULT_RECIPE_BOOKS_DIR)
+    manifest = json.loads((DATA_DIR / "manifest.json").read_text(encoding="utf-8"))
+    paths = {}
+    for book in manifest.get("recipe_books", []):
+        value = env.get(book.get("env", ""), "").strip()
+        if value.lower() in {"off", "0", "false", "no", "none"}:
+            continue
+        paths[book["id"]] = Path(value) if value else books_dir / book["file"]
+    return paths
+
+
+def binding_path(env: dict | None = None) -> Path | None:
+    """The programme binding package folder: DIXIT_BINDING_DIR (or the manifest's own variable) if set, "off" for none, else the
+    first search folder that holds the manifest's "package" path. None when it is not on this machine."""
+    env = dict(os.environ) if env is None else env
+    entry = json.loads((DATA_DIR / "manifest.json").read_text(encoding="utf-8")).get("programme_binding") or {}
+    value = env.get(entry.get("env") or "DIXIT_BINDING_DIR", "").strip()
     if value.lower() in {"off", "0", "false", "no", "none"}:
         return None
-    return Path(value) if value else DEFAULT_BOOK_RECIPES
+    if value:
+        return Path(value)
+    package = entry.get("package")
+    for folder in BINDING_SEARCH_DIRS if package else ():
+        if (folder / package).is_dir():
+            return folder / package
+    return None
 
 
 def load_settings(**overrides) -> Settings:
@@ -127,7 +158,8 @@ def load_settings(**overrides) -> Settings:
         var_dir=Path(env.get("DIXIT_VAR_DIR") or PROJECT_DIR / "var"),
         nutrition_dir=Path(env.get("DIXIT_NUTRITION_DIR") or PROJECT_DIR.parent / "Nutrition"),
         dish_lookup=env.get("DIXIT_DISH_LOOKUP", "on").strip().lower() not in {"off", "0", "false", "no"},
-        book_recipes_file=_book_path(env.get("DIXIT_BOOK_RECIPES", "")),
+        recipe_books=recipe_book_paths(env),
+        binding_dir=binding_path(env),
         llm_provider=provider,
         llm_api_key=api_key,
         llm_base_url=env.get("LLM_BASE_URL") or "https://api.groq.com/openai/v1",

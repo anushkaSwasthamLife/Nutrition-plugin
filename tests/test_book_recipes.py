@@ -6,7 +6,7 @@ import json
 import pytest
 
 from dixit_answer.book_recipes import _quantity, _yield, convert, load_book
-from dixit_answer.config import DATA_DIR, DEFAULT_BOOK_RECIPES
+from dixit_answer.config import DATA_DIR, recipe_book_paths
 from dixit_answer.golden import Status
 from dixit_answer.llm import MockLLM
 from dixit_answer.main_pipeline import MainPipeline
@@ -16,8 +16,9 @@ from dixit_answer.recipes import recipe_badge
 
 MAP = json.loads((DATA_DIR / "book_ingredient_map.json").read_text(encoding="utf-8"))
 FOODS = {f["id"]: f for f in json.loads((DATA_DIR / "food_master.json").read_text(encoding="utf-8"))["foods"]}
-HAVE_BOOK = DEFAULT_BOOK_RECIPES.is_file()
-needs_book = pytest.mark.skipif(not HAVE_BOOK, reason=f"the book file is not on this machine ({DEFAULT_BOOK_RECIPES})")
+BOOK_FILE = recipe_book_paths()["healthful_diet"]
+HAVE_BOOK = BOOK_FILE.is_file()
+needs_book = pytest.mark.skipif(not HAVE_BOOK, reason=f"the book file is not on this machine ({BOOK_FILE})")
 VEG = {"allergies": [], "diet_type": "vegetarian"}
 
 
@@ -85,7 +86,8 @@ def test_the_recipe_carries_its_source_credit_kind_diet_and_yield():
     r = convert(mini_book(dish(ingredients=[{"item": "minced chicken", "quantity": 500, "unit": "g"}], category="non_vegetarian")),
                 MAP, FOODS).recipes[0]
     assert r["source"] == "healthful_diet_book" and r["book"] == {
-        "id": "HD-T-01", "page": 120, "title": "Healthful Diet", "signed": False, "source_book": "healthful_diet",
+        "id": "HD-T-01", "page": 120, "page_label": "page", "title": "Healthful Diet", "credit": "Healthful Diet", "signed": False,
+        "source_book": "healthful_diet",
         "citation": "Healthful Diet: Think wise. Eat twice. Drop size (ADORE Trust, 2021)"}
     assert (r["kind"], r["diet"], r["main_ingredients"]) == ("protein", "non_vegetarian", ["FOOD-CHICKEN-MINCE"])
     assert r["yield"] == {"count": 4.0, "unit": "vati", "per_serving": 1.0} and "Test bhaji" in r["aliases"]
@@ -123,7 +125,7 @@ def test_a_missing_book_file_means_the_book_is_off(tmp_path):
 
 def test_an_engine_pointed_at_a_missing_book_starts_and_still_offers_recipes(settings, tmp_path):
     s = copy.copy(settings)
-    s.book_recipes_file = tmp_path / "nope.json"
+    s.recipe_books = {"healthful_diet": tmp_path / "nope.json"}
     result = MainPipeline(Engine(s, llm=MockLLM())).answer("what can I make with aloo and onion")
     assert result.handled_by == "plugin" and "Healthful Diet" not in result.answer
 
@@ -134,7 +136,7 @@ def book_engine(settings):
     if not HAVE_BOOK:
         pytest.skip("the book file is not on this machine")
     s = copy.copy(settings)
-    s.book_recipes_file = DEFAULT_BOOK_RECIPES
+    s.recipe_books = {"healthful_diet": BOOK_FILE}
     return Engine(s, llm=MockLLM())
 
 
@@ -155,15 +157,15 @@ def run_dish(engine, rid, person):
 
 @needs_book
 def test_the_book_loads_its_dishes(book_engine):
-    summary = book_engine.book.summary()
+    summary = book_engine.books["healthful_diet"].summary()
     assert summary["dishes"] == 31 and summary["components"] == 22
     assert {s["id"] for s in summary["skipped"]} == {"HD-H-01", "HD-I-01"}
-    assert book_engine.versions["book_recipes"] == "Healthful Diet, 31 dishes"
+    assert book_engine.versions["recipe_book:healthful_diet"] == "BM-0.1.1, Healthful Diet, 31 dishes"
 
 
 @needs_book
 def test_every_book_dish_passes_for_a_plain_profile_with_usda_numbers(book_engine):
-    for raw in book_engine.book.recipes:
+    for raw in book_engine.books["healthful_diet"].recipes:
         out = run_dish(book_engine, raw["recipe_id"], plain(book_engine))
         assert out.status == "recipe" and out.recipe.recipe_id == raw["recipe_id"], (raw["name"], out.rejected)
         assert out.recipe.tier == "programme" and out.recipe.totals.get("energy_kcal", 0) > 0
@@ -172,8 +174,8 @@ def test_every_book_dish_passes_for_a_plain_profile_with_usda_numbers(book_engin
 @needs_book
 def test_a_book_dish_is_credited_to_the_book(book_main):
     r = book_main.answer("palak paneer recipe", None, VEG)
-    assert r.badge["kind"] == "programme" and r.badge["text"] == "Healthful Diet recipe · Dixit programme (test)"
-    assert "A recipe from the Dixit programme's Healthful Diet book, page 127 (transcribed from the book" in r.answer
+    assert r.badge["kind"] == "programme" and r.badge["text"] == "Recipe from Healthful Diet (test)"
+    assert "A recipe from Healthful Diet, page 127 (transcribed for this app; not yet checked by our dietitian)." in r.answer
     assert "Dr. Dixit" not in r.answer                               # the book is credited, never a person
     assert "**Amounts we assumed:** salt 3 g" in r.answer and "kasuri methi" in r.answer
     assert "kcal in each vati" in r.answer and "calculated from USDA" in r.answer
@@ -184,8 +186,8 @@ def test_a_book_dish_is_credited_to_the_book(book_main):
 @needs_book
 def test_a_swap_makes_it_a_tailored_version(book_main):
     r = book_main.answer("mix veg khichadi recipe", None, {"allergies": ["milk"], "diet_type": "vegetarian"})
-    assert r.badge["kind"] == "adapted" and r.badge["text"].startswith("Tailored from a Healthful Diet recipe")
-    assert "A version of a Healthful Diet recipe, page 149, tailored for your health and taste" in r.answer
+    assert r.badge["kind"] == "adapted" and r.badge["text"] == "Adapted from Healthful Diet (test)"
+    assert "Adapted for your health and taste from a recipe in Healthful Diet, page 149" in r.answer
     assert "ghee" not in r.answer.split("**How:**")[0].lower()
 
 
@@ -236,7 +238,7 @@ class DishModel(MockLLM):
 @needs_book
 def test_no_similar_dish_means_an_ai_draft_recalculated_and_gated(settings):
     s = copy.copy(settings)
-    s.book_recipes_file = DEFAULT_BOOK_RECIPES
+    s.recipe_books = {"healthful_diet": BOOK_FILE}
     main = MainPipeline(Engine(s, llm=DishModel()))
     r = main.answer("recipe for saag", None, {"allergies": ["milk"], "diet_type": "vegetarian"})
     assert r.badge["kind"] == "ai_checked" and "Our AI drafted one from our food list" in r.answer
@@ -254,5 +256,5 @@ def test_without_a_model_nothing_is_drafted(book_main):
 def test_a_list_of_dishes_starts_with_the_programmes_main_dishes(book_main):
     r = book_main.answer("give me a recipe", None, VEG)
     first = r.answer.split("\n")[1].lstrip("- ")
-    raw = next(x for x in book_main.engine.book.recipes if x["name"] == first)
+    raw = next(x for x in book_main.engine.books["healthful_diet"].recipes if x["name"] == first)
     assert raw["kind"] in {"sabji", "dal", "protein"}

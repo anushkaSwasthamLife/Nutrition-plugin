@@ -7,6 +7,7 @@ No fixed India-first or USA-first order (N3); ties between different dishes are 
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 from .loader import FLAG_ENERGY_MISSING, FLAG_MACRO_MISMATCH, FLAG_MACROS_INCOMPLETE, FLAG_SERVING_UNCLEAR, Library
@@ -34,6 +35,9 @@ class FoodIndex:
                 self.alias_to_id.setdefault(clean(alias, self.spelling_map), food["id"])
         # Longest aliases first, so "sweet potato" wins over "potato" and "moong dal" over "dal".
         self._aliases = sorted(self.alias_to_id, key=lambda a: (-len(a.split()), -len(a)))
+        # A recipe-only food can claim its own phrase, so a shorter chat alias inside it is not read: "baking soda" is not "soda".
+        self._claimed = sorted({clean(a, self.spelling_map) for f in food_master["foods"] if f.get("claims_phrase")
+                                for a in [f["name"], *f.get("aliases", [])]}, key=len, reverse=True)
 
     def name(self, food_id: str) -> str:
         return self.foods[food_id]["name"]
@@ -49,7 +53,8 @@ class FoodIndex:
 
     def find(self, text: str, already_clean: bool = False) -> list[FoodMention]:
         cleaned = text if already_clean else clean(text, self.spelling_map)
-        taken: list[tuple[int, int]] = []
+        taken: list[tuple[int, int]] = [(m.start(), m.end()) for phrase in self._claimed
+                                        for m in re.finditer(rf"(?<!\w){re.escape(phrase)}(?!\w)", cleaned)]
         found: list[FoodMention] = []
         for alias in self._aliases:
             start = 0

@@ -52,3 +52,19 @@ def test_emergency_and_risk_words(engine):
     assert safety.check("I don't take insulin", ChatState("t"), words).updates["diabetes_medicine"] == "no"
     assert safety.check("I am 15 years old", ChatState("t"), words).updates["under_18"] == "yes"
     assert not safety.check("I have hypothyroidism", ChatState("t"), words).emergency
+
+
+@pytest.mark.parametrize("message, expected", [
+    ("what should my 5 year old eat", None),                         # live run 27 Oct 2026: the parent was marked under 18
+    ("my son is 8 years old, what can he eat", None),
+    ("meri beti 12 years old hai, kya khilau", None),
+    ("my daughter is 16 years old and I am 45, can I eat dal", "no"),  # the person's own age still counts
+    ("I am 15 years old and my mother is 40 years old", "yes"),
+    ("my mom says I am 15, can I eat paneer", "yes"),               # PR #4 review: "I am N" is always the person's own
+    ("my friend told me I am 14", "yes"),
+    ("my mom says i'm 16", "yes"),
+    ("my age is 15 years old", "yes"),
+    ("my son aged 8 eats dal", None),
+])
+def test_someone_elses_age_never_changes_the_persons_own_status(engine, message, expected):
+    assert safety.check(message, ChatState("t"), engine.words).updates.get("under_18") == expected

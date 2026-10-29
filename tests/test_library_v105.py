@@ -2,13 +2,20 @@
 import hashlib
 import json
 import math
-from pathlib import Path
 
 import pytest
 
-from dixit_answer.config import DEFAULT_LIBRARY_DIR
+from dixit_answer.config import load_settings
 
 NEW_IDS = {"USDA-2768188", "USDA-2515382", "USDA-2710839", "USDA-2262073", "USDA-2262075", "USDA-2261420"}
+
+
+def _library(engine=None):
+    """The library folder the engine loaded (DIXIT_LIBRARY_DIR or the default); skip when it is absent."""
+    path = engine.settings.library_dir if engine else load_settings().library_dir
+    if not path.exists():
+        pytest.skip(f"{path} is not on this PC; set DIXIT_LIBRARY_DIR to the nutrition library")
+    return path
 
 
 def _usda(engine):
@@ -82,9 +89,7 @@ def test_corrected_examples(engine):
 
 
 def test_the_library_files_match_their_own_manifest():
-    base = Path(DEFAULT_LIBRARY_DIR)
-    if not base.exists():
-        pytest.skip("library is not on this PC")
+    base = _library()
     manifest = json.loads((base / "06_release" / "file_manifest.json").read_text(encoding="utf-8"))
     assert manifest["file_count"] == len(manifest["files"])
     for rel, info in manifest["files"].items():
@@ -93,7 +98,7 @@ def test_the_library_files_match_their_own_manifest():
 
 
 def test_the_index_agrees_with_the_records(engine):
-    base = Path(DEFAULT_LIBRARY_DIR) / "01_data" / "nutrition_master_index.jsonl"
+    base = _library(engine) / "01_data" / "nutrition_master_index.jsonl"
     rows = [json.loads(line) for line in base.read_text(encoding="utf-8").splitlines() if line]
     assert len(rows) == 14425 and len({r["nutrition_record_id"] for r in rows}) == 14425
     for row in rows:

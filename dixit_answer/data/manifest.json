@@ -1,6 +1,6 @@
 {
   "runtime_id": "DIXIT-ANSWER-0.3.0-dev",
-  "note": "Release bundle for the Dixit answer pipeline. The loader checks every pin at start and stops on any mismatch.",
+  "note": "Release bundle for the Dixit answer pipeline. The loader checks every pin at start and stops on any mismatch. 27 Oct 2026: adds programme_binding, the Dixit nutrition binding package (Knee-style handover: rules, answer checks, intents, orchestration anchors, tests) that this pipeline is measured against; read from outside the repo and hash-pinned.",
   "library": {
     "name": "Swastham_Nutrition_Data_Library",
     "version": "1.0.5",
@@ -70,10 +70,54 @@
     "decision_logic": "decision_logic_draft.json",
     "doctor_packs": "doctor_packs.json",
     "router_rules": "router_rules.json",
-    "book_ingredient_map": "book_ingredient_map.json",
     "food_cautions": "food_cautions_test.json",
+    "binding_map": "binding_map.json",
     "authority_ladder": "authority_ladder.json"
   },
+  "programme_binding": {
+    "id": "DIXIT-NUTRITION-1.2.6",
+    "package": "Dixit_AI_Nutrition_Data_Integration_Amendment_v1_2_6/Dixit_AI_Nutrition_Data_Integration_Amendment_v1_2_6",
+    "env": "DIXIT_BINDING_DIR",
+    "release_manifest": "06_release/file_manifest.json",
+    "release_manifest_sha256": "f597da3d2e1ad08f25be5cf99b0ed353d55d2112f94c8dfdd58bc8343e740ec9",
+    "files": {
+      "package_manifest": "01_manifest/amendment_manifest.json",
+      "flow": "02_registration/orchestration_flow_v1_1_1_anchored.json",
+      "library_registration": "02_registration/nutrition_library_registration.json",
+      "priority_registry": "02_registration/rule_priority_registry.json",
+      "conflicts": "03_rules/conflict_supersession_registry_addendum.json",
+      "patch_rules": "03_rules/immediate_runtime_patch_rules_v1_1_1_update.json",
+      "answer_checks": "03_rules/nutrition_answer_validator_addendum.json",
+      "rules": "03_rules/nutrition_lookup_and_composition_rules.json",
+      "universal_rules": "03_rules/universal_knowledge_and_personal_boundary_rules.json",
+      "intents": "04_conversation/nutrition_intent_taxonomy_addendum.json",
+      "orchestration_patch": "04_conversation/nutrition_orchestration_patch.json",
+      "functional_tests": "05_tests/nutrition_integration_tests.json",
+      "structural_tests": "05_tests/structural_acceptance_tests.json",
+      "critical_rechecks": "05_tests/critical_regression_addendum.json"
+    },
+    "runtime": {
+      "dixit_baseline": null,
+      "required_overlay": null
+    },
+    "note": "The Dixit baseline (v1.1) and overlay (v1.1.1) this binding patches are not on this machine, so they are null: the effective runtime is then not a validated combination and production refuses it. Fill each version only when that package is installed and its tests run."
+  },
+  "recipe_books": [
+    {
+      "id": "healthful_diet",
+      "map": "book_ingredient_map.json",
+      "file": "healthful-diet/healthful-diet-recipes.json",
+      "env": "DIXIT_BOOK_RECIPES",
+      "note": "Healthful Diet (ADORE Trust, 2021), the Dixit programme's recipe book."
+    },
+    {
+      "id": "adore_90_days",
+      "map": "deck_ingredient_map.json",
+      "file": "adore-90-days/adore-90-days-recipes.json",
+      "env": "DIXIT_DECK_RECIPES",
+      "note": "The ADORE 90 Days Weight Loss & Diabetes Reversal Challenge diet charts (Aug-Oct 2023)."
+    }
+  ],
   "release": {
     "hash_rule": "SHA-256 of the file with line endings made LF",
     "library_digest": "5bcbc32439e409f6bbd521b09a50a786608ca24773094e87c8fada383ffadefd",
@@ -96,17 +140,17 @@
         "status": "PROPOSED",
         "sha256": "98985b046f5c813e5e65e8c3bc546050c395b5a096736786f31ad93c24487917"
       },
+      "binding_map": {
+        "name": "binding_map.json",
+        "version": "BMAP-0.1.0",
+        "status": "PROPOSED",
+        "sha256": "00b925debc31db485caa78e4f05fddfca93d52b1ff663858b6948be0055e2cf0"
+      },
       "black_lists": {
         "name": "black_lists.json",
         "version": "BL-0.1.0",
         "status": "PROPOSED",
         "sha256": "3f23371855376f54e102b97dc87ad5d66e3b21a0de18b4edb8fbfbe3ac611129"
-      },
-      "book_ingredient_map": {
-        "name": "book_ingredient_map.json",
-        "version": "BM-0.1.0",
-        "status": "TEST ONLY",
-        "sha256": "61487725a788b99bd67328467fd145ba8ea67198ccf68ba895bc5dcc1c87a2d8"
       },
       "book_measures": {
         "name": "book_measures_draft.json",
@@ -146,9 +190,9 @@
       },
       "doctor_packs": {
         "name": "doctor_packs.json",
-        "version": "DP-0.3.0",
+        "version": "DP-0.3.1",
         "status": "TEST ONLY",
-        "sha256": "17238b3be311a6c1c6fe84e5c4ee4f232549681e2cbaf2d6fa64017f0e6aa3a2"
+        "sha256": "f1774ce27a86b110e9238b0fa31b5a364830a9a855d5897a82db45808be00bb4"
       },
       "emergency_rules": {
         "name": "emergency_rules.json",
@@ -164,9 +208,9 @@
       },
       "food_master": {
         "name": "food_master.json",
-        "version": "FM-0.4.0",
+        "version": "FM-0.5.0",
         "status": "TEST ONLY",
-        "sha256": "c261f0a47a4a6076bdb90294926f635850ad6ac74cbc6080361d6821d35f436d"
+        "sha256": "dee826f792569695f768bd3348ae66867a496fbc7303874cb318153608c51984"
       },
       "general_recipe_rules": {
         "name": "general_recipe_rules.json",
@@ -198,6 +242,18 @@
         "status": "PARTIAL",
         "sha256": "f035ab4817386e3e50bb35eefa5a6877d21b16c472ae81414251b3b0c8fece74"
       },
+      "recipe_books.adore_90_days": {
+        "name": "deck_ingredient_map.json",
+        "version": "DM-0.1.1",
+        "status": "TEST ONLY",
+        "sha256": "5af8c99dbf41f7be9b1b25bd2889088ac78ac7a3a0fb984250287e666b1a5024"
+      },
+      "recipe_books.healthful_diet": {
+        "name": "book_ingredient_map.json",
+        "version": "BM-0.1.1",
+        "status": "TEST ONLY",
+        "sha256": "c58607e68f08a0ae390c7b226a9701cdd25d5d8d27f90d4b79ef15243f53a277"
+      },
       "recipes": {
         "name": "recipes_test.json",
         "version": "RCP-0.2.0",
@@ -212,9 +268,9 @@
       },
       "router_rules": {
         "name": "router_rules.json",
-        "version": "IR-0.3.2",
+        "version": "IR-0.4.0",
         "status": "PROPOSED",
-        "sha256": "c5eae0f6b7dce681dee8e75acad1a647af336534ac44bf09a46140264e8a10ea"
+        "sha256": "b3cc8743731012631082803575628878bc08a74cdbf5abf9e1bd76fbecb30c06"
       },
       "rules_registry": {
         "name": "rules_registry.json",
@@ -230,15 +286,15 @@
       },
       "swap_table": {
         "name": "swap_table_test.json",
-        "version": "SW-0.2.0",
+        "version": "SW-0.2.1",
         "status": "TEST ONLY",
-        "sha256": "f9751a02c8e0303f107e4d0276627b5e4a79f7e073e38786bda031426dac2eac"
+        "sha256": "064f993e7b3e858047c227f2408c0793c486f881860f5301feb5f2ac1b08c2a6"
       },
       "white_lists": {
         "name": "white_lists.json",
-        "version": "WL-0.2.0",
+        "version": "WL-0.2.1",
         "status": "PROPOSED",
-        "sha256": "7ec54d1b520edae30b37bfccf1031e02bbd629d270c7752e039ef22cc9535ec8"
+        "sha256": "8d6568a39eca91a465006c9f38edbaad3256bb10f3a04657a69b1a042f816c00"
       },
       "word_lists": {
         "name": "word_lists.json",

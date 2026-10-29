@@ -377,6 +377,23 @@ def test_unknown_dish_is_named_logged_and_alternatives_offered(settings):
     assert any(x["kind"] == "recipe_backlog" for x in lines)
 
 
+@pytest.mark.parametrize("message, dish", [("recipe for paneer tikka masala", "paneer tikka masala"),   # live run 27 Oct 2026 (LP-05)
+                                           ("paneer tikka masala recipe", "paneer tikka masala"),
+                                           ("how to make dal makhani", "dal makhani")])
+def test_a_dish_we_dont_hold_is_said_before_a_dish_with_its_food(engine, message, dish):
+    r = engine.answer(message, None, {"allergies": [], "diet_type": "vegetarian"})
+    first = r.answer.splitlines()[0]
+    assert f'"{dish}"' in first and "I don't have" in first
+    assert r.plan["unknown_dish"] == dish
+
+
+@pytest.mark.parametrize("message", ["recipe for paneer", "aloo sabji recipe", "aloo ki sabji recipe", "how to cook bhindi",
+                                     "recipe for aloo gobi", "how do I make paneer and peanuts and kachalu every three ours?"])
+def test_a_food_with_generic_dish_words_is_not_an_unknown_dish(engine, message):
+    r = engine.answer(message, None, {"allergies": [], "diet_type": "vegetarian"})
+    assert "I don't have" not in r.answer and not r.plan["unknown_dish"]
+
+
 def test_generic_recipe_request_is_not_an_unknown_dish(settings):
     engine, _ = make_engine(settings)
     r = engine.answer("give me recipes please", None, {"allergies": []})

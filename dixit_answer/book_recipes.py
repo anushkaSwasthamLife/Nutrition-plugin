@@ -1,8 +1,14 @@
-"""The Dixit programme's recipe book (Healthful Diet, ADORE Trust 2021) as recipes the pipeline can offer (plugin step 5).
+"""A programme's recipe book as recipes the pipeline can offer (plugin step 5). Nothing here names a book.
 
-The book file stays outside this repository (it is for private circulation and an unverified transcription), like the INDB files:
-`DIXIT_BOOK_RECIPES` points at it, and without it the book is simply off. What the repository holds is the import rule set,
-`data/book_ingredient_map.json`: for every ingredient line in the book, which foods it is and how many grams.
+Books are listed in `data/manifest.json` ("recipe_books"): an id, its ingredient map in `data/`, and its recipes file. The recipes
+files stay outside this repository (private circulation, unverified transcriptions), like the INDB files; the book's environment
+variable or the recipe books folder points at them, and a book whose file is not there is simply off. The repository holds each
+book's import rule set (its ingredient map): for every ingredient line in the book, which foods it is and how many grams, plus
+the book's title and citation and which of its dishes are dishes at all.
+
+A recipes file is JSON: {"_about": {"source": {"title"}}, "recipes": [{"id", "name", "category", "book_page", "ingredients":
+[{"item", "quantity", "unit"}], "steps": [...], "total_yield", "serving_size", "local_names"}]}. Adding a book means adding that
+file, its map and a manifest entry, and listing the book in a doctor pack's recipe_books: no code changes.
 
 Every dish becomes a recipe in the collection's own shape, so the usual flow applies unchanged: the doctor pack and the patient's
 allergies, diet and limits filter it, USDA records give the numbers (never the book's printed values, which disagree with their
@@ -16,12 +22,12 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-SOURCE_ID = "healthful_diet_book"
 TEST_STATUSES = {"TEST ONLY", "STUB", "PARTIAL", "PROPOSED", "DRAFT"}
 UNIT_NAMES = {"teaspoon": "teaspoon", "teaspoons": "teaspoon", "spoon": "teaspoon", "tablespoon": "tablespoon",
               "tablespoons": "tablespoon", "count": "count", "pieces": "piece", "piece": "piece", "clove": "clove",
               "inch": "inch", "bunch": "bunch", "stalks": "stalk", "sprigs": "stalk", "lemon": "lemon", "packet": "packet",
-              "vati": "vati", "g": "g", "kg": "kg", "ml": "ml", "pinch": "pinch"}
+              "vati": "vati", "g": "g", "kg": "kg", "ml": "ml", "pinch": "pinch", "sprig": "stalk", "bowl": "bowl", "cup": "cup",
+              "handful": "handful", "ball": "ball"}
 FOOD_UNIT_KEYS = {"count": ("count", "piece", "medium", "clove"), "piece": ("piece", "count", "medium"), "clove": ("clove",),
                   "inch": ("inch",), "bunch": ("bunch",), "stalk": ("stalk",), "lemon": ("lemon",), "packet": ("packet",)}
 SHOWN_UNITS = {"vati", "teaspoon", "tablespoon", "clove", "inch", "bunch", "stalk", "lemon", "packet"}
@@ -50,7 +56,7 @@ def load_book(path: Path | None) -> dict | None:
         return None
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     if not isinstance(data, dict) or not isinstance(data.get("recipes"), list):
-        raise ValueError(f"{path}: not a Healthful Diet recipes file")
+        raise ValueError(f"{path}: not a recipe book file (it needs a 'recipes' list)")
     return data
 
 
@@ -196,8 +202,9 @@ def convert(book: dict, mapping: dict, foods: dict) -> BookImport:
             "kind": kind, "main_ingredients": main, "diet": diet,
             "makes": f"the whole dish; the book's yield is {raw.get('total_yield') or 'not stated'}",
             "ingredients": [{"food": f, "grams": round(g, 1), "unit": shown.get(f, "")} for f, g in grams.items()],
-            "steps": list(raw["steps"]), "why_it_fits": "", "meal_place": "home_meal", "source": meta.get("source_id", SOURCE_ID),
-            "book": {"id": rid, "page": raw.get("book_page"), "title": short, "signed": signed, "source_book": book_id,
+            "steps": list(raw["steps"]), "why_it_fits": "", "meal_place": "home_meal", "source": meta["source_id"],
+            "book": {"id": rid, "page": raw.get(meta.get("page_field", "book_page")), "page_label": meta.get("page_label", "page"),
+                     "title": short, "credit": meta.get("credit") or short, "signed": signed, "source_book": book_id,
                      "citation": meta.get("citation", short)},
             "assumed": assumed, "trace_items": trace, "optional_items": optional,
             "printed_nutrition": raw.get("nutrition_per_serving"),

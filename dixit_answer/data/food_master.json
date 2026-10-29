@@ -1,7 +1,7 @@
 {
- "version": "FM-0.4.0",
+ "version": "FM-0.5.0",
  "status": "TEST ONLY",
- "note": "Draft food master table for development. Allergens, record choices and unit weights need dietitian review; unit weights are typical values to verify against USDA FoodData Central portion data. ingredient_record = USDA per-100 g record used for recipe maths. No IFCT links. FM-0.3.0 (16 Oct 2026): 35 more vegetables, leafy greens, roots and pulses/legumes added, each mapped to one USDA record; the vegetables people cook most in India were missing (capsicum, brinjal, karela, carrot and others). Names and aliases (Hindi, regional) need dietitian review; only carrot, beetroot and capsicum have a unit weight, the rest have none until a dietitian enters one. dry_weight = the record is for the dry, uncooked pulse: the AI is never asked to build a recipe around it (it needs soaking and boiling), approved recipes may use it. FM-0.3.2: rice now has a USDA record so approved recipes (khichdi, pulao, lemon rice) can use it; besan and suji added. The AI is never asked to draft around them. FM-0.4.0 (26 Oct 2026): foods and unit weights for the Healthful Diet book recipes. Book-only foods have match_in_chat false, so they never change how a chat message is read; proxies say which USDA record stands in and why. Every record, weight, proxy and allergen here needs dietitian review.",
+ "note": "Draft food master table for development. Allergens, record choices and unit weights need dietitian review; unit weights are typical values to verify against USDA FoodData Central portion data. ingredient_record = USDA per-100 g record used for recipe maths. No IFCT links. FM-0.3.0 (16 Oct 2026): 35 more vegetables, leafy greens, roots and pulses/legumes added, each mapped to one USDA record; the vegetables people cook most in India were missing (capsicum, brinjal, karela, carrot and others). Names and aliases (Hindi, regional) need dietitian review; only carrot, beetroot and capsicum have a unit weight, the rest have none until a dietitian enters one. dry_weight = the record is for the dry, uncooked pulse: the AI is never asked to build a recipe around it (it needs soaking and boiling), approved recipes may use it. FM-0.3.2: rice now has a USDA record so approved recipes (khichdi, pulao, lemon rice) can use it; besan and suji added. The AI is never asked to draft around them. FM-0.4.0 (26 Oct 2026): foods and unit weights for the Healthful Diet book recipes. Book-only foods have match_in_chat false, so they never change how a chat message is read; proxies say which USDA record stands in and why. Every record, weight, proxy and allergen here needs dietitian review. FM-0.5.0 (27 Oct 2026): 16 foods for the ADORE 90 Days Challenge recipes (oats, ragi flour, cheese, pasta, maida, daliya, buttermilk, olives, molasses, tendli, dill, pistachios, rice flour, multigrain bread, ketchup, and sprouted moong with a USDA record, read as 'sprouts' through generic). Like FM-0.4.0 they never match chat text, and every record, proxy and allergen needs dietitian review.",
  "foods": [
   {
    "id": "FOOD-CHAPATI",
@@ -2972,7 +2972,9 @@
     "teaspoon": 4.6
    },
    "match_in_chat": false,
-   "source": "Healthful Diet import (FM-0.4.0)"
+   "claims_phrase": true,
+   "source": "Healthful Diet import (FM-0.4.0)",
+   "note": "claims_phrase: 'baking soda' is this food's own phrase, so it is never read as 'soda' (a sweet drink)."
   },
   {
    "id": "FOOD-BHAJNI",
@@ -3029,6 +3031,295 @@
     }
    ],
    "note": "Values computed from the grains of the book's mixed-grain roast flour (HD-E-05)."
+  },
+  {
+   "id": "FOOD-MOONG-SPROUTS",
+   "name": "sprouted mung beans",
+   "category": "pulse",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-169957",
+   "unit_weights_g": {},
+   "match_in_chat": false,
+   "source": "ADORE 90 Days import (FM-0.5.0)",
+   "generic": "FOOD-SPROUTS"
+  },
+  {
+   "id": "FOOD-RAGI-FLOUR",
+   "name": "ragi (finger millet) flour",
+   "category": "staple",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-172023",
+   "unit_weights_g": {
+    "tablespoon": 8
+   },
+   "match_in_chat": false,
+   "source": "ADORE 90 Days import (FM-0.5.0)",
+   "dry_weight": true,
+   "proxy": "USDA has no finger millet flour: millet flour stands in"
+  },
+  {
+   "id": "FOOD-OATS",
+   "name": "oats",
+   "category": "staple",
+   "aliases": [],
+   "allergens": [
+    "gluten"
+   ],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-173904",
+   "unit_weights_g": {
+    "tablespoon": 5
+   },
+   "match_in_chat": false,
+   "source": "ADORE 90 Days import (FM-0.5.0)",
+   "dry_weight": true,
+   "note": "Tagged gluten: oats are often processed with wheat; the dietitian decides."
+  },
+  {
+   "id": "FOOD-CHEESE",
+   "name": "cheese",
+   "category": "dairy",
+   "aliases": [],
+   "allergens": [
+    "milk"
+   ],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "USDA-328637",
+   "unit_weights_g": {
+    "tablespoon": 7
+   },
+   "match_in_chat": false,
+   "source": "ADORE 90 Days import (FM-0.5.0)",
+   "proxy": "cheddar stands in for processed cheese"
+  },
+  {
+   "id": "FOOD-PASTA",
+   "name": "pasta",
+   "category": "staple",
+   "aliases": [],
+   "allergens": [
+    "gluten"
+   ],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-168927",
+   "unit_weights_g": {},
+   "match_in_chat": false,
+   "source": "ADORE 90 Days import (FM-0.5.0)",
+   "dry_weight": true
+  },
+  {
+   "id": "FOOD-MAIDA",
+   "name": "maida (refined wheat flour)",
+   "category": "staple",
+   "aliases": [],
+   "allergens": [
+    "gluten"
+   ],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-169761",
+   "unit_weights_g": {
+    "tablespoon": 8
+   },
+   "match_in_chat": false,
+   "source": "ADORE 90 Days import (FM-0.5.0)",
+   "dry_weight": true
+  },
+  {
+   "id": "FOOD-DALIYA",
+   "name": "daliya (broken wheat)",
+   "category": "staple",
+   "aliases": [],
+   "allergens": [
+    "gluten"
+   ],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-170688",
+   "unit_weights_g": {},
+   "match_in_chat": false,
+   "source": "ADORE 90 Days import (FM-0.5.0)",
+   "dry_weight": true,
+   "proxy": "USDA bulgur stands in for daliya"
+  },
+  {
+   "id": "FOOD-BUTTERMILK",
+   "name": "buttermilk",
+   "category": "dairy",
+   "aliases": [],
+   "allergens": [
+    "milk"
+   ],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "USDA-2259792",
+   "unit_weights_g": {},
+   "match_in_chat": false,
+   "source": "ADORE 90 Days import (FM-0.5.0)"
+  },
+  {
+   "id": "FOOD-OLIVES",
+   "name": "olives",
+   "category": "vegetable",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-169094",
+   "unit_weights_g": {
+    "count": 4
+   },
+   "match_in_chat": false,
+   "source": "ADORE 90 Days import (FM-0.5.0)"
+  },
+  {
+   "id": "FOOD-MOLASSES",
+   "name": "molasses",
+   "category": "sweet",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-168820",
+   "unit_weights_g": {
+    "teaspoon": 7
+   },
+   "match_in_chat": false,
+   "source": "ADORE 90 Days import (FM-0.5.0)"
+  },
+  {
+   "id": "FOOD-TENDLI",
+   "name": "tendli (ivy gourd)",
+   "category": "vegetable",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-168414",
+   "unit_weights_g": {},
+   "match_in_chat": false,
+   "source": "ADORE 90 Days import (FM-0.5.0)",
+   "proxy": "USDA has no ivy gourd: dishcloth gourd stands in"
+  },
+  {
+   "id": "FOOD-DILL",
+   "name": "dill (shepu)",
+   "category": "vegetable",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-172233",
+   "unit_weights_g": {},
+   "match_in_chat": false,
+   "source": "ADORE 90 Days import (FM-0.5.0)"
+  },
+  {
+   "id": "FOOD-PISTACHIO",
+   "name": "pistachios",
+   "category": "nut",
+   "aliases": [],
+   "allergens": [
+    "tree_nut"
+   ],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "USDA-2515379",
+   "unit_weights_g": {
+    "piece": 0.7
+   },
+   "match_in_chat": false,
+   "source": "ADORE 90 Days import (FM-0.5.0)"
+  },
+  {
+   "id": "FOOD-RICE-FLOUR",
+   "name": "rice flour",
+   "category": "staple",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-169714",
+   "unit_weights_g": {
+    "tablespoon": 10
+   },
+   "match_in_chat": false,
+   "source": "ADORE 90 Days import (FM-0.5.0)",
+   "dry_weight": true
+  },
+  {
+   "id": "FOOD-MULTIGRAIN-BREAD",
+   "name": "multigrain bread",
+   "category": "staple",
+   "aliases": [],
+   "allergens": [
+    "gluten"
+   ],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "SURVEY-2707777",
+   "unit_weights_g": {
+    "piece": 30
+   },
+   "match_in_chat": false,
+   "source": "ADORE 90 Days import (FM-0.5.0)"
+  },
+  {
+   "id": "FOOD-KETCHUP",
+   "name": "tomato ketchup",
+   "category": "pantry",
+   "aliases": [],
+   "allergens": [],
+   "fact_records": {
+    "development": [],
+    "production": []
+   },
+   "ingredient_record": "LEGACY-168556",
+   "unit_weights_g": {
+    "tablespoon": 15
+   },
+   "match_in_chat": false,
+   "source": "ADORE 90 Days import (FM-0.5.0)",
+   "note": "Has added sugar."
   }
  ]
 }

@@ -75,12 +75,27 @@ def test_a_manifest_section_added_later_is_pinned_without_changing_the_code(data
     assert "recipe_maps.book_a" in _manifest(data_copy)["release"]["files"]
 
 
+def test_every_recipe_book_map_is_pinned_and_a_changed_one_is_caught(data_copy):
+    # PR #4 review: the maps sit in a list ("recipe_books"), not a {name: file.json} section, so they were not found by shape.
+    manifest = load_manifest()
+    for book in manifest["recipe_books"]:
+        assert manifest["release"]["files"][f"recipe_books.{book['id']}"]["name"] == book["map"]
+    book = _manifest(data_copy)["recipe_books"][0]
+    path = data_copy / book["map"]
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    doc["note"] = "edited after the release record"
+    path.write_text(json.dumps(doc, indent=2), encoding="utf-8")
+    result = release.verify(_manifest(data_copy), data_copy)
+    assert not result["verified"] and result["drifted"] == [f"recipe_books.{book['id']}"]
+
+
 def test_every_file_named_by_the_manifest_is_in_the_record():
     manifest = load_manifest()
     named = set()
     for section, value in manifest.items():
         if isinstance(value, dict) and value and all(isinstance(v, str) and v.endswith(".json") for v in value.values()):
             named |= set(value.values())
+    named |= {book["map"] for book in manifest.get("recipe_books") or []}
     assert named == {entry["name"] for entry in manifest["release"]["files"].values()}
 
 

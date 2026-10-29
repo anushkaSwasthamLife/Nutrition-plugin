@@ -43,6 +43,8 @@ NEUTRAL_TEXTS = {
     "draft_meal_place": "a home-cooked main dish; a sabji or dal",
     "portion": "I can't give amounts to eat or drink. Please ask {coach} if you want to talk about amounts.",
     "plan_refusal": "I can't write a meal plan or diet chart. I can suggest dishes for a meal if you tell me what you have.",
+    "metric_refusal": "Insulin demand, glycaemic index and glycaemic load aren't part of the approved nutrition data, so I can't give or "
+                      "estimate them. I can give the calories, carbohydrate, protein, fat or fibre of a food or dish instead.",
     "frequency_note": "",
 }
 

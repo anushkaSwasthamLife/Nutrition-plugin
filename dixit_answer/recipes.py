@@ -495,7 +495,7 @@ class RecipeService:
     # ------------------------------------------------------------------ the flow
     def run(self, *, person: Person, have: list[str], dish_ids: list[str], unknown_words: list[str],
             suggestion: dict | None, wants_list: bool, home_foods: list[str], exclude: list[str] | None = None,
-            exclude_foods: list[str] | None = None) -> RecipeOutcome:
+            exclude_foods: list[str] | None = None, avoid_drafts: list[str] | None = None) -> RecipeOutcome:
         started = time.monotonic()
         out = RecipeOutcome(status="tips_only")
 
@@ -636,6 +636,10 @@ class RecipeService:
             out.trace.append(f"R5: AI drafting skipped ({why})")
         else:
             allowed = set(main_have) | (self.pantry - blocked)
+            # "Something different": the dishes already shown for these foods, and earlier AI drafts, must not come back renamed.
+            different_from = list(dict.fromkeys(
+                [self.recipes[rid]["name"] for rid in (exclude or []) if rid in self.recipes
+                 and set(self.recipes[rid]["main_ingredients"]) & set(main_have)] + list(avoid_drafts or [])))[:12]
             feedback: list[str] = []
             for attempt in range(3):          # first draft + at most 2 retries
                 if time.monotonic() - started > TIME_BUDGET_SECONDS:
@@ -649,12 +653,16 @@ class RecipeService:
                     "limits_whole_dish": {n: float(l.release_at.quantize(Decimal('1'))) for n, l in limits.items()},
                     "previous_attempt_failed": feedback,
                 }
+                if different_from:
+                    request["different_from"] = different_from
                 try:
                     draft = self.llm.draft_recipe(request)
                 except Exception as exc:          # provider errors -> fallback, never a crash
                     out.trace.append(f"R5: draft failed ({exc.__class__.__name__}: {str(exc)[:80]})")
                     break
                 recipe, problem = self._validate_draft(draft, allowed)
+                if recipe is not None and _same_dish(recipe.name, different_from):
+                    recipe, problem = None, f"the same dish as one already shown ({recipe.name}): draft a different dish"
                 if recipe is None:
                     feedback = [f"invalid draft: {problem}"]
                     out.trace.append(f"R5: attempt {attempt + 1} rejected ({problem})")
@@ -706,13 +714,13 @@ class RecipeService:
         """The source sentence shown under the dish name (step 8). Test data says so."""
         if recipe.origin != "approved":
             return recipe.label or AI_LABEL
-        if recipe.book:                                    # the programme's book: credited to the book, never to a person
-            page = f", page {recipe.book['page']}" if recipe.book.get("page") else ""
-            test = "" if recipe.source_signed else " (transcribed from the book; not yet checked by our dietitian)"
-            title = recipe.book.get("title", "the book")
+        if recipe.book:                                    # the programme's book, by the name in its map (book.credit)
+            where = f", {recipe.book.get('page_label', 'page')} {recipe.book['page']}" if recipe.book.get("page") else ""
+            test = "" if recipe.source_signed else " (transcribed for this app; not yet checked by our dietitian)"
+            credit = recipe.book.get("credit") or recipe.book.get("title", "the programme's recipes")
             if recipe.repairs:
-                return f"A version of a {title} recipe{page}, tailored for your health and taste{test}."
-            return f"A recipe from {programme().identity['programme']}'s {title} book{page}{test}."
+                return f"Adapted for your health and taste from a recipe in {credit}{where}{test}."
+            return f"A recipe from {credit}{where}{test}."
         if recipe.tier == "doctor":
             lead = f"Adapted for you from a recipe recommended by {recipe.source_name}" if recipe.repairs else f"Recommended by {recipe.source_name}"
             return lead + ("." if recipe.source_signed else " (test pack, not yet signed by the doctor).")
@@ -783,6 +791,12 @@ class RecipeService:
 _MARKUP_RE = re.compile(r"[<>{}\[\]|\\`*_#~]|https?:|www\.|://|@", re.IGNORECASE)
 
 
+def _same_dish(name: str, names: list[str]) -> bool:
+    """A draft named like a dish already shown ("Karela Sabji (dry)" / "karela sabji"): words compared, brackets and case ignored."""
+    words = lambda text: frozenset(re.sub(r"\([^)]*\)|[^a-z ]", " ", text.lower()).split())      # noqa: E731
+    return words(name) in {words(n) for n in names}
+
+
 def _plain_text(text: str) -> bool:
     """No markup, braces, links or control characters: AI text that is shown to a person must be plain words."""
     return not _MARKUP_RE.search(text) and not any(ord(ch) < 32 for ch in text)
@@ -794,11 +808,11 @@ def recipe_badge(recipe: CheckedRecipe) -> dict:
     if recipe.origin != "approved":
         return {"kind": "ai_checked", "text": "AI-drafted, checked", "recipe_id": recipe.recipe_id}
     if recipe.book:
-        title = recipe.book.get("title", "Book")
+        credit = recipe.book.get("credit") or recipe.book.get("title", "the programme's recipes")
         if recipe.repairs:
-            return {"kind": "adapted", "text": f"Tailored from a {title} recipe{test}", "recipe_id": recipe.recipe_id,
+            return {"kind": "adapted", "text": f"Adapted from {credit}{test}", "recipe_id": recipe.recipe_id,
                     "tier": recipe.tier, "changes": list(recipe.repairs), "book": recipe.book}
-        return {"kind": "programme", "text": f"{title} recipe · {programme().identity['name']}{test}", "recipe_id": recipe.recipe_id,
+        return {"kind": "programme", "text": f"Recipe from {credit}{test}", "recipe_id": recipe.recipe_id,
                 "tier": recipe.tier, "book": recipe.book}
     source = {"doctor": f"{recipe.source_name}'s recipe", "dietitian": "a dietitian-approved recipe"}.get(recipe.tier, "a reference recipe")
     if recipe.repairs:

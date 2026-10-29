@@ -37,7 +37,8 @@ def stub():
 
 @pytest.fixture(scope="module")
 def eng(tmp_path_factory, stub):
-    settings = load_settings(llm_provider="mock", llm_api_key="", var_dir=tmp_path_factory.mktemp("var"), dish_lookup=True)
+    settings = load_settings(llm_provider="mock", llm_api_key="", var_dir=tmp_path_factory.mktemp("var"), dish_lookup=True,
+                             recipe_books={})                 # no programme book: "pasta" has no recipe of ours
     return Engine(settings, llm=stub)
 
 

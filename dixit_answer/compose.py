@@ -190,6 +190,8 @@ class Composer:
                                                 "Please ask {coach} how to fit the programme with what you follow.")))
             elif block == "plan_refusal":
                 d.lines.append(lock("T", P.text("plan_refusal")))
+            elif block == "metric_refusal":
+                d.lines.append(lock("T", P.text("metric_refusal")))
             elif block == "safety_ack":
                 d.lines.append(lock("T", "Thank you for telling me. I've noted it and I'll keep it in mind. Please talk to your doctor before you change when you eat. "
                                          "You can ask me about any food or meal."))
@@ -408,7 +410,8 @@ class Composer:
         out = self.recipes.run(person=person, have=list(plan.ingredients), dish_ids=list(plan.recipe_ids),
                                unknown_words=[] if reply else list(u.unknown_words),
                                suggestion=None if reply else u.suggestion, wants_list=plan.wants_list,
-                               home_foods=list(state.home_foods), exclude=list(plan.exclude_recipes), exclude_foods=list(plan.exclude_foods))
+                               home_foods=list(state.home_foods), exclude=list(plan.exclude_recipes), exclude_foods=list(plan.exclude_foods),
+                               avoid_drafts=list(state.drafts_shown) if plan.exclude_recipes else [])
         d.recipe_trace = out.trace
         general = None
         if plan.unknown_dish and not plan.reply_slot and out.status in {"tips_only", "choices"}:
@@ -661,6 +664,8 @@ class Composer:
 
     def _render_recipe(self, recipe, plan, d: Draft, lock, free, name, state=None) -> None:
         d.recipe = recipe
+        if recipe.origin == "ai_suggested" and state is not None and recipe.name not in state.drafts_shown:
+            state.drafts_shown = (state.drafts_shown + [recipe.name])[-10:]       # "something else" next: the AI must draft a different dish
         if recipe.origin == "approved":
             self._remember_shown(state, [recipe.recipe_id])
             if state is not None:                  # "how many calories in it?" / "and protein?" next: about this dish
@@ -687,7 +692,8 @@ class Composer:
             d.lines.append("- " + lock("K", line))
         if recipe.assumed:                         # the book left these open: the grams we counted are named, never hidden
             d.lines.append("**Amounts we assumed:** " + lock("T", _join(
-                [f"{a['text']} {_grams(a['grams'])} (the book says \"{a['book']}\")" for a in recipe.assumed])))
+                [f"{a['text']} {_grams(a['grams'])} " + ("(the book gives no amount)" if a["book"] == "no amount" else f"(the book says \"{a['book']}\")")
+                 for a in recipe.assumed])))
         if recipe.trace_items:
             d.lines.append("**Not counted (a pinch or a few leaves):** " + lock("T", _join(recipe.trace_items)))
         if recipe.optional_items:

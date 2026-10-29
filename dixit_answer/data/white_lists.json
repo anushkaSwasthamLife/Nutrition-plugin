@@ -1,5 +1,5 @@
 {
-  "version": "WL-0.2.0",
+  "version": "WL-0.2.1",
   "status": "PROPOSED",
   "note": "Allow lists: only what is written here may be used. Every entry needs approved_by and approved_on from a dietitian before production (the readiness report counts the ones that are empty). allowed_in says where an entry may be used. Anything not listed is refused or sent to the review queue, never guessed.",
   "recipe_sources": {
@@ -9,7 +9,8 @@
       {"id": "swastham_dev_draft", "label": "Draft written for development, not signed", "allowed_in": ["development"], "approved_by": null, "approved_on": null},
       {"id": "ai_draft_gated", "label": "Drafted by the AI and passed by the checks", "allowed_in": ["development"], "note": "AI drafting stays off in production until the 100-recipe dietitian review (item G) has passed.", "approved_by": null, "approved_on": null},
       {"id": "indb_recipes", "label": "INDB recipes (Art & Science of Cooking, Basic Food Preparation, web recipes)", "allowed_in": ["development"], "note": "INDB is derived from ICMR-NIN data; development only until a licence or ownership is confirmed.", "approved_by": null, "approved_on": null},
-      {"id": "healthful_diet_book", "label": "Healthful Diet: Think wise. Eat twice. Drop size (ADORE Trust, Pune, 2021), the Dixit programme's recipe book", "allowed_in": ["development"], "note": "Unverified transcription of a book for private circulation; development only until the dietitian has checked the import (book_ingredient_map.json).", "approved_by": null, "approved_on": null}
+      {"id": "healthful_diet_book", "label": "Healthful Diet: Think wise. Eat twice. Drop size (ADORE Trust, Pune, 2021), the Dixit programme's recipe book", "allowed_in": ["development"], "note": "Unverified transcription of a book for private circulation; development only until the dietitian has checked the import (book_ingredient_map.json).", "approved_by": null, "approved_on": null},
+      {"id": "adore_90_days_deck", "label": "90 Days Weight Loss & Diabetes Reversal Challenge recipes (ADORE, Aug-Oct 2023), the Dixit programme's daily diet charts", "allowed_in": ["development"], "note": "Unverified transcription of slides for the programme's members; most amounts are assumed. Development only until the dietitian has checked the import (deck_ingredient_map.json).", "approved_by": null, "approved_on": null}
     ]
   },
   "cooking_methods": {

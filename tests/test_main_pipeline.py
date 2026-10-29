@@ -213,9 +213,41 @@ class FakeModel:
 
 
 def test_main_assistant_uses_a_clean_model_reply(engine):
-    out = MainAssistant(FakeModel("Gentle walks after meals can feel good. Ask your Dixit coach what suits you."),
-                        engine.data.router_rules).reply("should I walk", "exercise")
-    assert out.method == "model" and out.text.startswith("Gentle walks")
+    out = MainAssistant(FakeModel("I'm sorry you're dealing with that. Your doctor is the right person to ask about your tablets."),
+                        engine.data.router_rules).reply("I keep forgetting my tablets", "medicine")
+    assert out.method == "model" and out.text.startswith("I'm sorry you're dealing with that")
+
+
+# Live run with Groq, 27 Oct 2026 (evals LP-01 to LP-03): the model wrote a poem, gave walking advice and said it chats about
+# medicines and symptoms. Only the topics in router_rules "model_topics" may be model-worded (decision of 27 Oct 2026, IR-0.4.0).
+@pytest.mark.parametrize("topic, message", [("general", "write me a poem about the sea"), ("exercise", "how much should I walk"),
+                                            ("sleep", "how do I sleep better"), ("greeting", "hello, who are you?"),
+                                            ("about", "what can you do"), ("thanks", "thanks"), ("cure", "will this cure me"),
+                                            ("child", "what should my son eat")])
+def test_topics_that_set_the_assistants_scope_get_only_the_reviewed_reply(engine, topic, message):
+    rules = engine.data.router_rules
+    out = MainAssistant(FakeModel("The sea is wide and blue, its waves sing songs to you. Walk briskly every morning."), rules).reply(message, topic)
+    assert out.method == "template" and "sea" not in out.text and "Walk briskly" not in out.text
+
+
+def test_cure_and_child_are_never_model_worded_even_if_the_data_lists_them(engine):
+    rules = {**engine.data.router_rules, "model_topics": ["cure", "child", "medicine"]}
+    assistant = MainAssistant(FakeModel("Yes, this diet will fix it."), rules)
+    assert assistant.reply("will this cure me", "cure").method == "template"
+    assert assistant.reply("what should my son eat", "child").method == "template"
+
+
+@pytest.mark.parametrize("topics, problem", [(["child"], "model_topics lists 'child'"), (["cure"], "model_topics lists 'cure'"),
+                                             (["dance"], "model_topics lists 'dance', which has no reviewed reply")])
+def test_a_bad_model_topic_stops_start_up(engine, topics, problem):
+    data = copy.copy(engine.data)
+    data.router_rules = {**engine.data.router_rules, "model_topics": topics}
+    assert any(problem in p for p in find_problems(data, engine.library, engine.index, "development"))
+
+
+def test_the_main_prompt_claims_no_scope_beyond_food():
+    from dixit_answer.llm import MAIN_PROMPT
+    assert "exercise, sleep, medicines" not in MAIN_PROMPT and "Never say you help with anything else" in MAIN_PROMPT
 
 
 @pytest.mark.parametrize("bad", ["Take 500 mg twice a day.", "See https://example.com", "word " * 200, ""])
@@ -236,7 +268,7 @@ def test_symptom_model_reply_always_gets_the_locked_line(engine):
 @pytest.mark.parametrize("bad", ["You can stop your tablets once you feel better.", "Try to skip the evening tablet.",
                                  "Ask your doctor to increase the dose.", "Cut down on the pills slowly.", "Dawai band kar do."])
 def test_a_model_reply_naming_a_medicine_change_gets_the_template(engine, topic, bad):
-    rules = engine.data.router_rules
+    rules = _model_may_word(engine, topic)
     out = MainAssistant(FakeModel(bad), rules).reply("my tablets", topic)
     assert out.method == "template" and out.text.startswith(rules["main_replies"][topic].split("{")[0])
     assert any("medicine change or dose" in p for p in out.problems)
@@ -244,8 +276,14 @@ def test_a_model_reply_naming_a_medicine_change_gets_the_template(engine, topic,
 
 def test_a_change_word_is_fine_outside_the_medicine_topics(engine):
     out = MainAssistant(FakeModel("Short walks are a good way to start, and you can increase them slowly."),
-                        engine.data.router_rules).reply("should I walk", "exercise")
+                        _model_may_word(engine, "exercise")).reply("should I walk", "exercise")
     assert out.method == "model"
+
+
+def _model_may_word(engine, topic):
+    """The router rules with this topic model-worded too: the reply checks must hold if the data ever lists it."""
+    rules = engine.data.router_rules
+    return {**rules, "model_topics": [*rules["model_topics"], topic]}
 
 
 # ---------------------------------------------------------------- steps 2, 4: doctor packs and constraint layers
@@ -417,5 +455,5 @@ def test_a_question_about_getting_off_medicines_gets_the_medicine_line(talk, mes
 
 @pytest.mark.parametrize("topic", ["exercise", "sleep"])
 def test_a_model_reply_on_exercise_or_sleep_that_changes_a_medicine_gets_the_template(engine, topic):
-    out = MainAssistant(FakeModel("Skip your tablets before a walk."), engine.data.router_rules).reply("should I walk", topic)
+    out = MainAssistant(FakeModel("Skip your tablets before a walk."), _model_may_word(engine, topic)).reply("should I walk", topic)
     assert out.method == "template" and any("medicine change or dose" in p for p in out.problems)

@@ -27,6 +27,9 @@ TYPES = [
 CREATIVE = re.compile(r"\b(?:write|compose|draft)\b.*\b(?:poem|poetry|story|essay|song|code|script|letter|email|speech)\b|\b(?:poem|poetry|joke|riddle|lyrics)\b")
 PLAN_REQUEST = re.compile(r"\b(?:meal plan|diet plan|diet chart|meal chart|food chart|menu plan|weekly plan|weekly menu|week plan|plan for the week|plan for a week|"
                           r"(?:\d+|seven|7|three|five|ten|14|30) day (?:meal |diet |food )?(?:plan|chart|menu)|full day (?:meal |diet )?plan|daily meal plan)\b")
+# Values the nutrition binding excludes from the approved release (prohibited_runtime_fields): never given, never estimated.
+EXCLUDED_METRIC = re.compile(r"\b(?:insulin (?:demand|index|load|score)|food insulin index|fii|glyca?emic (?:index|load|value)|"
+                             r"(?:gi|gl) (?:of|value|score|for|kya|kitna)|what(?: is|s| s) the (?:gi|gl)|ka (?:gi|gl))\b")
 DEFINITION = re.compile(r"^(?:what is|what are|what s|whats|define|meaning of|explain|tell me about|what does)\s+(?:a |an |the )?"
                         r"(?:calorie|calories|kcal|protein|proteins|carb|carbs|carbohydrate|carbohydrates|fat|fats|fibre|fiber|nutrient|nutrients|macro|macros)(?: mean)?$")
 COOK_ASK = re.compile(r"\b(?:what (?:to|should i|can i|do i|shall i) (?:cook|make|prepare)|(?:cook|make|prepare) today|what (?:to|can i) (?:cook|make) (?:today|tonight|now|for (?:lunch|dinner|breakfast))|"
@@ -64,6 +67,8 @@ DISH_FILLER = {"please", "pls", "show", "me", "the", "a", "an", "recipe", "recip
                "chahiye", "of", "to", "and", "ok", "okay", "yes", "this", "that", "one", "sure", "make", "how"}
 GENERIC_DISH = {"recipes", "recipe", "some recipes", "a recipe", "something", "food", "a dish", "dish", "dishes", "some dishes",
                 "me recipes", "it", "this", "that", "meal", "meals", "lunch", "dinner"}
+# Words that say what kind of dish, not which dish: "aloo sabji" asks for a dish with aloo, "paneer tikka masala" names one.
+DISH_KIND = {"sabji", "sabzi", "subji", "subzi", "sabjee", "bhaji", "curry", "dish", "dry", "gravy", "wali", "wala", "with", "aur"}
 MAKE = re.compile(r"\b(make|prepare|cook|dish|meal|recipe|what can i (make|cook|prepare))\b")
 RECIPE = re.compile(r"\b(recipe|how (do|to|can) (i |you )?(make|cook|prepare)|how is .* made|method to (make|cook)|want to (?:make|cook|prepare)|let s (?:make|cook)|how about making)\b")
 SOURCE = re.compile(r"\b(source|where (does|do|did) (this|that|these|the) .*(come|from)|where is (this|that) from|reference)\b")
@@ -157,6 +162,7 @@ class Understanding:
     statement: dict = field(default_factory=dict)        # what the person said about themselves: {"allergies", "diet", "avoid", "label"}
     reading: float | None = None                         # a blood sugar reading the person shared (mg/dL)
     refuse_plan: bool = False                            # asked for a meal plan or diet chart: answered with a plain "I can't", then the programme
+    excluded_metric: bool = False                        # asked for insulin demand, GI, GL or FII: not approved values (binding check NUT-FIELD-001)
     subject: str = ""                                    # the food or dish this question is about (for "and protein?" next)
     subject_kind: str = ""
     subject_nutrient: str = ""
@@ -191,6 +197,17 @@ def _preference(cleaned: str, word_lists: dict) -> str:
         if any(has_phrase(cleaned, clean(t)) for t in word_lists["preference_words"][name]):
             return name
     return ""
+
+
+def _names_more_than_its_foods(dish: str, index: FoodIndex) -> bool:
+    """True when a dish name has a word beyond its foods and the generic dish words: "paneer tikka masala" names a dish we may not
+    hold; "aloo sabji" and "paneer" only ask for a dish with those foods. A list ("paneer and peanuts and kachalu") or a long
+    phrase is what the person has, not a dish name."""
+    words = dish.split()
+    if len(words) > 4 or {"and", "aur", "or"} & set(words):
+        return False
+    covered = {w for m in index.find(dish) for w in m.alias.split()}
+    return any(w not in covered and w not in DISH_KIND and w not in DISH_FILLER and w not in NON_FOOD_WORDS for w in dish.split())
 
 
 def classify(cleaned: str, foods: list[str], index: FoodIndex) -> str:
@@ -695,6 +712,10 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
                                  getattr(state, "recipe_choices", None))
 
     question_type = classify(cleaned, foods, index)
+    if EXCLUDED_METRIC.search(cleaned):
+        rest = classify(" ".join(EXCLUDED_METRIC.sub(" ", cleaned).split()), foods, index)
+        if rest in {"neutral_nutrient_lookup", "neutral_food_comparison"}:
+            question_type = rest                           # "calories and GI of dal": the calories are answered, the GI declined
     u.frequency_question = bool(FREQUENCY.search(cleaned)) and question_type == "meal_protocol_application"
     if question_type == "out_of_scope" and not u.slot_fill and parse_status(cleaned):
         question_type = "status_dependent_protocol_question"       # "yes, my consultant confirmed it": a status statement
@@ -720,8 +741,9 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
             dish = " ".join(w for w in m.group(1).split() if w not in {"please", "pls", "some", "a", "an", "the", "me", "for", "my"})
             if TIME_WISH.search(dish):
                 u.time_wish = True                                        # "in 10 minutes", "quick": no dish named, and we hold no cooking times
-            elif dish and dish not in GENERIC_DISH and not u.foods and any(w not in NON_FOOD_WORDS for w in dish.split()):
-                u.unknown_dish = dish
+            elif dish and dish not in GENERIC_DISH and any(w not in NON_FOOD_WORDS for w in dish.split()) and (
+                    not u.foods or _names_more_than_its_foods(dish, index)):
+                u.unknown_dish = dish      # said before any dish with its foods is offered, never substituted silently (NUT-MATCH-001)
     if INGREDIENTS.search(cleaned) and question_type == "meal_from_ingredients":
         u.ingredients = foods
         u.unknown_words, u.suggestion, absent = pantry_words(scrub_conditions(cleaned, word_lists), index,
@@ -787,6 +809,8 @@ def understand(text: str, state, index: FoodIndex, word_lists: dict, recipe_find
                 question_type = "profile_statement"                    # only a statement: acknowledged. With a question in it, the question is answered too
     if PLAN_REQUEST.search(cleaned) and question_type == "food_choice_guidance":
         u.refuse_plan = True
+    if EXCLUDED_METRIC.search(cleaned):
+        u.excluded_metric = True
     if question_type == "out_of_scope" and not u.slot_fill and INGREDIENTS.search(cleaned) and not u.conditions and not (HARMFUL_WORDS | HEALTH_WORDS) & set(cleaned.split()) and not SYMPTOM.search(cleaned) and not subject_of(cleaned):
         unknown_pantry, _s, _a = pantry_words(scrub_conditions(cleaned, word_lists), index, word_lists.get("ingredient_stop_words", []))
         if foods or unknown_pantry:

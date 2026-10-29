@@ -51,6 +51,97 @@ fails on any critical miss outside the baseline's list. The LLM pipeline is meas
 the baseline: it replaces a rule only where it scores better. Rubrics are counted as "not judged" until the judge is built. Add every miss
 found in review as a new case.
 
+EV-0.2.0 (27 Oct 2026) adds the binding's 25 chat tests (`NB-*`) and the misses of the live 25-prompt run with Groq (`LP-*`),
+with profiles `prediabetic`, `hypertension` and `t2_condition_only`. The test suite reads the baseline named after the eval set's
+version: `evals/baselines/rules-EV-0.2.0.json` scores 188/200 with the same single critical failure (NE-08). Write a baseline with
+the recipe books off (`DIXIT_BOOK_RECIPES=off DIXIT_DECK_RECIPES=off`), as the test suite scores, so it holds no private book text. LP-01..03 pass on
+the rules target because the mock model sends the reviewed templates; they fail with Groq and are there for the model target.
+
+## Programme binding: the Knee-style handover for nutrition (27 Oct 2026)
+
+The Dixit AI Nutrition Data Integration Amendment v1.2.6 is the programme binding this pipeline is measured against: nine
+nutrition rules plus two boundary rules with registered priorities, 14 answer checks, 18 intents (8 declared sub-intents), a
+16-anchor orchestration flow, a conflict registry, 26 chat tests and 15 structural tests. It stays outside git (`nutrition\`,
+git-ignored) and is hash-pinned in `manifest.json` → `programme_binding`. [NUTRITION_HANDOVER.md](NUTRITION_HANDOVER.md) says
+what every artifact is for.
+
+    python -m dixit_answer.binding            # binding state, effective runtime ID, structural tests, coverage; exit 1 on a failure
+
+- **Start-up** (`binding.py`, `Engine`): the package is loaded after its release hashes are checked, and every audit record carries
+  `binding` and `effective_runtime` (`DIXIT-RT-<baseline>+OVR<overlay>+NUT<binding>+SNDL<library>`, "none" for a package this
+  machine does not have). Production refuses a missing or changed package, a combination the package has not validated, or a
+  package whose own `production_enabled` is false; development records the same problems, and `readiness` lists them.
+- **Structural tests** STR-001..015 run as written; a test that needs the Dixit baseline or the library reports "not run", never
+  passed. Today: 11 passed, 2 failed (STR-008, STR-013: library v1.0.5 is not the pinned v1.0.3), 2 not run (STR-006, STR-011).
+- **Coverage** (`data/binding_map.json`, BMAP-0.1.0, PROPOSED): every rule, check, intent, anchor, patch step, conflict and test
+  the binding declares is mapped to where it is implemented, as implemented, partial, missing or not applicable.
+- **Chat tests** are eval cases (area `binding`, ids `NB-T001`..`NB-T026`; NUT-T025 is a release check, run as STR-006).
+- **Fixed with this change:** "calculate insulin demand" and "what is the GI of rice" are declined and never estimated (NUT-FIELD-001;
+  wording in `programme.py` → `metric_refusal`, a doctor pack may override it), and someone else's age ("my 5 year old") no longer
+  marks the person as under 18.
+
+## Main assistant scope (IR-0.4.0, 27 Oct 2026)
+
+The live run with Groq showed the main assistant writing a poem for "write me a poem about the sea", giving walking advice, and
+describing itself as chatting about medicines and symptoms (evals LP-01 to LP-03). Now `router_rules.json` → `model_topics` lists
+the only topics a model may word (`medicine`, `symptom`); greeting, about, exercise, sleep, thanks and anything else are sent as the
+reviewed reply. Cure and child can never be model-worded: the code ignores them in `model_topics` and a start-up check refuses
+them. The main prompt (`llm.py`) no longer claims any scope beyond food, and tells the model to give no advice of any kind.
+Checked live with Groq on 27 Oct 2026: the three prompts get the reviewed replies; medicine and symptom replies are still
+model-worded and end with the locked safety line.
+
+## A dish we don't hold is never substituted silently (27 Oct 2026)
+
+"Recipe for paneer tikka masala" used to get Paneer Salad as "With paneer you can make this", with no word that we don't hold
+paneer tikka masala (eval LP-05, binding check NUT-MATCH-001). A dish name now counts as a named dish when it has a word beyond
+its foods and the generic dish words (`understand.DISH_KIND`: sabji, curry, dry...): "paneer tikka masala" and "dal makhani" are
+named and the answer starts with "I don't have a checked recipe for ..." (and the dish goes to the dietitian's queue); "recipe
+for paneer", "aloo sabji recipe" and "how to cook bhindi" still ask for a dish with those foods. Tests: `tests/test_phase5.py`.
+
+## Recipe books are data: adding one needs no code (27 Oct 2026)
+
+A programme's recipe book is four pieces of data, and no code names a book:
+
+1. **The recipes file** (JSON, kept outside the repo, private circulation): `{"_about": {"source": {"title"}}, "recipes": [{"id",
+   "name", "category", "book_page", "ingredients": [{"item", "quantity", "unit"}], "steps": [...], "total_yield", "serving_size"}]}`.
+2. **Its ingredient map** in `data/` (like `book_ingredient_map.json`): the book's id, title and citation; units; which categories
+   or recipe IDs are dishes (`dish_categories`, `kind_overrides`, with a reason for each one that is not); and for every ingredient
+   line its food ID and grams (`per`, `default_g` for lines without an amount, `trace`, `skip`, `optional`, `exclude`, `split`).
+   New foods go into `food_master.json` with `match_in_chat: false`.
+3. **A manifest entry** in `manifest.json` → `recipe_books`: `{"id", "map", "file", "env"}`. The file is looked for under
+   `DIXIT_RECIPE_BOOKS_DIR` (default `<parent>/Nutrition`) unless the book's `env` variable points elsewhere (`off` turns it off).
+4. **The book's source on the white list** (`white_lists.json` → `recipe_sources`), and the book's id in a doctor pack's
+   `recipe_books`, so that programme's patients get its dishes.
+
+The start-up check refuses a pack that names a book the manifest doesn't list, a map whose book id disagrees with the manifest, a
+map line naming an unknown food, and a source not on the white list. `tests/test_deck_recipes.py` adds a book this way in a test.
+Versions are reported per book (`recipe_book:<id>`: map version, title, dishes), and `/api/info` lists each book's import summary.
+
+### The ADORE 90 Days Challenge recipes (27 Oct 2026)
+
+The programme's daily diet charts (`recipes book.pptx`, 94 slides, Days 3 to 92, Aug to Oct 2023) were transcribed to
+`<parent>/Nutrition/adore-90-days/adore-90-days-recipes.json`: 70 recipes, 9 fasting dishes, 90 day plans and the programme's
+rules. Its map is `data/deck_ingredient_map.json` (DM-0.1.0, TEST ONLY) and the Dixit pack lists it (DP-0.3.1).
+
+- **62 dishes are offered.** 7 are not dishes (4 soups, a raita, a dip, a spiced curd drink); the rajma-patty sandwich is skipped
+  (its patty is another recipe with no amounts).
+- **Most amounts are assumed:** the deck gives few. Each assumed amount is named in the answer: "(the book gives no amount)" or
+  "(the book says "a little")". A bowl is the Healthful Diet vati (60 g); cups are set per line.
+- **16 foods were added** (FM-0.5.0, `match_in_chat: false`): oats, ragi flour, cheese, pasta, maida, daliya, buttermilk, olives,
+  molasses, tendli, dill, pistachios, rice flour, multigrain bread, ketchup, and sprouted mung beans with a USDA record (read as
+  "sprouts" through `generic`). Proxies are marked: millet flour for ragi, bulgur for daliya, dishcloth gourd for tendli, cheddar
+  for cheese, sprouted moong for matki.
+- **Molasses is removed** like sugar, jaggery and honey (swap table SW-0.2.1). Every dish passes the gate for a plain profile.
+- "baking soda" is no longer read as "soda" (a sweet drink): a recipe-only food can claim its own phrase (`claims_phrase`).
+
+### When the person wants something different
+
+Recipes are searched first (the doctor's picks, then the programme's books, then the rest), by what the person has. "Something
+else" leaves out every dish already shown. When no dish we hold is left, the AI drafts one from our food IDs only, and it is
+recalculated from USDA and gated like any recipe. The draft request carries `different_from` (the dishes already shown for these
+foods and earlier AI drafts in the chat), and a draft named like one of them is rejected and retried, so each "something
+different" is a new dish. When nothing new passes, the answer says those are all the checked dishes we have.
+
 ## One plugin, many doctors (26 Oct 2026)
 
 Only the **doctor pack** (`data/doctor_packs.json`) differs between doctors. Everything else is shared: emergency and

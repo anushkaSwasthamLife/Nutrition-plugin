@@ -20,9 +20,10 @@ DRY = ["FOOD-RAJMA", "FOOD-CHICKPEAS", "FOOD-MASOOR-DAL", "FOOD-TOOR-DAL", "FOOD
 
 
 def test_the_list_grew_and_says_so(engine):
-    # FM-0.4.0 added 61 foods that only the Healthful Diet book's recipes use; they never match chat text.
+    # FM-0.4.0 added 61 foods that only the Healthful Diet book's recipes use, FM-0.5.0 16 for the 90 Days Challenge recipes; they
+    # never match chat text.
     chat_foods = [f for f in engine.index.foods if f not in engine.index.book_only]
-    assert engine.data.food_master["version"] == "FM-0.4.0" and len(chat_foods) == 79 and len(engine.index.book_only) == 61
+    assert engine.data.food_master["version"] == "FM-0.5.0" and len(chat_foods) == 79 and len(engine.index.book_only) == 77
     assert all(f in engine.index.foods for f in NEW)
 
 

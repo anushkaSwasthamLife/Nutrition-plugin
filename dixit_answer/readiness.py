@@ -10,9 +10,11 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from dataclasses import replace
 from pathlib import Path
 
-from .config import DATA_DIR
+from .binding import open_binding
+from .config import DATA_DIR, load_settings
 from . import release as release_record
 from .lists import unsigned_counts
 from .sign_off import _unfilled, file_problems, limit_problems
@@ -31,6 +33,13 @@ def _read(path: Path):
     if not isinstance(data, dict):
         return None, "is not a JSON object"
     return data, None
+
+
+def binding_problems(manifest: dict) -> list[str]:
+    """The programme binding's open points (binding.py): not on this machine, changed since pinned, a runtime combination the
+    package has not validated, or the package's own production switch still off. Production refuses to start on any of them."""
+    _binding, status = open_binding(replace(load_settings(), environment="development"), manifest)
+    return status["problems"]
 
 
 def check(manifest_path: Path = MANIFEST_PATH, data_dir: Path = DATA_DIR) -> dict:
@@ -92,6 +101,8 @@ def check(manifest_path: Path = MANIFEST_PATH, data_dir: Path = DATA_DIR) -> dic
             add("manifest", manifest_path.name, "production uses Indian records without a licence ID")
         if production.get("recipe_ai_drafting"):
             add("manifest", manifest_path.name, "AI recipe drafting is on in production before the 100-recipe dietitian review (item G)")
+    for problem in binding_problems(manifest):
+        add("binding", "programme_binding", problem)
     return {"ready": not items, "items": items, "files": files}
 
 

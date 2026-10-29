@@ -339,6 +339,11 @@ def make_plan(u: Understanding, state: ChatState, emergency: bool = False, aller
     if u.refuse_plan:
         plan.refuse_plan = True
         blocks.insert(0, "plan_refusal")
+    if u.excluded_metric:
+        plan.rules.append("NUT-FIELD-001")
+        if plan.type == "food_choice_guidance":     # nothing else was asked ("calculate insulin demand for this meal"): no general guidance
+            blocks = []
+        blocks.insert(0, "metric_refusal")
     plan.blocks = blocks
     if plan.type in RECIPE_TYPES:
         plan.max_words = 260

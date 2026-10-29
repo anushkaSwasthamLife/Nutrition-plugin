@@ -61,6 +61,10 @@ def listed_files(manifest: dict) -> dict[str, str]:
             continue
         for key, name in value.items():
             out[key if section == "swastham_data" else f"{section}.{key}"] = name
+    # A recipe book's ingredient map sits in a list ("recipe_books": [{"id": ..., "map": "book_ingredient_map.json"}]); the
+    # recipes themselves live outside the repo and are not pinned here.
+    for book in manifest.get("recipe_books") or []:
+        out[f"recipe_books.{book['id']}"] = book["map"]
     return out
 
 
