@@ -1,17 +1,17 @@
 """Dish lookup: finding the dish, the two paths, and every case that must give no number."""
 import copy
 import json
-from pathlib import Path
 
 import pytest
 
 from dixit_answer import dish_lookup as dl
 from dixit_answer import indb_calc as calc
-from dixit_answer.config import DATA_DIR, DEFAULT_LIBRARY_DIR
+from dixit_answer.config import DATA_DIR, load_settings
 from dixit_answer.loader import FLAG_MACRO_MISMATCH, FLAG_SERVING_UNCLEAR, Library
 
 RULES = json.loads((DATA_DIR / "dish_rules.json").read_text(encoding="utf-8"))
-NUTRITION = Path(__file__).resolve().parents[2] / "Nutrition"
+LIBRARY = load_settings().library_dir            # DIXIT_LIBRARY_DIR, as the app reads it
+NUTRITION = load_settings().nutrition_dir          # DIXIT_NUTRITION_DIR, as the app reads it
 
 
 def record(code, name, kcal=100.0, aliases=(), quantity=1, unit="bowl", approx=False, rng=None, constraint=None, per100=True):
@@ -238,7 +238,7 @@ def test_rules_file_is_proposed_and_registered():
 # ---------------------------------------------------------------- real data (development only)
 RELEASES = sorted((NUTRITION / "releases").glob("*/alias_table.csv"))
 needs_data = pytest.mark.skipif(not RELEASES or not (NUTRITION / "indb_source" / "recipes.xlsx").exists()
-                                or not (DEFAULT_LIBRARY_DIR / "01_data").exists(), reason="INDB or library files are not on this PC")
+                                or not (LIBRARY / "01_data").exists(), reason="INDB or library files are not on this PC")
 
 
 @pytest.fixture(scope="module")
@@ -250,7 +250,7 @@ def real_lookup():
     library = load_library(settings)
     imap = calc.load_ingredient_map(latest_ingredient_map(NUTRITION))
     fct = {**calc.load_fct(NUTRITION / "indb_source" / "UK_fct.xlsx", "uk_cofid"), **calc.load_fct(NUTRITION / "indb_source" / "US_fct.xlsx", "us_fct")}
-    src = calc.Sources(usda=calc.load_usda(DEFAULT_LIBRARY_DIR), ingredient_map=imap, fct=fct, allowed_matches=calc.WITH_PROXIES)
+    src = calc.Sources(usda=calc.load_usda(LIBRARY), ingredient_map=imap, fct=fct, allowed_matches=calc.WITH_PROXIES)
     return dl.DishLookup(library, dl.load_alias_rows(RELEASES[-1]), dl.load_indb_recipes(NUTRITION / "indb_source"), src, RULES)
 
 

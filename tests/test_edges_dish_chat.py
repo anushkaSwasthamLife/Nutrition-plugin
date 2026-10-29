@@ -1,17 +1,17 @@
 """Edge cases for dishes in the chat: hostile text, several dishes in one question, allergy sentences, generic words, fuzz."""
 import random
 import re
-from pathlib import Path
 
 import pytest
 
 from dixit_answer import dish_lookup as dl
-from dixit_answer.config import load_settings
+from dixit_answer.config import load_settings, recipe_book_paths
 from dixit_answer.llm import MockLLM
 from dixit_answer.pipeline import Engine
+from dixit_answer.textnorm import clean
 from dixit_answer.understand import question_part
 
-NUTRITION = Path(__file__).resolve().parents[2] / "Nutrition"
+NUTRITION = load_settings().nutrition_dir          # DIXIT_NUTRITION_DIR, as the app reads it
 needs_data = pytest.mark.skipif(not (NUTRITION / "indb_source" / "recipes.xlsx").exists() or not list((NUTRITION / "releases").glob("*/alias_table.csv")),
                                 reason="INDB files are not on this PC")
 
@@ -133,9 +133,51 @@ def test_each_dish_name_answers_about_that_dish(eng):
         if result.status != dl.FOUND:
             continue
         r = ask(eng, f"calories in {name}")
+        ours = re.match(r"For our (.+?)(?: \(.*?\))? recipe \(", r.answer)          # our own recipe of that dish, named by its own name
+        if ours and f" {clean(ours.group(1))} " in f" {clean(name)} ":
+            continue
         if f"DISH-{result.code}" not in r.records and not r.records and "won't suit you" not in r.answer:      # a blocked food is a valid answer
             wrong.append((name, r.answer[:70]))
     assert not wrong, wrong[:5]
+
+
+BOOK_DISHES = [("pizza", "Sprout Base Pizza", "adore_90_days"), ("dalma", "Mixed vegetable with dal", "healthful_diet")]
+
+
+def _needs_book(book):
+    path = recipe_book_paths().get(book)
+    if path is None:
+        pytest.skip(f"the {book} recipe book is switched off in .env")
+    if not path.is_file():
+        pytest.skip(f"the {book} recipe file is not on this PC ({path}); set its variable in .env")
+
+
+@pytest.fixture(scope="module")
+def eng_no_dishes(tmp_path_factory):
+    """As production runs: no INDB dish lookup."""
+    return Engine(load_settings(llm_provider="mock", llm_api_key="", var_dir=tmp_path_factory.mktemp("nodish"), dish_lookup=False),
+                  llm=MockLLM())
+
+
+@needs_data
+@pytest.mark.parametrize("dish, recipe, book", BOOK_DISHES)
+def test_a_dish_that_is_only_another_name_for_a_book_recipe_answers_from_the_dish_record(eng, dish, recipe, book):
+    # A book's other name for its recipe ("Pizza" for Sprout Base Pizza) must not answer for every pizza.
+    r = ask(eng, f"calories in {dish}")
+    assert recipe not in r.answer and any(rec.startswith("DISH-") for rec in r.records), r.answer[:120]
+
+
+@pytest.mark.parametrize("dish, recipe, book", BOOK_DISHES)
+def test_without_the_dish_lookup_a_book_recipe_never_answers_by_another_name(eng_no_dishes, dish, recipe, book):
+    # PR #5 review: production has no dish lookup, so the rule must hold without it.
+    r = ask(eng_no_dishes, f"calories in {dish}")
+    assert recipe not in r.answer and "For our" not in r.answer, r.answer[:120]
+
+
+@pytest.mark.parametrize("dish, recipe, book", BOOK_DISHES)
+def test_naming_the_book_recipe_itself_still_gets_its_totals(eng_no_dishes, dish, recipe, book):
+    _needs_book(book)
+    assert f"For our {recipe} recipe" in ask(eng_no_dishes, f"calories in {recipe.lower()}").answer
 
 
 # ---------------------------------------------------------------- fuzz

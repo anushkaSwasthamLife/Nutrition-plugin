@@ -31,8 +31,9 @@ writes a number, picks a route, clears a block or answers an emergency.
 .venv\Scripts\python.exe -m dixit_answer.web                            # chat on http://127.0.0.1:8100 (review page: /review)
 ```
 
-Eight tests in `test_edges_extra_nutrients.py` and `test_library_v105.py` need the data library at the Desktop path; they fail
-on machines without it. Say so when you report results; never hide them.
+About 800 tests need data outside the repo (the library, INDB files, releases, recipe books, the binding package). They read
+the same folders as the app (`DIXIT_LIBRARY_DIR`, `DIXIT_NUTRITION_DIR`, ... in `.env`) and skip, naming the missing path, when
+it is absent. With all the data present nothing skips; report the skipped count with your results and never hide it.
 
 ## Map
 

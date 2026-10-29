@@ -1,7 +1,6 @@
 """'I want a meal with 326 kcal and 26 g protein, what can I have': dishes whose stored values sit near the amounts, never a plan."""
 import random
 import re
-from pathlib import Path
 
 import pytest
 
@@ -11,7 +10,7 @@ from dixit_answer.pipeline import Engine
 from dixit_answer.targets import MEAT_FISH, is_target_request, parse_targets
 from tests.edge_helpers import assert_valid
 
-NUTRITION = Path(__file__).resolve().parents[2] / "Nutrition"
+NUTRITION = load_settings().nutrition_dir          # DIXIT_NUTRITION_DIR, as the app reads it
 needs_data = pytest.mark.skipif(not (NUTRITION / "indb_source" / "recipes.xlsx").exists() or not list((NUTRITION / "releases").glob("*/alias_table.csv")),
                                 reason="INDB files are not on this PC")
 VEG = {"allergies": ["peanut"], "diet_type": "vegetarian"}

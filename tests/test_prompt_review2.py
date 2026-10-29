@@ -1,7 +1,6 @@
 """The second round of the prompt review (21 Oct 2026): typos, ranges, who-are-you, body facts, special diets, building up what is at home, narrower diets."""
 import random
 import re
-from pathlib import Path
 
 import pytest
 
@@ -12,7 +11,7 @@ from dixit_answer.targets import parse_targets
 from dixit_answer.understand import fix_typos
 from tests.edge_helpers import assert_valid
 
-NUTRITION = Path(__file__).resolve().parents[2] / "Nutrition"
+NUTRITION = load_settings().nutrition_dir          # DIXIT_NUTRITION_DIR, as the app reads it
 needs_data = pytest.mark.skipif(not (NUTRITION / "indb_source" / "recipes.xlsx").exists() or not list((NUTRITION / "releases").glob("*/alias_table.csv")),
                                 reason="INDB files are not on this PC")
 VEG = {"allergies": ["peanut"], "diet_type": "vegetarian"}

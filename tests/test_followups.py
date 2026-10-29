@@ -1,7 +1,6 @@
 """A follow-up is read in the light of the last answer: "what else" after a recipe, "and protein?" after calories, "what about dal?"."""
 import random
 import re
-from pathlib import Path
 
 import pytest
 
@@ -13,7 +12,7 @@ from dixit_answer.understand import canonical_nutrient
 from tests.edge_helpers import assert_valid
 
 PROFILE = {"allergies": ["peanut"], "diet_type": "vegetarian"}
-NUTRITION = Path(__file__).resolve().parents[2] / "Nutrition"
+NUTRITION = load_settings().nutrition_dir          # DIXIT_NUTRITION_DIR, as the app reads it
 needs_data = pytest.mark.skipif(not (NUTRITION / "indb_source" / "recipes.xlsx").exists() or not list((NUTRITION / "releases").glob("*/alias_table.csv")),
                                 reason="INDB files are not on this PC")
 

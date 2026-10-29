@@ -1,14 +1,14 @@
 """Recipe calculator and the INDB comparison: unit rules, valuation, completeness, and a regression guard on the real data."""
 import math
-from pathlib import Path
 
 import pytest
 
 from dixit_answer import indb_calc as calc
 from dixit_answer import indb_compare as cmp
-from dixit_answer.config import DEFAULT_LIBRARY_DIR
+from dixit_answer.config import load_settings
 
-NUTRITION = Path(__file__).resolve().parents[2] / "Nutrition"
+LIBRARY = load_settings().library_dir            # DIXIT_LIBRARY_DIR, as the app reads it
+NUTRITION = load_settings().nutrition_dir          # DIXIT_NUTRITION_DIR, as the app reads it
 INDB_DIR = NUTRITION / "indb_source"
 
 
@@ -239,14 +239,14 @@ def test_load_fct_reads_trace_marks_and_skips_unreadable_rows(tmp_path):
 
 
 # ---------------------------------------------------------------- regression guard on the real data
-needs_data = pytest.mark.skipif(not (INDB_DIR / "recipes.xlsx").exists() or not (DEFAULT_LIBRARY_DIR / "01_data").exists()
+needs_data = pytest.mark.skipif(not (INDB_DIR / "recipes.xlsx").exists() or not (LIBRARY / "01_data").exists()
                                 or not list((NUTRITION / "releases").glob("*/ingredient_map.csv")),
                                 reason="INDB source files, library or ingredient map are not on this PC")
 
 
 @needs_data
 def test_real_comparison_arithmetic_matches_indb_and_accuracy_does_not_slip(tmp_path):
-    info = cmp.run(INDB_DIR, DEFAULT_LIBRARY_DIR, cmp.latest_ingredient_map(NUTRITION), tmp_path)
+    info = cmp.run(INDB_DIR, LIBRARY, cmp.latest_ingredient_map(NUTRITION), tmp_path)
     assert info["recipes"] == 1014
     import csv
     rows = list(csv.DictReader(open(tmp_path / "recipe_comparison.csv", encoding="utf-8-sig")))

@@ -1,6 +1,5 @@
 """Roman Hindi (Hinglish), clause by clause (hinglish.py + data/hinglish_glossary.json), through translate() and through the engine."""
 import json
-from pathlib import Path
 
 import pytest
 
@@ -10,7 +9,7 @@ from dixit_answer.hindi import translate
 from dixit_answer.llm import MockLLM
 from dixit_answer.pipeline import Engine
 
-NUTRITION = Path(__file__).resolve().parents[2] / "Nutrition"
+NUTRITION = load_settings().nutrition_dir          # DIXIT_NUTRITION_DIR, as the app reads it
 needs_data = pytest.mark.skipif(not (NUTRITION / "indb_source" / "recipes.xlsx").exists() or not list((NUTRITION / "releases").glob("*/alias_table.csv")),
                                 reason="INDB files are not on this PC")
 
